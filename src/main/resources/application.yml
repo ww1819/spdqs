@@ -11,8 +11,8 @@ spring:
     import: optional:classpath:application-local.yml,optional:file:./application-local.yml
   datasource:
     url: jdbc:mysql://localhost:3306/spdqs?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
-    username: spdqs
-    password: ${DB_PASSWORD:root}
+    username: root
+    password: root
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect

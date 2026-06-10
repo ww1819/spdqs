@@ -1,3 +1,0 @@
-spring:
-  datasource:
-    password: 请填写 spdqs 的数据库密码
