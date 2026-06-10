@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/app-head :: head('工单 - 档案工单系统')}"></head>
+<body class="app-page">
+<div class="app-shell">
+    <div th:replace="~{fragments/app-nav :: sidebar}"></div>
+    <main class="app-main">
+        <header class="app-header">
+            <h1 th:text="${ticket.id != null ? '编辑工单' : '新建工单'}">工单</h1>
+        </header>
+        <div class="app-content">
+            <div th:if="${success}" class="alert alert-success alert-dismissible fade show py-2 mb-3">
+                <span th:text="${success}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <div th:if="${error}" class="alert alert-danger py-2" th:text="${error}"></div>
+            <div class="form-page-card">
+        <form id="ticketForm" th:action="@{/tickets/save}" method="post" th:object="${ticket}">
+            <input type="hidden" th:field="*{id}" th:if="${ticket.id != null and !ticket.id.isEmpty()}">
+            <input type="hidden" id="originalExpectedDate"
+                   th:value="${ticket.expectedCompleteDate != null ? #temporals.format(ticket.expectedCompleteDate, 'yyyy-MM-dd') : ''}">
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">项目名称 <span class="text-danger">*</span></label>
+                    <select name="archiveId" id="archiveSelect" class="form-select" required>
+                        <option value="">请选择项目</option>
+                        <option th:each="opt : ${archiveOptions}"
+                                th:value="${opt.id}"
+                                th:text="${opt.projectName}"
+                                th:selected="${ticket.archive != null and ticket.archive.id == opt.id}">
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">工单类型 <span class="text-danger">*</span></label>
+                    <select th:field="*{orderType}" class="form-select" required>
+                        <option value="">请选择</option>
+                        <option th:each="t : ${orderTypes}" th:value="${t.label}" th:text="${t.label}"></option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">工单状态 <span class="text-danger">*</span></label>
+                    <select th:field="*{status}" class="form-select" required>
+                        <option th:each="s : ${ticketStatuses}" th:value="${s.label}" th:text="${s.label}"></option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">预计完成时间</label>
+                    <input type="date" id="expectedCompleteDate" name="expectedCompleteDate" class="form-control"
+                           th:value="${ticket.expectedCompleteDate != null ? #temporals.format(ticket.expectedCompleteDate, 'yyyy-MM-dd') : ''}">
+                    <div class="form-text">未完成工单在到期前 3 天、1 天及当天 15/16/17/18 点会提醒；修改预计完成时间须填写跟进记录</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">目标完成时间</label>
+                    <input type="date" id="targetCompleteDate" name="targetCompleteDate" class="form-control"
+                           th:value="${ticket.targetCompleteDate != null ? #temporals.format(ticket.targetCompleteDate, 'yyyy-MM-dd') : ''}">
+                    <div class="form-text">紧急工单请填写，工作台将优先展示；今日到期的工单会标红</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">处理人</label>
+                    <input type="text" th:field="*{handler}" id="handlerInput" class="form-control" placeholder="负责处理该工单的人员">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">提交人</label>
+                    <input type="text" th:field="*{submitter}" class="form-control">
+                </div>
+                <div class="col-12">
+                    <label class="form-label">注意事项</label>
+                    <textarea th:field="*{attentionNote}" class="form-control" rows="3"
+                              placeholder="仅紧急工单填写，说明需特别关注的事项；非紧急工单请勿填写。"></textarea>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">工单内容</label>
+                    <textarea th:field="*{content}" class="form-control" rows="8"></textarea>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">联系方式</label>
+                    <textarea th:field="*{contactInfo}" id="contactInfoInput" class="form-control" rows="5"></textarea>
+                    <div class="form-text">选择项目后可自动带出档案中的联系方式，也可手动修改</div>
+                </div>
+                <div class="col-12" id="archiveBriefPanel" style="display:none;">
+                    <div class="archive-side-panel">
+                        <h6 class="fw-bold mb-2">档案参考信息</h6>
+                        <div id="briefRemote"></div>
+                        <div id="briefSpecial" class="mt-2"></div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <hr class="my-2 hr-tech">
+                    <label class="form-label">跟进记录</label>
+                    <div th:if="${followUps != null and !#lists.isEmpty(followUps)}" class="followup-timeline mb-3">
+                        <div class="followup-item" th:each="fu : ${followUps}">
+                            <div class="followup-meta">
+                                <span th:text="${fu.createBy ?: '—'}">记录人</span>
+                                <span class="text-muted ms-2"
+                                      th:text="${#temporals.format(fu.createTime, 'yyyy-MM-dd HH:mm')}">时间</span>
+                            </div>
+                            <div class="followup-content" th:text="${fu.content}">内容</div>
+                        </div>
+                    </div>
+                    <div th:if="${followUps == null or #lists.isEmpty(followUps)}" class="text-muted small mb-2">暂无跟进记录</div>
+                    <label class="form-label small text-muted">新增跟进</label>
+                    <textarea name="newFollowUp" id="newFollowUp" class="form-control" rows="4"
+                              placeholder="填写处理进展。修改预计完成时间时必填。"></textarea>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary">保存</button>
+                <a href="/tickets" class="btn btn-outline-secondary">取消</a>
+            </div>
+        </form>
+
+            <div th:replace="~{fragments/ticket-attachments :: attachmentSection(ticket=${ticket}, editable=${ticket.id != null and !#strings.isEmpty(ticket.id)}, returnTo='edit')}"></div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<div class="modal fade" id="dateChangeModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header">
+                <h5 class="modal-title">修改预计完成时间</h5>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-2">预计完成时间已变更，请填写跟进记录说明原因后再保存。</p>
+                <textarea id="modalFollowUp" class="form-control" rows="4" placeholder="例如：客户要求延期至下周完成"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="confirmDateChangeSave">确认并保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="maintWarnModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">维保到期提醒</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="maintWarnText" class="mb-0"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">知道了</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    const archiveOptions = /*[[${archiveOptions}]]*/ [];
+    const archiveSelect = document.getElementById('archiveSelect');
+    const contactInfoInput = document.getElementById('contactInfoInput');
+    const handlerInput = document.getElementById('handlerInput');
+    const briefPanel = document.getElementById('archiveBriefPanel');
+    const maintWarnModal = new bootstrap.Modal(document.getElementById('maintWarnModal'));
+    const isNewTicket = /*[[${ticket.id == null or ticket.id.isEmpty()}]]*/ true;
+    const ticketForm = document.getElementById('ticketForm');
+    const expectedDateInput = document.getElementById('expectedCompleteDate');
+    const originalExpectedDate = document.getElementById('originalExpectedDate');
+    const newFollowUpInput = document.getElementById('newFollowUp');
+    const dateChangeModal = new bootstrap.Modal(document.getElementById('dateChangeModal'));
+    const modalFollowUp = document.getElementById('modalFollowUp');
+    const confirmDateChangeSave = document.getElementById('confirmDateChangeSave');
+
+    function isExpectedDateChanged() {
+        if (isNewTicket || !originalExpectedDate) {
+            return false;
+        }
+        return (originalExpectedDate.value || '') !== (expectedDateInput.value || '');
+    }
+
+    function needsFollowUpForDateChange() {
+        return isExpectedDateChanged() && !(newFollowUpInput.value || '').trim();
+    }
+
+    ticketForm.addEventListener('submit', function (e) {
+        if (!needsFollowUpForDateChange()) {
+            return;
+        }
+        e.preventDefault();
+        modalFollowUp.value = '';
+        dateChangeModal.show();
+    });
+
+    confirmDateChangeSave.addEventListener('click', function () {
+        const text = (modalFollowUp.value || '').trim();
+        if (!text) {
+            modalFollowUp.focus();
+            modalFollowUp.classList.add('is-invalid');
+            return;
+        }
+        modalFollowUp.classList.remove('is-invalid');
+        newFollowUpInput.value = text;
+        dateChangeModal.hide();
+        ticketForm.requestSubmit();
+    });
+
+    if (/*[[${requireFollowUpModal}]]*/ false) {
+        dateChangeModal.show();
+    }
+
+    archiveSelect.addEventListener('change', function () {
+        const selectedId = this.value;
+        if (!selectedId) {
+            briefPanel.style.display = 'none';
+            return;
+        }
+
+        const opt = archiveOptions.find(o => o.id === selectedId);
+        if (opt) {
+            const warnStatuses = ['维保到期在三个月内', '维保到期'];
+            if (warnStatuses.includes(opt.status)) {
+                let daysText;
+                if (opt.daysToExpire < 0) {
+                    daysText = '已过期 ' + Math.abs(opt.daysToExpire) + ' 天';
+                } else if (opt.daysToExpire === 0) {
+                    daysText = '今天到期';
+                } else {
+                    daysText = '距今还有 ' + opt.daysToExpire + ' 天';
+                }
+                const expireDate = opt.maintExpireDate || '未知';
+                document.getElementById('maintWarnText').textContent =
+                    '该项目「' + opt.projectName + '」维保将于 ' + expireDate + ' 到期，' + daysText + '，请注意！';
+                maintWarnModal.show();
+            }
+        }
+
+        fetch('/api/archives/' + selectedId + '/brief')
+            .then(r => r.json())
+            .then(data => {
+                if (isNewTicket && data.contactInfo && !contactInfoInput.value.trim()) {
+                    contactInfoInput.value = data.contactInfo;
+                }
+                if (isNewTicket && data.implManager && !handlerInput.value.trim()) {
+                    handlerInput.value = data.implManager;
+                }
+                document.getElementById('briefRemote').innerHTML =
+                    '<strong>远程方式：</strong><br>' + (data.remoteMethod || '—').replace(/\n/g, '<br>');
+                document.getElementById('briefSpecial').innerHTML =
+                    '<strong>特殊流程：</strong><br>' + (data.specialProcess || '—').replace(/\n/g, '<br>');
+                briefPanel.style.display = 'block';
+            })
+            .catch(() => briefPanel.style.display = 'none');
+    });
+
+    if (archiveSelect.value) {
+        archiveSelect.dispatchEvent(new Event('change'));
+    }
+</script>
+<div th:replace="~{fragments/image-preview :: imagePreviewModal}"></div>
+</body>
+</html>

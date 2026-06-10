@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/app-head :: head('出错了 - 档案工单系统')}"></head>
+<body class="app-page">
+<div class="app-shell">
+    <div th:replace="~{fragments/app-nav :: sidebar}"></div>
+    <main class="app-main">
+        <header class="app-header">
+            <h1>出错了</h1>
+        </header>
+        <div class="app-content">
+            <div class="form-page-card text-center py-5">
+                <p class="text-danger mb-3" th:text="${message}">错误信息</p>
+                <a href="javascript:history.back()" class="btn btn-outline-secondary me-2">返回上一页</a>
+                <a href="/dashboard" class="btn btn-primary">回到工作台</a>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

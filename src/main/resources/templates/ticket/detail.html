@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/app-head :: head('工单详情 - 档案工单系统')}"></head>
+<body class="app-page">
+<div class="app-shell">
+    <div th:replace="~{fragments/app-nav :: sidebar}"></div>
+    <main class="app-main">
+        <header class="app-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h1 class="mb-1" th:text="${ticket.archive.projectName}">项目名称</h1>
+                <span class="tag tag-default me-1" th:text="${ticket.orderType}">类型</span>
+                <span class="tag tag-default" th:if="${ticket.status == '已提交'}" th:text="${ticket.status}">状态</span>
+                <span class="tag tag-info" th:if="${ticket.status == '沟通中'}" th:text="${ticket.status}">状态</span>
+                <span class="tag tag-warning" th:if="${ticket.status == '处理中'}" th:text="${ticket.status}">状态</span>
+                <span class="tag tag-danger" th:if="${ticket.status == '待升级'}" th:text="${ticket.status}">状态</span>
+                <span class="tag tag-success" th:if="${ticket.status == '已完成'}" th:text="${ticket.status}">状态</span>
+            </div>
+            <div class="d-flex gap-2">
+                <a th:href="@{/archives/{id}(id=${ticket.archive.id})}" class="btn btn-outline-secondary btn-sm">查看档案</a>
+                <a th:href="@{/tickets/{id}/edit(id=${ticket.id})}" class="btn btn-primary btn-sm">编辑</a>
+                <a href="/tickets" class="btn btn-outline-secondary btn-sm">返回列表</a>
+            </div>
+        </header>
+        <div class="app-content">
+            <div th:if="${success}" class="alert alert-success alert-dismissible fade show py-2 mb-3">
+                <span th:text="${success}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <div th:if="${error}" class="alert alert-danger py-2 mb-3" th:text="${error}"></div>
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <div class="detail-section h-100">
+                        <h6>处理人</h6>
+                        <div th:text="${ticket.handler ?: '—'}">—</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="detail-section h-100">
+                        <h6>提交人</h6>
+                        <div th:text="${ticket.submitter ?: '—'}">—</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="detail-section h-100">
+                        <h6>预计完成时间</h6>
+                        <div th:text="${ticket.expectedCompleteDate != null ? #temporals.format(ticket.expectedCompleteDate, 'yyyy-MM-dd') : '—'}">—</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="detail-section h-100">
+                        <h6>目标完成时间</h6>
+                        <div th:text="${ticket.targetCompleteDate != null ? #temporals.format(ticket.targetCompleteDate, 'yyyy-MM-dd') : '—'}">—</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="detail-section h-100">
+                        <h6>提交时间</h6>
+                        <div th:text="${#temporals.format(ticket.createTime, 'yyyy-MM-dd HH:mm')}">—</div>
+                    </div>
+                </div>
+                <div class="col-md-6" th:if="${ticket.upgradeBy != null}">
+                    <div class="detail-section h-100">
+                        <h6>升级人</h6>
+                        <div th:text="${ticket.upgradeBy}">—</div>
+                    </div>
+                </div>
+                <div class="col-md-6" th:if="${ticket.upgradeTime != null}">
+                    <div class="detail-section h-100">
+                        <h6>升级时间</h6>
+                        <div th:text="${#temporals.format(ticket.upgradeTime, 'yyyy-MM-dd HH:mm')}">—</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-section" th:if="${ticket.attentionNote != null and !ticket.attentionNote.isEmpty()}">
+                <h6>注意事项</h6>
+                <div class="content-block text-danger" th:text="${ticket.attentionNote}"></div>
+            </div>
+
+            <div class="detail-section">
+                <h6>工单内容</h6>
+                <div class="content-block" th:text="${ticket.content ?: '—'}"></div>
+            </div>
+            <div class="detail-section">
+                <h6>工单联系方式</h6>
+                <div class="content-block" th:text="${ticket.contactInfo ?: '—'}"></div>
+            </div>
+            <div th:replace="~{fragments/ticket-attachments :: attachmentSection(ticket=${ticket}, editable=true, returnTo='detail')}"></div>
+            <div class="detail-section">
+                <h6>跟进记录</h6>
+                <div th:if="${followUps != null and !#lists.isEmpty(followUps)}" class="followup-timeline">
+                    <div class="followup-item" th:each="fu : ${followUps}">
+                        <div class="followup-meta">
+                            <span th:text="${fu.createBy ?: '—'}">记录人</span>
+                            <span class="text-muted ms-2"
+                                  th:text="${#temporals.format(fu.createTime, 'yyyy-MM-dd HH:mm')}">时间</span>
+                        </div>
+                        <div class="followup-content" th:text="${fu.content}">内容</div>
+                    </div>
+                </div>
+                <div th:if="${followUps == null or #lists.isEmpty(followUps)}" class="text-muted">暂无跟进记录</div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="archive-side-panel sticky-top" style="top: 16px;">
+                <h5 class="fw-bold mb-3">档案信息</h5>
+                <h6>项目类型</h6>
+                <div th:text="${ticket.archive.projectType ?: '—'}">—</div>
+                <h6>现场负责人</h6>
+                <div th:text="${ticket.archive.onsiteManager ?: '—'}">—</div>
+                <h6>实施负责人</h6>
+                <div th:text="${ticket.archive.implManager ?: '—'}">—</div>
+                <h6>联系方式</h6>
+                <div class="content-block small" th:text="${ticket.archive.contactInfo ?: '—'}">—</div>
+                <h6>远程方式</h6>
+                <div class="content-block small" th:text="${ticket.archive.remoteMethod ?: '—'}">—</div>
+                <h6>特殊流程</h6>
+                <div class="content-block small" th:text="${ticket.archive.specialProcess ?: '—'}">—</div>
+            </div>
+        </div>
+    </div>
+        </div>
+    </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<div th:replace="~{fragments/image-preview :: imagePreviewModal}"></div>
+</body>
+</html>

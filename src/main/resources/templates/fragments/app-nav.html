@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<aside th:fragment="sidebar" class="app-sidebar">
+    <div class="sidebar-brand">
+        <span class="sidebar-brand-icon">◆</span>
+        <span class="sidebar-brand-text">档案工单系统</span>
+    </div>
+    <nav class="sidebar-nav">
+        <a class="sidebar-link" th:classappend="${activeTab == 'dashboard'} ? 'active'" href="/dashboard">
+            <span class="sidebar-icon">▣</span> 工作台
+        </a>
+        <a class="sidebar-link" th:classappend="${activeTab == 'archives'} ? 'active'" href="/archives">
+            <span class="sidebar-icon">☰</span> 档案列表
+        </a>
+        <a class="sidebar-link" th:classappend="${activeTab == 'tickets'} ? 'active'" href="/tickets">
+            <span class="sidebar-icon">☷</span> 工单列表
+        </a>
+        <a class="sidebar-link" th:classappend="${activeTab == 'users'} ? 'active'" href="/users">
+            <span class="sidebar-icon">👤</span> 账号管理
+        </a>
+        <div class="sidebar-divider"></div>
+        <a class="sidebar-link sidebar-link-sub" href="/archives/new">
+            <span class="sidebar-icon">+</span> 新建档案
+        </a>
+        <a class="sidebar-link sidebar-link-sub" href="/tickets/new">
+            <span class="sidebar-icon">+</span> 新建工单
+        </a>
+    </nav>
+    <div class="sidebar-footer">
+        <a th:if="${currentUser != null}" href="/profile" class="sidebar-user sidebar-user-link">
+            <div class="sidebar-user-name" th:text="${currentUser}">用户</div>
+            <span class="sidebar-user-role">成员 · 个人信息</span>
+        </a>
+        <form th:action="@{/logout}" method="post" class="m-0">
+            <button type="submit" class="sidebar-link sidebar-link-logout w-100 border-0 bg-transparent text-start">
+                <span class="sidebar-icon">⎋</span> 退出登录
+            </button>
+        </form>
+    </div>
+</aside>
+</body>
+</html>

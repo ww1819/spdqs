@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/app-head :: head('编辑账号 - 档案工单系统')}"></head>
+<body class="app-page">
+<div class="app-shell">
+    <div th:replace="~{fragments/app-nav :: sidebar}"></div>
+    <main class="app-main">
+        <header class="app-header">
+            <h1>编辑账号</h1>
+        </header>
+        <div class="app-content">
+            <div th:replace="~{fragments/page-header :: alerts}"></div>
+            <div class="form-page-card">
+                <form th:action="@{/users/save}" method="post">
+                    <input type="hidden" name="id" th:value="${user.id}">
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">账户名</label>
+                            <input type="text" class="form-control" th:value="${user.username}" readonly disabled>
+                            <div class="form-text">账户名不可修改</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">显示名 <span class="text-danger">*</span></label>
+                            <input type="text" name="displayName" class="form-control" th:value="${user.displayName}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">账号状态</label>
+                            <input type="hidden" name="enabled" value="true" th:if="${user.username == currentUsername}">
+                            <div class="form-check mt-2">
+                                <input type="checkbox" class="form-check-input" id="enabled" name="enabled" value="true"
+                                       th:checked="${user.enabled}"
+                                       th:disabled="${user.username == currentUsername}">
+                                <label class="form-check-label" for="enabled">启用（允许登录）</label>
+                            </div>
+                            <div class="form-text" th:if="${user.username == currentUsername}">不能停用自己的账号</div>
+                            <div class="form-text" th:unless="${user.enabled}">当前为待审核状态，启用后用户方可登录</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">注册时间</label>
+                            <input type="text" class="form-control" readonly disabled
+                                   th:value="${#temporals.format(user.createTime, 'yyyy-MM-dd HH:mm')}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">重置密码</label>
+                            <input type="password" name="newPassword" class="form-control" placeholder="留空则不修改，至少4位">
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">保存</button>
+                        <a href="/users" class="btn btn-outline-secondary">返回列表</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

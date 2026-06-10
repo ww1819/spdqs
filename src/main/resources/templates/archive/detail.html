@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/app-head :: head('档案详情 - 档案工单系统')}"></head>
+<body class="app-page">
+<div class="app-shell">
+    <div th:replace="~{fragments/app-nav :: sidebar}"></div>
+    <main class="app-main">
+        <header class="app-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h1 class="mb-1" th:text="${view.projectName}">项目名称</h1>
+                <span class="tag tag-info" th:if="${view.statusLabel == '上线中'}" th:text="${view.statusLabel}">状态</span>
+                <span class="tag tag-success" th:if="${view.statusLabel == '维保中'}" th:text="${view.statusLabel}">状态</span>
+                <span class="tag tag-warning" th:if="${view.statusLabel == '维保到期在三个月内'}" th:text="${view.statusLabel}">状态</span>
+                <span class="tag tag-danger" th:if="${view.statusLabel == '维保到期'}" th:text="${view.statusLabel}">状态</span>
+            </div>
+            <div class="d-flex gap-2">
+                <a th:href="@{/tickets/new}" class="btn btn-outline-primary btn-sm">+ 新建工单</a>
+                <a th:href="@{/archives/{id}/edit(id=${view.id})}" class="btn btn-primary btn-sm">编辑</a>
+                <a href="/archives" class="btn btn-outline-secondary btn-sm">返回列表</a>
+            </div>
+        </header>
+        <div class="app-content">
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
+            <div class="detail-section h-100">
+                <h6>项目类型</h6>
+                <div th:text="${view.projectType ?: '—'}">—</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="detail-section h-100">
+                <h6>上线时间</h6>
+                <div th:text="${view.launchDate != null ? #temporals.format(view.launchDate, 'yyyy-MM-dd') : '—'}">—</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="detail-section h-100">
+                <h6>维保到期时间</h6>
+                <div th:text="${view.maintExpireDate != null ? #temporals.format(view.maintExpireDate, 'yyyy-MM-dd') : '—'}">—</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="detail-section h-100">
+                <h6>现场负责人</h6>
+                <div th:text="${view.onsiteManager ?: '—'}">—</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="detail-section h-100">
+                <h6>实施负责人</h6>
+                <div th:text="${view.implManager ?: '—'}">—</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="detail-section h-100">
+                <h6>创建人</h6>
+                <div th:text="${view.createBy ?: '—'}">—</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="detail-section" th:if="${view.launchPlan != null and !view.launchPlan.isEmpty()}">
+        <h6>上线方案</h6>
+        <div class="content-block" th:text="${view.launchPlan}"></div>
+    </div>
+    <div class="detail-section" th:if="${view.specialProcess != null and !view.specialProcess.isEmpty()}">
+        <h6>特殊流程</h6>
+        <div class="content-block" th:text="${view.specialProcess}"></div>
+    </div>
+    <div class="detail-section" th:if="${view.contactInfo != null and !view.contactInfo.isEmpty()}">
+        <h6>联系方式</h6>
+        <div class="content-block" th:text="${view.contactInfo}"></div>
+    </div>
+    <div class="detail-section" th:if="${view.remoteMethod != null and !view.remoteMethod.isEmpty()}">
+        <h6>远程方式</h6>
+        <div class="content-block" th:text="${view.remoteMethod}"></div>
+    </div>
+
+    <div th:replace="~{fragments/archive-attachments :: attachmentSection(archive=${archive}, editable=true, returnTo='detail')}"></div>
+
+    <div class="detail-section mt-3">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold mb-0">关联工单</h6>
+            <span class="text-muted small" th:text="'共 ' + ${#lists.size(tickets)} + ' 条'"></span>
+        </div>
+        <div th:if="${#lists.isEmpty(tickets)}" class="text-muted">暂无关联工单</div>
+        <div class="table-responsive" th:unless="${#lists.isEmpty(tickets)}">
+            <table class="table table-sm table-hover mb-0">
+                <thead>
+                <tr>
+                    <th>类型</th>
+                    <th>状态</th>
+                    <th>处理人</th>
+                    <th>预计完成</th>
+                    <th>提交时间</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="t : ${tickets}">
+                    <td th:text="${t.orderType}"></td>
+                    <td th:text="${t.status}"></td>
+                    <td th:text="${t.handler ?: '—'}"></td>
+                    <td th:text="${t.expectedCompleteDate != null ? #temporals.format(t.expectedCompleteDate, 'yyyy-MM-dd') : '—'}"></td>
+                    <td th:text="${#temporals.format(t.createTime, 'yyyy-MM-dd')}"></td>
+                    <td><a th:href="@{/tickets/{id}(id=${t.id})}" class="btn btn-link btn-sm p-0">查看</a></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+        </div>
+    </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="imagePreviewModal">
+    <div class="modal fade" id="imagePreviewModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content bg-dark border-0">
+                <div class="modal-header border-secondary py-2">
+                    <h6 class="modal-title text-white" id="imagePreviewTitle">图片预览</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body image-preview-body p-0">
+                    <div class="image-preview-viewport" id="imagePreviewViewport">
+                        <img id="imagePreviewFull" src="" alt="preview" class="image-preview-img">
+                    </div>
+                    <div class="image-preview-toolbar">
+                        <button type="button" class="btn btn-sm btn-outline-light" id="imagePreviewZoomOut" title="缩小">缩小</button>
+                        <span class="image-preview-scale" id="imagePreviewScale">100%</span>
+                        <button type="button" class="btn btn-sm btn-outline-light" id="imagePreviewZoomIn" title="放大">放大</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="imagePreviewZoomReset" title="重置缩放">重置</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        (function () {
+            const modalEl = document.getElementById('imagePreviewModal');
+            if (!modalEl || modalEl.dataset.previewInit) return;
+            modalEl.dataset.previewInit = '1';
+
+            const img = document.getElementById('imagePreviewFull');
+            const viewport = document.getElementById('imagePreviewViewport');
+            const scaleLabel = document.getElementById('imagePreviewScale');
+            const MIN_SCALE = 0.25;
+            const MAX_SCALE = 5;
+            const STEP = 0.25;
+            let scale = 1;
+            let modal;
+
+            function applyScale() {
+                img.style.transform = 'scale(' + scale + ')';
+                scaleLabel.textContent = Math.round(scale * 100) + '%';
+            }
+
+            function resetZoom() {
+                scale = 1;
+                applyScale();
+                if (viewport) viewport.scrollTop = 0;
+                if (viewport) viewport.scrollLeft = 0;
+            }
+
+            function zoomIn() {
+                scale = Math.min(MAX_SCALE, Math.round((scale + STEP) * 100) / 100);
+                applyScale();
+            }
+
+            function zoomOut() {
+                scale = Math.max(MIN_SCALE, Math.round((scale - STEP) * 100) / 100);
+                applyScale();
+            }
+
+            function openPreview(thumb) {
+                if (!modal) {
+                    modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                }
+                document.getElementById('imagePreviewTitle').textContent = thumb.dataset.name || '图片预览';
+                img.onload = resetZoom;
+                img.src = thumb.dataset.full;
+                if (img.complete) resetZoom();
+                modal.show();
+            }
+
+            modalEl.addEventListener('hidden.bs.modal', resetZoom);
+
+            document.getElementById('imagePreviewZoomIn').addEventListener('click', zoomIn);
+            document.getElementById('imagePreviewZoomOut').addEventListener('click', zoomOut);
+            document.getElementById('imagePreviewZoomReset').addEventListener('click', resetZoom);
+
+            viewport.addEventListener('wheel', function (e) {
+                e.preventDefault();
+                if (e.deltaY < 0) zoomIn();
+                else zoomOut();
+            }, { passive: false });
+
+            document.querySelectorAll('.ticket-thumb').forEach(function (thumb) {
+                thumb.addEventListener('dblclick', function () {
+                    openPreview(thumb);
+                });
+            });
+        })();
+    </script>
+</div>
+</body>
+</html>

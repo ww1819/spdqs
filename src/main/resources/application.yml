@@ -1,0 +1,40 @@
+server:
+  port: 8080
+  servlet:
+    session:
+      timeout: -1
+
+spring:
+  application:
+    name: spdqs-system
+  config:
+    import: optional:classpath:application-local.yml,optional:file:./application-local.yml
+  datasource:
+    url: jdbc:mysql://localhost:3306/spdqs?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: spdqs
+    password: ${DB_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        query:
+          pagination:
+            style: legacy
+  thymeleaf:
+    cache: false
+
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 100MB
+
+app:
+  upload:
+    dir: ./data/uploads
+    max-image-size: 10485760
+    max-file-size: 52428800

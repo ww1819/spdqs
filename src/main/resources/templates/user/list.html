@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/app-head :: head('账号管理 - 档案工单系统')}"></head>
+<body class="app-page">
+<div class="app-shell">
+    <div th:replace="~{fragments/app-nav :: sidebar}"></div>
+    <main class="app-main">
+        <header class="app-header">
+            <h1>账号管理</h1>
+            <p class="header-desc">审核注册账号、启用停用与修改账号信息</p>
+        </header>
+        <div class="app-content">
+            <div th:replace="~{fragments/page-header :: alerts}"></div>
+
+            <div class="panel">
+                <div class="panel-body">
+                    <div th:if="${#lists.isEmpty(users)}" class="table-empty">暂无账号</div>
+                    <table class="data-table" th:unless="${#lists.isEmpty(users)}">
+                        <thead>
+                        <tr>
+                            <th>账户名</th>
+                            <th>显示名</th>
+                            <th>状态</th>
+                            <th>注册时间</th>
+                            <th>操作</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="u : ${users}">
+                            <td th:text="${u.username}">账户名</td>
+                            <td th:text="${u.displayName}">显示名</td>
+                            <td>
+                                <span class="tag tag-success" th:if="${u.enabled}">已启用</span>
+                                <span class="tag tag-warning" th:unless="${u.enabled}">待审核</span>
+                            </td>
+                            <td th:text="${#temporals.format(u.createTime, 'yyyy-MM-dd HH:mm')}">时间</td>
+                            <td class="cell-actions">
+                                <a th:href="@{/users/{id}/edit(id=${u.id})}">编辑</a>
+                                <form th:if="${!u.enabled}" th:action="@{/users/{id}/enable(id=${u.id})}" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-link btn-sm p-0 border-0">启用</button>
+                                </form>
+                                <form th:if="${u.enabled and u.username != currentUsername}" th:action="@{/users/{id}/disable(id=${u.id})}" method="post" class="d-inline"
+                                      onsubmit="return confirm('确定停用该账号？停用后将无法登录。')">
+                                    <button type="submit" class="btn btn-link btn-sm text-danger p-0 border-0">停用</button>
+                                </form>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

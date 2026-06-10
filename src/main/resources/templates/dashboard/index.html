@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/app-head :: head('工作台 - 档案工单系统')}"></head>
+<body class="app-page">
+<div class="app-shell">
+    <div th:replace="~{fragments/app-nav :: sidebar}"></div>
+    <main class="app-main">
+        <header class="app-header">
+            <h1>工作台</h1>
+            <p class="header-desc">今日需要关注的事项一览</p>
+        </header>
+        <div class="app-content">
+            <div th:replace="~{fragments/page-header :: alerts}"></div>
+
+            <!-- 待跟进 -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>
+                        待跟进事项
+                        <span class="count-badge" th:if="${dashboard.pendingCount > 0}" th:text="${dashboard.pendingCount}">0</span>
+                    </h2>
+                    <a href="/tickets" class="link-tech">查看全部工单</a>
+                </div>
+                <div class="panel-body">
+                    <div th:if="${#lists.isEmpty(dashboard.todayFollowUps) and #lists.isEmpty(dashboard.unreadReminders)}"
+                         class="table-empty">暂无待跟进事项</div>
+                    <ul class="issue-list" th:unless="${#lists.isEmpty(dashboard.todayFollowUps) and #lists.isEmpty(dashboard.unreadReminders)}">
+                        <a th:each="t, stat : ${dashboard.todayFollowUps}" th:href="@{/tickets/{id}/edit(id=${t.id})}"
+                           class="issue-item">
+                            <span class="issue-num" th:text="${stat.count}">1</span>
+                            <div class="issue-body">
+                                <div class="issue-title" th:text="${t.archive.projectName} + ' · ' + ${t.orderType}">项目</div>
+                                <div class="issue-meta"
+                                     th:text="'预计 ' + (${t.expectedCompleteDate != null ? #temporals.format(t.expectedCompleteDate, 'yyyy-MM-dd') : '未设置'}) + ' · 处理人 ' + (${t.handler ?: '—'})">meta</div>
+                            </div>
+                            <div class="issue-tags">
+                                <span class="tag tag-danger">今日到期</span>
+                                <span class="tag tag-default" th:text="${t.status}">状态</span>
+                            </div>
+                        </a>
+                        <a th:each="rem : ${dashboard.unreadReminders}" th:href="@{/tickets/{id}(id=${rem.ticket.id})}"
+                           class="issue-item">
+                            <span class="issue-num">!</span>
+                            <div class="issue-body">
+                                <div class="issue-title" th:text="${rem.message}">提醒</div>
+                                <div class="issue-meta" th:text="${rem.remindHour} + ':00 提醒'">时间</div>
+                            </div>
+                            <span class="tag tag-warning">未读</span>
+                        </a>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 统计 -->
+            <div class="stat-row">
+                <a href="/archives" class="stat-card stat-card-link">
+                    <div>
+                        <div class="stat-label">档案总数</div>
+                        <div class="stat-value" th:text="${dashboard.totalArchives}">0</div>
+                    </div>
+                    <div class="stat-icon">☰</div>
+                </a>
+                <a th:href="@{/tickets(status='进行中')}" class="stat-card stat-card-link">
+                    <div>
+                        <div class="stat-label">进行中工单</div>
+                        <div class="stat-value text-primary" th:text="${dashboard.activeTickets}">0</div>
+                    </div>
+                    <div class="stat-icon">◷</div>
+                </a>
+                <a th:href="@{/tickets(status='已完成')}" class="stat-card stat-card-link">
+                    <div>
+                        <div class="stat-label">已完成工单</div>
+                        <div class="stat-value text-success" th:text="${dashboard.completedTickets}">0</div>
+                    </div>
+                    <div class="stat-icon">✓</div>
+                </a>
+                <div class="stat-card">
+                    <div>
+                        <div class="stat-label">未读提醒</div>
+                        <div class="stat-value text-danger" th:text="${dashboard.unreadReminderCount}">0</div>
+                    </div>
+                    <div class="stat-icon">◉</div>
+                </div>
+            </div>
+
+            <div class="dash-grid">
+                <div>
+                    <!-- 工单列表（未完成，有目标完成时间优先） -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2>工单列表</h2>
+                            <a href="/tickets" class="link-tech">查看全部</a>
+                        </div>
+                        <div class="panel-body">
+                            <p class="small text-muted px-3 pt-2 mb-0">有目标完成时间的工单排在前面；目标完成日期为今天或已过期时行标红显示</p>
+                            <div th:if="${#lists.isEmpty(dashboard.recentTickets)}" class="table-empty">暂无未完成工单</div>
+                            <table class="data-table" th:unless="${#lists.isEmpty(dashboard.recentTickets)}">
+                                <thead>
+                                <tr>
+                                    <th>序号</th>
+                                    <th>项目</th>
+                                    <th>类型</th>
+                                    <th>工单内容</th>
+                                    <th>状态</th>
+                                    <th>处理人</th>
+                                    <th>目标完成</th>
+                                    <th>预计完成</th>
+                                    <th>注意事项</th>
+                                    <th></th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="t : ${dashboard.recentTickets}"
+                                    th:classappend="${t.isTargetDueOrOverdue()} ? 'row-target-today' : ''">
+                                    <td class="text-muted" th:text="${t.ticketNo ?: '—'}">1</td>
+                                    <td th:text="${t.archive.projectName}">项目</td>
+                                    <td th:text="${t.orderType}">类型</td>
+                                    <td class="cell-clamp" th:text="${t.content ?: '—'}">内容</td>
+                                    <td>
+                                        <span class="tag tag-default" th:if="${t.status == '已提交'}" th:text="${t.status}">状态</span>
+                                        <span class="tag tag-info" th:if="${t.status == '沟通中'}" th:text="${t.status}">状态</span>
+                                        <span class="tag tag-warning" th:if="${t.status == '处理中'}" th:text="${t.status}">状态</span>
+                                        <span class="tag tag-danger" th:if="${t.status == '待升级'}" th:text="${t.status}">状态</span>
+                                        <span class="tag tag-success" th:if="${t.status == '已完成'}" th:text="${t.status}">状态</span>
+                                    </td>
+                                    <td th:text="${t.handler ?: '—'}">—</td>
+                                    <td>
+                                        <span th:if="${t.targetCompleteDate != null}"
+                                              th:classappend="${t.isTargetDueOrOverdue()} ? 'text-danger fw-semibold' : ''"
+                                              th:text="${#temporals.format(t.targetCompleteDate, 'yyyy-MM-dd')}">—</span>
+                                        <span th:if="${t.targetCompleteDate == null}">—</span>
+                                    </td>
+                                    <td th:text="${t.expectedCompleteDate != null ? #temporals.format(t.expectedCompleteDate, 'yyyy-MM-dd') : '—'}">—</td>
+                                    <td class="cell-clamp" th:text="${t.attentionNote ?: '—'}">—</td>
+                                    <td class="cell-actions">
+                                        <a th:href="@{/tickets/{id}(id=${t.id})}" class="link-tech">详情</a>
+                                        <form th:if="${t.status != '已完成' and t.status != '待升级'}"
+                                              th:action="@{/tickets/{id}/pending-upgrade(id=${t.id})}" method="post" class="d-inline ms-1"
+                                              onsubmit="return confirm('确定设为待升级？目标完成时间将设为今天。')">
+                                            <button type="submit" class="btn btn-link btn-sm p-0 text-warning">已处理待升级</button>
+                                        </form>
+                                        <form th:if="${t.status != '已完成'}"
+                                              th:action="@{/tickets/{id}/upgraded(id=${t.id})}" method="post" class="d-inline ms-1"
+                                              onsubmit="return confirm('确定标记为已升级完成？')">
+                                            <button type="submit" class="btn btn-link btn-sm p-0 text-success">已升级</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 维保关注 -->
+                    <div class="panel" th:unless="${#lists.isEmpty(dashboard.maintAlerts)}">
+                        <div class="panel-header">
+                            <h2>维保关注</h2>
+                            <a href="/archives?status=维保到期在三个月内" class="link-tech">查看全部</a>
+                        </div>
+                        <div class="panel-body">
+                            <table class="data-table">
+                                <thead>
+                                <tr>
+                                    <th>项目名称</th>
+                                    <th>维保到期</th>
+                                    <th>状态</th>
+                                    <th></th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="item : ${dashboard.maintAlerts}">
+                                    <td th:text="${item.projectName}">项目</td>
+                                    <td th:text="${item.maintExpireDate != null ? #temporals.format(item.maintExpireDate, 'yyyy-MM-dd') : '—'}">—</td>
+                                    <td>
+                                        <span class="tag tag-warning" th:if="${item.statusLabel == '维保到期在三个月内'}" th:text="${item.statusLabel}">状态</span>
+                                        <span class="tag tag-danger" th:if="${item.statusLabel == '维保到期'}" th:text="${item.statusLabel}">状态</span>
+                                    </td>
+                                    <td class="cell-actions">
+                                        <a th:href="@{/archives/{id}(id=${item.id})}" class="link-tech">详情 →</a>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <!-- 档案状态分布 -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2>档案状态分布</h2>
+                        </div>
+                        <div class="panel-body-padded">
+                            <div th:each="entry : ${dashboard.archiveStatusCounts}" class="status-bar-row">
+                                <span class="status-bar-label" th:text="${entry.key}">状态</span>
+                                <div class="status-bar-track">
+                                    <div class="status-bar-fill"
+                                         th:style="'width:' + (${dashboard.totalArchives > 0 ? (entry.value * 100 / dashboard.totalArchives) : 0}) + '%'"></div>
+                                </div>
+                                <span class="status-bar-count" th:text="${entry.value}">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 快捷操作 -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2>快捷操作</h2>
+                        </div>
+                        <div class="panel-body-padded quick-actions">
+                            <a href="/archives/new" class="btn btn-primary btn-sm">+ 新建档案</a>
+                            <a href="/tickets/new" class="btn btn-outline-primary btn-sm">+ 新建工单</a>
+                            <a href="/archives" class="btn btn-outline-secondary btn-sm">档案列表</a>
+                            <a href="/tickets" class="btn btn-outline-secondary btn-sm">工单列表</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<div th:replace="~{fragments/cell-clamp-tooltip :: cellClampTooltip}"></div>
+</body>
+</html>

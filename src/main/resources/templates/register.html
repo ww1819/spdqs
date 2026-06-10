@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/app-head :: head('注册 - 档案工单系统')}"></head>
+<body class="auth-page">
+<div class="auth-wrapper">
+    <div class="card auth-card border-0">
+        <div class="card-body p-4 p-md-5">
+            <div class="auth-brand">
+                <div class="auth-brand-icon">注</div>
+                <h4>注册账号</h4>
+                <p>创建您的系统账号</p>
+            </div>
+
+            <div th:if="${error}" class="alert alert-danger py-2" th:text="${error}"></div>
+
+            <form th:action="@{/register}" method="post" th:object="${form}">
+                <div class="mb-3">
+                    <label class="form-label">账户名</label>
+                    <input type="text" th:field="*{username}" class="form-control" placeholder="登录用账户名" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">显示名</label>
+                    <input type="text" th:field="*{displayName}" class="form-control" placeholder="显示名称" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">密码</label>
+                    <input type="password" th:field="*{password}" class="form-control" placeholder="至少4位" required>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label">确认密码</label>
+                    <input type="password" th:field="*{confirmPassword}" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 mb-3">注 册</button>
+            </form>
+            <a href="/login" class="btn btn-outline-secondary w-100">返回登录</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

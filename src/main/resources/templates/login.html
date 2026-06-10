@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/app-head :: head('登录 - 档案工单系统')}"></head>
+<body class="auth-page">
+<div class="auth-wrapper">
+    <div class="card auth-card border-0">
+        <div class="card-body p-4 p-md-5">
+            <div class="auth-brand">
+                <div class="auth-brand-icon">档</div>
+                <h4>档案工单系统</h4>
+                <p>内部管理系统</p>
+            </div>
+
+            <div th:if="${param.error}" class="alert alert-danger py-2">账户名或密码错误</div>
+            <div th:if="${param.disabled}" class="alert alert-warning py-2">账号待审核，请联系管理员启用后再登录</div>
+            <div th:if="${param.logout}" class="alert alert-success py-2">已安全退出</div>
+            <div th:if="${success}" class="alert alert-success py-2" th:text="${success}"></div>
+
+            <form id="loginForm" th:action="@{/login}" method="post">
+                <div class="mb-3">
+                    <label class="form-label">账户名</label>
+                    <input type="text" id="username" name="username" class="form-control" placeholder="请输入账户名"
+                           th:value="${savedUsername}" required autofocus>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">密码</label>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="请输入密码"
+                           th:value="${savedPassword}" required>
+                </div>
+                <div class="mb-4 form-check">
+                    <input type="checkbox" class="form-check-input" id="rememberMe" name="rememberMe" value="on"
+                           th:checked="${rememberChecked}">
+                    <label class="form-check-label" for="rememberMe">保存密码</label>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 mb-3">登 录</button>
+            </form>
+            <a href="/register" class="btn btn-outline-secondary w-100">注册账号</a>
+        </div>
+    </div>
+</div>
+<script th:if="${savedPassword != null}" th:inline="javascript">
+    document.getElementById('password').value = /*[[${savedPassword}]]*/ '';
+</script>
+</body>
+</html>

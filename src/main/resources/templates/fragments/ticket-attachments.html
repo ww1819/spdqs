@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="attachmentSection(ticket, editable, returnTo)">
+    <div class="detail-section">
+        <h6 class="fw-bold mb-3">图片与附件</h6>
+
+        <div th:if="${ticket.id == null or ticket.id.isEmpty()}" class="text-muted small mb-3">
+            请先保存工单，保存后可上传图片和附件。
+        </div>
+
+        <div th:if="${ticket.id != null and !ticket.id.isEmpty()}">
+            <!-- 图片展示 -->
+            <div class="mb-3">
+                <div class="small text-muted mb-2">图片（双击查看，可放大缩小）</div>
+                <div th:if="${#lists.isEmpty(ticketImages)}" class="text-muted small">暂无图片</div>
+                <div class="ticket-image-grid" th:unless="${#lists.isEmpty(ticketImages)}">
+                    <div class="ticket-image-item" th:each="img : ${ticketImages}">
+                        <img th:src="@{/tickets/attachments/{id}(id=${img.id}, inline=true)}"
+                             th:alt="${img.originalName}"
+                             class="ticket-thumb"
+                             th:attr="data-full=@{/tickets/attachments/{id}(id=${img.id}, inline=true)}, data-name=${img.originalName}"
+                             title="双击查看">
+                        <div class="ticket-image-meta">
+                            <span class="text-truncate" th:text="${img.originalName}">name</span>
+                            <form th:if="${editable}" th:action="@{/tickets/attachments/{id}/delete(id=${img.id})}" method="post" class="d-inline"
+                                  onsubmit="return confirm('确定删除该图片？')">
+                                <input type="hidden" name="ticketId" th:value="${ticket.id}">
+                                <input type="hidden" name="returnTo" th:value="${returnTo}">
+                                <button type="submit" class="btn btn-link btn-sm text-danger p-0">删除</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 附件列表 -->
+            <div class="mb-3">
+                <div class="small text-muted mb-2">附件（点击下载）</div>
+                <div th:if="${#lists.isEmpty(ticketFiles)}" class="text-muted small">暂无附件</div>
+                <ul class="attachment-file-list" th:unless="${#lists.isEmpty(ticketFiles)}">
+                    <li th:each="f : ${ticketFiles}" class="attachment-file-item">
+                        <a th:href="@{/tickets/attachments/{id}(id=${f.id})}" class="link-tech" th:text="${f.originalName}">file</a>
+                        <span class="text-muted small ms-2"
+                              th:text="${f.fileSize != null ? (#numbers.formatDecimal(f.fileSize / 1024.0, 1, 1) + ' KB') : ''}"></span>
+                        <form th:if="${editable}" th:action="@{/tickets/attachments/{id}/delete(id=${f.id})}" method="post" class="d-inline ms-2"
+                              onsubmit="return confirm('确定删除该附件？')">
+                            <input type="hidden" name="ticketId" th:value="${ticket.id}">
+                            <input type="hidden" name="returnTo" th:value="${returnTo}">
+                            <button type="submit" class="btn btn-link btn-sm text-danger p-0">删除</button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- 上传 -->
+            <div th:if="${editable}" class="attachment-upload-box">
+                <form th:id="'ticketAttachmentForm-' + ${ticket.id}"
+                      th:action="@{/tickets/{id}/attachments(id=${ticket.id})}" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="returnTo" th:value="${returnTo}">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-5">
+                            <label class="form-label small mb-1">上传图片</label>
+                            <div class="image-paste-zone" th:id="'imagePasteZone-' + ${ticket.id}" tabindex="0">
+                                <span class="image-paste-hint">点击此处或直接 <kbd>Ctrl</kbd>+<kbd>V</kbd> 粘贴截图</span>
+                                <span class="image-paste-status d-none">正在上传...</span>
+                            </div>
+                            <input type="file" name="images" class="form-control form-control-sm mt-2 ticket-image-input" multiple accept="image/*">
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label small mb-1">上传附件</label>
+                            <input type="file" name="files" class="form-control form-control-sm" multiple>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-outline-primary btn-sm w-100">上传</button>
+                        </div>
+                    </div>
+                    <div class="form-text mt-1">图片最大 10MB，附件最大 50MB；粘贴图片后会自动上传</div>
+                </form>
+            </div>
+
+            <script th:if="${editable}" th:inline="javascript">
+                (function () {
+                    const ticketId = /*[[${ticket.id}]]*/ '';
+                    const returnTo = /*[[${returnTo}]]*/ 'edit';
+                    const uploadUrl = /*[[@{/tickets/{id}/attachments(id=${ticket.id})}]]*/ '';
+                    const form = document.getElementById('ticketAttachmentForm-' + ticketId);
+                    const pasteZone = document.getElementById('imagePasteZone-' + ticketId);
+                    const imageInput = form ? form.querySelector('.ticket-image-input') : null;
+                    if (!form || !pasteZone || !imageInput) return;
+
+                    function isTextInput(el) {
+                        if (!el) return false;
+                        const tag = el.tagName;
+                        return tag === 'TEXTAREA' || tag === 'INPUT' || tag === 'SELECT' || el.isContentEditable;
+                    }
+
+                    function collectImages(dataTransfer) {
+                        const files = [];
+                        if (dataTransfer.items && dataTransfer.items.length) {
+                            for (const item of dataTransfer.items) {
+                                if (item.kind === 'file' && item.type.startsWith('image/')) {
+                                    const f = item.getAsFile();
+                                    if (f) files.push(f);
+                                }
+                            }
+                        }
+                        if (!files.length && dataTransfer.files) {
+                            for (const f of dataTransfer.files) {
+                                if (f.type && f.type.startsWith('image/')) files.push(f);
+                            }
+                        }
+                        return files;
+                    }
+
+                    function appendToInput(files) {
+                        const dt = new DataTransfer();
+                        for (const f of imageInput.files) dt.items.add(f);
+                        files.forEach(function (file, i) {
+                            const ext = (file.type && file.type.includes('/')) ? file.type.split('/')[1] : 'png';
+                            const name = file.name && file.name.trim() ? file.name : ('paste-' + Date.now() + '-' + i + '.' + ext);
+                            dt.items.add(new File([file], name, { type: file.type || 'image/png' }));
+                        });
+                        imageInput.files = dt.files;
+                    }
+
+                    function setUploading(uploading) {
+                        pasteZone.classList.toggle('is-uploading', uploading);
+                        pasteZone.querySelector('.image-paste-hint').classList.toggle('d-none', uploading);
+                        pasteZone.querySelector('.image-paste-status').classList.toggle('d-none', !uploading);
+                    }
+
+                    async function uploadImages(files) {
+                        if (!files.length) return;
+                        const csrfInput = form.querySelector('input[name="_csrf"]');
+                        const formData = new FormData();
+                        formData.append('returnTo', returnTo);
+                        if (csrfInput) formData.append(csrfInput.name, csrfInput.value);
+                        files.forEach(function (f) { formData.append('images', f); });
+                        setUploading(true);
+                        try {
+                            const resp = await fetch(uploadUrl, { method: 'POST', body: formData, credentials: 'same-origin' });
+                            if (resp.ok || resp.redirected) {
+                                window.location.reload();
+                                return;
+                            }
+                            alert('图片上传失败，请重试');
+                        } catch (e) {
+                            alert('图片上传失败，请检查网络后重试');
+                        } finally {
+                            setUploading(false);
+                        }
+                    }
+
+                    pasteZone.addEventListener('click', function () { pasteZone.focus(); });
+                    pasteZone.addEventListener('dragover', function (e) { e.preventDefault(); pasteZone.classList.add('is-dragover'); });
+                    pasteZone.addEventListener('dragleave', function () { pasteZone.classList.remove('is-dragover'); });
+                    pasteZone.addEventListener('drop', function (e) {
+                        e.preventDefault();
+                        pasteZone.classList.remove('is-dragover');
+                        const files = collectImages(e.dataTransfer);
+                        if (files.length) {
+                            appendToInput(files);
+                            uploadImages(files);
+                        }
+                    });
+
+                    document.addEventListener('paste', function (e) {
+                        if (isTextInput(e.target)) return;
+                        if (!document.getElementById('imagePasteZone-' + ticketId)) return;
+                        const files = collectImages(e.clipboardData);
+                        if (!files.length) return;
+                        e.preventDefault();
+                        appendToInput(files);
+                        uploadImages(files);
+                    });
+                })();
+            </script>
+        </div>
+    </div>
+</div>
+</body>
+</html>
