@@ -4,6 +4,7 @@ import com.qs.entity.Ticket;
 import com.qs.enums.AttachmentType;
 import com.qs.enums.OrderType;
 import com.qs.enums.TicketStatus;
+import com.qs.service.AnalysisService;
 import com.qs.service.ArchiveService;
 import com.qs.service.ReminderService;
 import com.qs.service.TicketAttachmentService;
@@ -32,35 +33,50 @@ public class TicketController {
 
     private final TicketService ticketService;
     private final ArchiveService archiveService;
+    private final AnalysisService analysisService;
     private final UserService userService;
     private final ReminderService reminderService;
     private final TicketAttachmentService attachmentService;
 
     public TicketController(TicketService ticketService, ArchiveService archiveService,
-                            UserService userService, ReminderService reminderService,
-                            TicketAttachmentService attachmentService) {
+                            AnalysisService analysisService, UserService userService,
+                            ReminderService reminderService, TicketAttachmentService attachmentService) {
         this.ticketService = ticketService;
         this.archiveService = archiveService;
+        this.analysisService = analysisService;
         this.userService = userService;
         this.reminderService = reminderService;
         this.attachmentService = attachmentService;
     }
 
     @GetMapping
-    public String list(@RequestParam(required = false) String status,
+    public String list(@RequestParam(required = false) List<String> status,
+                       @RequestParam(required = false) String archiveId,
                        @RequestParam(required = false) String handler,
                        @RequestParam(required = false) String submitter,
                        @RequestParam(required = false) String keyword,
+                       @RequestParam(required = false) String menu,
                        Model model,
                        @AuthenticationPrincipal UserDetails userDetails) {
         addUserToModel(model, userDetails);
         reminderService.checkAndCreateNow();
+        List<String> statusFilters = status == null ? List.of() : status.stream()
+                .filter(s -> s != null && !s.isBlank())
+                .map(String::trim)
+                .distinct()
+                .toList();
         model.addAttribute("returnUrl", "/tickets");
-        model.addAttribute("tickets", ticketService.search(status, handler, submitter, keyword));
-        model.addAttribute("statusFilter", status);
+        model.addAttribute("tickets", ticketService.search(
+                statusFilters, handler, submitter, keyword, menu,
+                analysisService.resolveMenuAliases(menu), archiveId));
+        model.addAttribute("statusFilters", statusFilters);
+        model.addAttribute("archiveIdFilter", archiveId);
         model.addAttribute("handlerFilter", handler);
         model.addAttribute("submitterFilter", submitter);
         model.addAttribute("keyword", keyword);
+        model.addAttribute("menuFilter", menu);
+        model.addAttribute("menuOptions", analysisService.listDistinctMenuTitles());
+        model.addAttribute("archiveOptions", archiveService.listOptions());
         model.addAttribute("ticketStatuses", Arrays.asList(TicketStatus.values()));
         model.addAttribute("activeTab", "tickets");
         return "ticket/list";

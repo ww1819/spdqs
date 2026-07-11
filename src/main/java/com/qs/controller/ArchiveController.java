@@ -154,6 +154,28 @@ public class ArchiveController {
 
 
 
+    @GetMapping("/{id}/nodes")
+
+    public String nodes(@PathVariable String id, Model model,
+
+                        @AuthenticationPrincipal UserDetails userDetails) {
+
+        addUserToModel(model, userDetails);
+
+        model.addAttribute("view", archiveService.getView(id));
+
+        model.addAttribute("archive", archiveService.getById(id));
+
+        model.addAttribute("nodeTypes", Arrays.asList(com.qs.enums.ArchiveNodeType.values()));
+
+        model.addAttribute("activeTab", "archives");
+
+        return "archive/nodes";
+
+    }
+
+
+
     @GetMapping("/{id}/edit")
 
     public String editForm(@PathVariable String id, Model model,

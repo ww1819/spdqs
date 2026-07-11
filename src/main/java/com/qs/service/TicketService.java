@@ -60,15 +60,56 @@ public class TicketService {
     }
 
     public List<Ticket> search(String status, String handler, String submitter, String keyword) {
+        return search(status == null || status.isBlank() ? null : List.of(status),
+                handler, submitter, keyword, null, null, null);
+    }
+
+    public List<Ticket> search(String status, String handler, String submitter, String keyword, String menu) {
+        return search(status == null || status.isBlank() ? null : List.of(status),
+                handler, submitter, keyword, menu, null, null);
+    }
+
+    public List<Ticket> search(List<String> statuses, String handler, String submitter, String keyword,
+                               String menu, List<String> menuAliases, String archiveId) {
         String kw = normalize(keyword);
+        List<String> aliases = menuAliases;
+        if ((aliases == null || aliases.isEmpty()) && menu != null && !menu.isBlank()) {
+            aliases = List.of(menu.trim());
+        }
+        List<String> finalAliases = aliases;
+        List<String> statusList = normalizeStatusList(statuses);
+        String projectId = archiveId == null || archiveId.isBlank() ? null : archiveId.trim();
         return attachFollowUpFlags(ticketRepository.findAllWithArchive().stream()
-                .filter(t -> status == null || status.isBlank() || matchesStatusFilter(t, status))
+                .filter(t -> statusList.isEmpty() || matchesAnyStatus(t, statusList))
+                .filter(t -> projectId == null
+                        || (t.getArchive() != null && projectId.equals(t.getArchive().getId())))
                 .filter(t -> handler == null || handler.isBlank()
                         || (t.getHandler() != null && t.getHandler().contains(handler)))
                 .filter(t -> submitter == null || submitter.isBlank()
                         || (t.getSubmitter() != null && t.getSubmitter().contains(submitter)))
                 .filter(t -> kw == null || matchesKeyword(t, kw))
+                .filter(t -> finalAliases == null || finalAliases.isEmpty() || matchesMenuAliases(t, finalAliases))
                 .toList());
+    }
+
+    private List<String> normalizeStatusList(List<String> statuses) {
+        if (statuses == null || statuses.isEmpty()) {
+            return List.of();
+        }
+        return statuses.stream()
+                .filter(s -> s != null && !s.isBlank())
+                .map(String::trim)
+                .distinct()
+                .toList();
+    }
+
+    private boolean matchesAnyStatus(Ticket ticket, List<String> statuses) {
+        for (String status : statuses) {
+            if (matchesStatusFilter(ticket, status)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public List<Ticket> listByArchiveId(String archiveId) {
@@ -191,6 +232,21 @@ public class TicketService {
         }
         if (t.getArchive() != null && containsIgnoreCase(t.getArchive().getProjectName(), kw)) {
             return true;
+        }
+        return false;
+    }
+
+    /** 按功能菜单匹配：工单内容命中当前名或曾用名 */
+    private boolean matchesMenuAliases(Ticket t, List<String> aliases) {
+        if (t.getContent() == null || t.getContent().isBlank()) {
+            return false;
+        }
+        String content = t.getContent().toLowerCase(Locale.ROOT);
+        for (String alias : aliases) {
+            if (alias != null && !alias.isBlank()
+                    && content.contains(alias.trim().toLowerCase(Locale.ROOT))) {
+                return true;
+            }
         }
         return false;
     }

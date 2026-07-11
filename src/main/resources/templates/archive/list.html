@@ -64,6 +64,7 @@
                             <td th:text="${item.implManager ?: '—'}">—</td>
                             <td class="cell-actions">
                                 <a th:href="@{/archives/{id}(id=${item.id})}">详情</a>
+                                <a th:href="@{/archives/{id}/nodes(id=${item.id})}">节点</a>
                                 <a th:href="@{/archives/{id}/edit(id=${item.id})}">编辑</a>
                                 <form th:action="@{/archives/{id}/delete(id=${item.id})}" method="post" class="d-inline"
                                       onsubmit="return confirm('确定删除该档案？')">

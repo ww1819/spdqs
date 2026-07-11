@@ -14,6 +14,7 @@
                 <span class="tag tag-danger" th:if="${view.statusLabel == '维保到期'}" th:text="${view.statusLabel}">状态</span>
             </div>
             <div class="d-flex gap-2">
+                <a th:href="@{/archives/{id}/nodes(id=${view.id})}" class="btn btn-outline-primary btn-sm">项目节点</a>
                 <a th:href="@{/tickets/new}" class="btn btn-outline-primary btn-sm">+ 新建工单</a>
                 <a th:href="@{/archives/{id}/edit(id=${view.id})}" class="btn btn-primary btn-sm">编辑</a>
                 <a href="/archives" class="btn btn-outline-secondary btn-sm">返回列表</a>

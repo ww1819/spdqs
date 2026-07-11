@@ -8,13 +8,17 @@ import java.util.Optional;
 
 public interface FlowNodeRepository extends JpaRepository<FlowNode, String> {
 
-    List<FlowNode> findByProjectIdOrderBySortOrderAsc(String projectId);
+    List<FlowNode> findByProjectIdAndDeletedFalseOrderBySortOrderAsc(String projectId);
 
-    List<FlowNode> findByParentIdOrderBySortOrderAsc(String parentId);
+    List<FlowNode> findByParentIdAndDeletedFalseOrderBySortOrderAsc(String parentId);
 
-    Optional<FlowNode> findByProjectIdAndParentIdIsNull(String projectId);
+    List<FlowNode> findByTitle(String title);
+
+    List<FlowNode> findByDeletedFalse();
+
+    Optional<FlowNode> findByProjectIdAndParentIdIsNullAndDeletedFalse(String projectId);
 
     void deleteByProjectId(String projectId);
 
-    long countByProjectId(String projectId);
+    long countByProjectIdAndDeletedFalse(String projectId);
 }

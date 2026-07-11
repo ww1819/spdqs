@@ -5,6 +5,7 @@ import com.qs.dto.ArchiveOptionDto;
 import com.qs.dto.ArchiveView;
 import com.qs.entity.Archive;
 import com.qs.enums.ArchiveStatus;
+import com.qs.repository.ArchiveNodeRepository;
 import com.qs.repository.ArchiveRepository;
 import com.qs.repository.TicketRepository;
 import org.springframework.stereotype.Service;
@@ -21,12 +22,15 @@ public class ArchiveService {
     private final ArchiveRepository archiveRepository;
     private final TicketRepository ticketRepository;
     private final ArchiveAttachmentService attachmentService;
+    private final ArchiveNodeRepository archiveNodeRepository;
 
     public ArchiveService(ArchiveRepository archiveRepository, TicketRepository ticketRepository,
-                          ArchiveAttachmentService attachmentService) {
+                          ArchiveAttachmentService attachmentService,
+                          ArchiveNodeRepository archiveNodeRepository) {
         this.archiveRepository = archiveRepository;
         this.ticketRepository = ticketRepository;
         this.attachmentService = attachmentService;
+        this.archiveNodeRepository = archiveNodeRepository;
     }
 
     public List<ArchiveView> listAll(String statusFilter, String keyword) {
@@ -82,6 +86,7 @@ public class ArchiveService {
         } catch (IOException ex) {
             throw new IllegalStateException("删除档案附件失败", ex);
         }
+        archiveNodeRepository.deleteByArchiveId(id);
         ticketRepository.findAllWithArchive().stream()
                 .filter(t -> t.getArchive().getId().equals(id))
                 .forEach(t -> ticketRepository.deleteById(t.getId()));

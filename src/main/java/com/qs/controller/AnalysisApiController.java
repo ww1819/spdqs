@@ -1,9 +1,11 @@
 package com.qs.controller;
 
 import com.qs.dto.CreateFlowNodeRequest;
+import com.qs.dto.FlowNodeChangeLogDto;
 import com.qs.dto.FlowNodeTreeDto;
 import com.qs.dto.UpdateFlowNodeRequest;
 import com.qs.service.AnalysisService;
+import com.qs.service.UserService;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,15 +18,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/analysis")
 public class AnalysisApiController {
 
     private final AnalysisService analysisService;
-    private final com.qs.service.UserService userService;
+    private final UserService userService;
 
-    public AnalysisApiController(AnalysisService analysisService,
-                                 com.qs.service.UserService userService) {
+    public AnalysisApiController(AnalysisService analysisService, UserService userService) {
         this.analysisService = analysisService;
         this.userService = userService;
     }
@@ -51,13 +54,25 @@ public class AnalysisApiController {
 
     @PutMapping("/nodes/{id}")
     public FlowNodeTreeDto updateNode(@PathVariable String id,
-                                      @RequestBody UpdateFlowNodeRequest request) {
-        return analysisService.updateNode(id, request.getTitle(), request.getDescription());
+                                      @RequestBody UpdateFlowNodeRequest request,
+                                      @AuthenticationPrincipal UserDetails userDetails) {
+        return analysisService.updateNode(
+                id,
+                request.getTitle(),
+                request.getDescription(),
+                resolveDisplayName(userDetails)
+        );
+    }
+
+    @GetMapping("/nodes/{id}/changes")
+    public List<FlowNodeChangeLogDto> nodeChanges(@PathVariable String id) {
+        return analysisService.listNodeChanges(id);
     }
 
     @DeleteMapping("/nodes/{id}")
-    public FlowNodeTreeDto deleteNode(@PathVariable String id) {
-        return analysisService.deleteNode(id);
+    public FlowNodeTreeDto deleteNode(@PathVariable String id,
+                                      @AuthenticationPrincipal UserDetails userDetails) {
+        return analysisService.deleteNode(id, resolveDisplayName(userDetails));
     }
 
     private String resolveDisplayName(UserDetails userDetails) {

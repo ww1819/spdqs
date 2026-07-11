@@ -11,7 +11,11 @@
                     <h1 th:text="${project.name}">项目分析</h1>
                     <p class="header-desc mb-0" th:text="${project.description ?: '流程树画布 — 悬停卡片可操作'}">流程树画布</p>
                 </div>
-                <div class="d-flex flex-wrap gap-2">
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <div class="btn-group btn-group-sm" role="group" aria-label="视图切换">
+                        <button type="button" class="btn btn-primary" id="btnViewTree" data-view="tree">树图视图</button>
+                        <button type="button" class="btn btn-outline-primary" id="btnViewTable" data-view="table">合并层级</button>
+                    </div>
                     <button type="button" class="btn btn-outline-primary btn-sm" id="btnCopyFlow">复制流程</button>
                     <a th:href="@{/analysis/{id}/export(id=${project.id})}" class="btn btn-outline-secondary btn-sm">导出</a>
                     <a href="/analysis" class="btn btn-outline-secondary btn-sm">返回列表</a>
@@ -28,6 +32,15 @@
                         <svg class="flow-lines" id="flowLines" aria-hidden="true"></svg>
                         <div class="flow-canvas" id="flowCanvas">
                             <div class="flow-loading" id="flowLoading">加载中…</div>
+                        </div>
+                    </div>
+                    <div class="flow-table-wrap d-none" id="flowTableWrap">
+                        <div class="flow-table-hint">同类项已合并显示；一二级列固定在左侧；父级名称随滚动浮动在可视区；点击菜单可操作；操作列固定在右侧</div>
+                        <div class="flow-table-scroll" id="flowTableScroll">
+                            <table class="data-table flow-merge-table" id="flowMergeTable">
+                                <thead id="flowMergeHead"></thead>
+                                <tbody id="flowMergeBody"></tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -56,25 +69,74 @@
     </div>
 </div>
 
-<!-- 功能说明 -->
-<div class="modal fade" id="descModal" tabindex="-1">
+<!-- 修改（名称 + 功能描述） -->
+<div class="modal fade" id="editFlowModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="descModalTitle">功能说明</h5>
+                <h5 class="modal-title">修改菜单</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div id="descView" class="desc-view d-none"></div>
-                <textarea id="descEdit" class="form-control" rows="10" placeholder="描述该流程的功能、触发条件、步骤与结果…"></textarea>
+                <div class="edit-section mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="form-label mb-0">名称</label>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="btnEditTitle">修改名称</button>
+                            <button type="button" class="btn btn-primary btn-sm d-none" id="btnSaveTitle">保存名称</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm d-none" id="btnCancelTitle">取消</button>
+                        </div>
+                    </div>
+                    <div id="editTitleView" class="edit-readonly"></div>
+                    <input type="text" class="form-control d-none" id="editFlowTitle" placeholder="功能菜单名称">
+                </div>
+                <div class="edit-section">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="form-label mb-0">功能描述</label>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="btnEditDesc">修改功能描述</button>
+                            <button type="button" class="btn btn-primary btn-sm d-none" id="btnSaveDesc">保存功能描述</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm d-none" id="btnCancelDesc">取消</button>
+                        </div>
+                    </div>
+                    <div id="editDescView" class="desc-view"></div>
+                    <textarea id="editFlowDesc" class="form-control d-none" rows="8"
+                              placeholder="描述该流程的功能、触发条件、步骤与结果…"></textarea>
+                </div>
+                <div class="form-text mt-3">分别点击「修改名称」或「修改功能描述」后再保存，避免误改。修改会写入变更记录。</div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">关闭</button>
-                <button type="button" class="btn btn-outline-primary d-none" id="btnDescEdit">编辑</button>
-                <button type="button" class="btn btn-primary" id="btnDescSave">保存</button>
             </div>
         </div>
     </div>
+</div>
+
+<!-- 变更记录 -->
+<div class="modal fade" id="changeLogModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="changeLogModalTitle">菜单变更记录</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="changeLogEmpty" class="text-muted d-none">暂无变更记录</div>
+                <div id="changeLogList" class="change-log-list"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 菜单操作弹出层 -->
+<div id="menuActionPopup" class="flow-menu-popup d-none" role="menu">
+    <button type="button" class="flow-menu-item" data-action="tickets">工单</button>
+    <button type="button" class="flow-menu-item" data-action="edit">修改</button>
+    <button type="button" class="flow-menu-item" data-action="history">变更记录</button>
+    <button type="button" class="flow-menu-item flow-menu-danger" data-action="delete">删除</button>
 </div>
 
 <!-- 复制 fallback -->

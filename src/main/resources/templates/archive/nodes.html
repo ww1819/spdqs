@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/app-head :: head(${view.projectName + ' - 项目节点'})}"></head>
+<body class="app-page">
+<div class="app-shell">
+    <div th:replace="~{fragments/app-nav :: sidebar}"></div>
+    <main class="app-main">
+        <header class="app-header">
+            <div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
+                <div>
+                    <h1 class="mb-1">项目节点</h1>
+                    <p class="header-desc mb-0">
+                        <span th:text="${view.projectName}">项目</span>
+                        · 管理项目阶段时间轴，阶段名称可自定义维护
+                    </p>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="btnManageStages">维护阶段</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="btnAddNode">+ 新增节点</button>
+                    <a th:href="@{/archives/{id}(id=${view.id})}" class="btn btn-outline-secondary btn-sm">返回详情</a>
+                    <a href="/archives" class="btn btn-outline-secondary btn-sm">档案列表</a>
+                </div>
+            </div>
+        </header>
+        <div class="app-content">
+            <div th:replace="~{fragments/page-header :: alerts}"></div>
+            <div id="nodeToast" class="flow-toast" role="status"></div>
+
+            <div class="panel mb-3">
+                <div class="panel-body">
+                    <div class="node-stage-quick" id="nodeStageQuick">
+                        <span class="text-muted small me-2">快捷添加：</span>
+                        <span class="text-muted small" id="stageQuickLoading">加载中…</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel mb-3">
+                <div class="panel-header d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0">项目时间轴</h2>
+                    <span class="text-muted small" id="nodeCountLabel">加载中…</span>
+                </div>
+                <div class="panel-body">
+                    <div id="nodeTimelineEmpty" class="table-empty d-none">
+                        <p class="mb-2">暂无项目节点</p>
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="btnAddNodeEmpty">创建第一个节点</button>
+                    </div>
+                    <div class="project-timeline-wrap" id="projectTimelineWrap">
+                        <div class="project-timeline-axis" id="projectTimelineAxis"></div>
+                        <div class="project-timeline-track" id="projectTimelineTrack"></div>
+                    </div>
+                    <div class="project-timeline-legend mt-3">
+                        <span class="legend-item"><i class="legend-dot legend-point"></i>时间点</span>
+                        <span class="legend-item"><i class="legend-bar legend-range"></i>时间段</span>
+                        <span class="legend-item"><i class="legend-dot legend-today"></i>今天</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="mb-0">节点列表</h2>
+                </div>
+                <div class="panel-body">
+                    <div id="nodeTableEmpty" class="text-muted d-none">暂无节点数据</div>
+                    <div class="table-responsive">
+                        <table class="data-table" id="nodeTable">
+                            <thead>
+                            <tr>
+                                <th>阶段</th>
+                                <th>标题</th>
+                                <th>类型</th>
+                                <th>时间</th>
+                                <th>状态</th>
+                                <th>备注</th>
+                                <th>操作</th>
+                            </tr>
+                            </thead>
+                            <tbody id="nodeTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<div class="modal fade" id="nodeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="nodeModalTitle">新增节点</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="nodeId">
+                <div class="mb-3">
+                    <label class="form-label">阶段 <span class="text-danger">*</span></label>
+                    <select id="nodeStage" class="form-select"></select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">标题</label>
+                    <input type="text" id="nodeTitle" class="form-control" placeholder="默认使用阶段名称">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">节点类型 <span class="text-danger">*</span></label>
+                    <div class="d-flex gap-3">
+                        <label class="form-check">
+                            <input class="form-check-input" type="radio" name="nodeType" value="时间点" checked>
+                            <span class="form-check-label">时间点</span>
+                        </label>
+                        <label class="form-check">
+                            <input class="form-check-input" type="radio" name="nodeType" value="时间段">
+                            <span class="form-check-label">时间段</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label" id="startDateLabel">日期 <span class="text-danger">*</span></label>
+                        <input type="date" id="nodeStartDate" class="form-control" required>
+                    </div>
+                    <div class="col-md-6" id="endDateWrap">
+                        <label class="form-label">结束日期 <span class="text-danger">*</span></label>
+                        <input type="date" id="nodeEndDate" class="form-control">
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <label class="form-label">备注</label>
+                    <textarea id="nodeRemark" class="form-control" rows="3" placeholder="可选，补充说明"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="btnSaveNode">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="stageManageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">维护节点阶段</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex gap-2 mb-3 align-items-center">
+                    <input type="number" id="newStageSort" class="form-control" style="width: 100px;"
+                           min="1" step="1" placeholder="序号">
+                    <input type="text" id="newStageName" class="form-control" placeholder="新阶段名称，如：验收阶段">
+                    <button type="button" class="btn btn-primary text-nowrap" id="btnAddStage">新增</button>
+                </div>
+                <div id="stageManageEmpty" class="text-muted d-none">暂无阶段，请先新增</div>
+                <table class="data-table" id="stageManageTable">
+                    <thead>
+                    <tr>
+                        <th style="width: 40px;"></th>
+                        <th style="width: 100px;">序号</th>
+                        <th>阶段名称</th>
+                        <th style="width: 160px;">操作</th>
+                    </tr>
+                    </thead>
+                    <tbody id="stageManageBody"></tbody>
+                </table>
+                <div class="form-text mt-2">可拖拽左侧把手调整顺序；也可手动改序号。重命名会同步更新已有节点；删除前需确保没有节点在使用该阶段。</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<meta name="_csrf" th:content="${_csrf.token}">
+<meta name="_csrf_header" th:content="${_csrf.headerName}">
+<meta name="archive-id" th:content="${view.id}">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/archive-nodes.js}"></script>
+</body>
+</html>

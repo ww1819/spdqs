@@ -33,6 +33,10 @@ public class DatabaseMigrationService {
         migrateProcessNotesToFollowUp();
         migrateAnalysisProjectTable();
         migrateFlowNodeTable();
+        migrateFlowNodeDeletedColumns();
+        migrateFlowNodeChangeTable();
+        migrateArchiveNodeTable();
+        migrateArchiveNodeStageTable();
         log.info("数据库结构检查完成");
     }
 
@@ -332,11 +336,101 @@ public class DatabaseMigrationService {
                    SORT_ORDER INT NOT NULL DEFAULT 0,
                    CREATE_BY VARCHAR(50),
                    CREATE_TIME DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                   DELETED TINYINT(1) NOT NULL DEFAULT 0,
+                   DELETED_BY VARCHAR(50),
+                   DELETED_TIME DATETIME,
                    PRIMARY KEY (ID),
                    KEY IDX_FLOW_NODE_PROJECT (PROJECT_ID),
                    KEY IDX_FLOW_NODE_PARENT (PARENT_ID)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
                 """);
+    }
+
+    private void migrateFlowNodeDeletedColumns() {
+        if (!tableExists("T_FLOW_NODE")) {
+            return;
+        }
+        addColumnIfMissing("T_FLOW_NODE", "DELETED", "TINYINT(1) NOT NULL DEFAULT 0");
+        addColumnIfMissing("T_FLOW_NODE", "DELETED_BY", "VARCHAR(50)");
+        addColumnIfMissing("T_FLOW_NODE", "DELETED_TIME", "DATETIME");
+        jdbcTemplate.update("UPDATE T_FLOW_NODE SET DELETED = 0 WHERE DELETED IS NULL");
+    }
+
+    private void migrateFlowNodeChangeTable() {
+        if (tableExists("T_FLOW_NODE_CHANGE")) {
+            return;
+        }
+        log.info("创建表 T_FLOW_NODE_CHANGE");
+        jdbcTemplate.execute("""
+                CREATE TABLE T_FLOW_NODE_CHANGE (
+                   ID VARCHAR(36) NOT NULL,
+                   NODE_ID VARCHAR(36) NOT NULL,
+                   PROJECT_ID VARCHAR(36) NOT NULL,
+                   OLD_TITLE VARCHAR(200),
+                   NEW_TITLE VARCHAR(200),
+                   OLD_DESCRIPTION TEXT,
+                   NEW_DESCRIPTION TEXT,
+                   CHANGE_BY VARCHAR(50),
+                   CHANGE_TIME DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                   PRIMARY KEY (ID),
+                   KEY IDX_FLOW_NODE_CHANGE_NODE (NODE_ID),
+                   KEY IDX_FLOW_NODE_CHANGE_PROJECT (PROJECT_ID)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """);
+    }
+
+    private void migrateArchiveNodeTable() {
+        if (tableExists("T_ARCHIVE_NODE")) {
+            return;
+        }
+        log.info("创建表 T_ARCHIVE_NODE");
+        jdbcTemplate.execute("""
+                CREATE TABLE T_ARCHIVE_NODE (
+                   ID VARCHAR(36) NOT NULL,
+                   ARCHIVE_ID VARCHAR(36) NOT NULL,
+                   STAGE VARCHAR(30) NOT NULL,
+                   TITLE VARCHAR(200) NOT NULL,
+                   NODE_TYPE VARCHAR(20) NOT NULL,
+                   START_DATE DATE NOT NULL,
+                   END_DATE DATE,
+                   REMARK TEXT,
+                   SORT_ORDER INT NOT NULL DEFAULT 0,
+                   CREATE_BY VARCHAR(50),
+                   CREATE_TIME DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                   PRIMARY KEY (ID),
+                   KEY IDX_ARCHIVE_NODE_ARCHIVE (ARCHIVE_ID),
+                   KEY IDX_ARCHIVE_NODE_START (START_DATE)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """);
+    }
+
+    private void migrateArchiveNodeStageTable() {
+        if (tableExists("T_ARCHIVE_NODE_STAGE")) {
+            return;
+        }
+        log.info("创建表 T_ARCHIVE_NODE_STAGE");
+        jdbcTemplate.execute("""
+                CREATE TABLE T_ARCHIVE_NODE_STAGE (
+                   ID VARCHAR(36) NOT NULL,
+                   NAME VARCHAR(50) NOT NULL,
+                   SORT_ORDER INT NOT NULL DEFAULT 0,
+                   COLOR_KEY VARCHAR(30),
+                   DELETED TINYINT(1) NOT NULL DEFAULT 0,
+                   CREATE_BY VARCHAR(50),
+                   CREATE_TIME DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                   PRIMARY KEY (ID),
+                   KEY IDX_ARCHIVE_NODE_STAGE_NAME (NAME)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """);
+        String[] names = {"商务阶段", "调研阶段", "上线阶段", "质保阶段", "维保阶段"};
+        String[] colors = {"business", "research", "launch", "warranty", "maint"};
+        for (int i = 0; i < names.length; i++) {
+            jdbcTemplate.update("""
+                    INSERT INTO T_ARCHIVE_NODE_STAGE (ID, NAME, SORT_ORDER, COLOR_KEY, DELETED, CREATE_BY, CREATE_TIME)
+                    VALUES (UUID(), ?, ?, ?, 0, 'system', NOW())
+                    """, names[i], i, colors[i]);
+        }
+        log.info("已初始化默认项目节点阶段");
     }
 
     private void createIndexIfMissing(String table, String indexName, String ddl) {

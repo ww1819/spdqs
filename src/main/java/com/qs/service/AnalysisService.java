@@ -1,9 +1,12 @@
 package com.qs.service;
 
+import com.qs.dto.FlowNodeChangeLogDto;
 import com.qs.dto.FlowNodeTreeDto;
 import com.qs.entity.AnalysisProject;
 import com.qs.entity.FlowNode;
+import com.qs.entity.FlowNodeChangeLog;
 import com.qs.repository.AnalysisProjectRepository;
+import com.qs.repository.FlowNodeChangeLogRepository;
 import com.qs.repository.FlowNodeRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,21 +14,27 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 @Service
 public class AnalysisService {
 
     private final AnalysisProjectRepository projectRepository;
     private final FlowNodeRepository flowNodeRepository;
+    private final FlowNodeChangeLogRepository changeLogRepository;
     private final AnalysisTextExporter textExporter;
 
     public AnalysisService(AnalysisProjectRepository projectRepository,
                            FlowNodeRepository flowNodeRepository,
+                           FlowNodeChangeLogRepository changeLogRepository,
                            AnalysisTextExporter textExporter) {
         this.projectRepository = projectRepository;
         this.flowNodeRepository = flowNodeRepository;
+        this.changeLogRepository = changeLogRepository;
         this.textExporter = textExporter;
     }
 
@@ -71,7 +80,7 @@ public class AnalysisService {
 
     public FlowNodeTreeDto getProjectTree(String projectId) {
         getProject(projectId);
-        List<FlowNode> nodes = flowNodeRepository.findByProjectIdOrderBySortOrderAsc(projectId);
+        List<FlowNode> nodes = flowNodeRepository.findByProjectIdAndDeletedFalseOrderBySortOrderAsc(projectId);
         if (nodes.isEmpty()) {
             throw new IllegalArgumentException("项目缺少根流程节点");
         }
@@ -83,10 +92,9 @@ public class AnalysisService {
         if (title == null || title.isBlank()) {
             throw new IllegalArgumentException("流程标题不能为空");
         }
-        FlowNode parent = flowNodeRepository.findById(parentId)
-                .orElseThrow(() -> new IllegalArgumentException("父节点不存在"));
+        FlowNode parent = requireActiveNode(parentId);
 
-        List<FlowNode> siblings = flowNodeRepository.findByParentIdOrderBySortOrderAsc(parentId);
+        List<FlowNode> siblings = flowNodeRepository.findByParentIdAndDeletedFalseOrderBySortOrderAsc(parentId);
         int nextOrder = siblings.stream()
                 .mapToInt(FlowNode::getSortOrder)
                 .max()
@@ -104,28 +112,53 @@ public class AnalysisService {
     }
 
     @Transactional
-    public FlowNodeTreeDto updateNode(String nodeId, String title, String description) {
-        FlowNode node = flowNodeRepository.findById(nodeId)
-                .orElseThrow(() -> new IllegalArgumentException("节点不存在"));
+    public FlowNodeTreeDto updateNode(String nodeId, String title, String description, String changeBy) {
+        FlowNode node = requireActiveNode(nodeId);
+
+        String oldTitle = node.getTitle();
+        String oldDescription = node.getDescription();
+        boolean titleChanged = false;
+        boolean descriptionChanged = false;
+
         if (title != null && !title.isBlank()) {
-            node.setTitle(title.trim());
+            String newTitle = title.trim();
+            if (!Objects.equals(oldTitle, newTitle)) {
+                node.setTitle(newTitle);
+                titleChanged = true;
+            }
         }
         if (description != null) {
-            node.setDescription(description.trim());
+            String newDescription = description.trim();
+            if (!Objects.equals(normalizeNullable(oldDescription), normalizeNullable(newDescription))) {
+                node.setDescription(newDescription);
+                descriptionChanged = true;
+            }
         }
-        flowNodeRepository.save(node);
+
+        if (titleChanged || descriptionChanged) {
+            FlowNodeChangeLog log = new FlowNodeChangeLog();
+            log.setNodeId(node.getId());
+            log.setProjectId(node.getProjectId());
+            log.setOldTitle(oldTitle);
+            log.setNewTitle(node.getTitle());
+            log.setOldDescription(oldDescription);
+            log.setNewDescription(node.getDescription());
+            log.setChangeBy(changeBy);
+            changeLogRepository.save(log);
+            flowNodeRepository.save(node);
+        }
+
         return getProjectTree(node.getProjectId());
     }
 
     @Transactional
-    public FlowNodeTreeDto deleteNode(String nodeId) {
-        FlowNode node = flowNodeRepository.findById(nodeId)
-                .orElseThrow(() -> new IllegalArgumentException("节点不存在"));
+    public FlowNodeTreeDto deleteNode(String nodeId, String deletedBy) {
+        FlowNode node = requireActiveNode(nodeId);
         if (node.getParentId() == null) {
             throw new IllegalArgumentException("根节点不能删除");
         }
         String projectId = node.getProjectId();
-        deleteSubtree(nodeId);
+        softDeleteSubtree(nodeId, deletedBy);
         return getProjectTree(projectId);
     }
 
@@ -135,12 +168,99 @@ public class AnalysisService {
         return textExporter.export(project, tree);
     }
 
-    private void deleteSubtree(String nodeId) {
-        List<FlowNode> children = flowNodeRepository.findByParentIdOrderBySortOrderAsc(nodeId);
-        for (FlowNode child : children) {
-            deleteSubtree(child.getId());
+    /** 全部功能菜单标题（去重排序），供工单列表筛选 */
+    public List<String> listDistinctMenuTitles() {
+        return flowNodeRepository.findByDeletedFalse().stream()
+                .map(FlowNode::getTitle)
+                .filter(t -> t != null && !t.isBlank())
+                .distinct()
+                .sorted(String::compareToIgnoreCase)
+                .toList();
+    }
+
+    public List<FlowNodeChangeLogDto> listNodeChanges(String nodeId) {
+        flowNodeRepository.findById(nodeId)
+                .orElseThrow(() -> new IllegalArgumentException("节点不存在"));
+        return changeLogRepository.findByNodeIdOrderByChangeTimeDesc(nodeId).stream()
+                .map(this::toChangeDto)
+                .toList();
+    }
+
+    /**
+     * 解析菜单筛选别名：当前名 + 相关曾用名，便于改名后仍能筛到旧工单内容。
+     */
+    public List<String> resolveMenuAliases(String menu) {
+        if (menu == null || menu.isBlank()) {
+            return List.of();
         }
-        flowNodeRepository.deleteById(nodeId);
+        String target = menu.trim();
+        Set<String> aliases = new LinkedHashSet<>();
+        aliases.add(target);
+
+        for (FlowNode node : flowNodeRepository.findByTitle(target)) {
+            collectTitlesFromLogs(aliases, changeLogRepository.findByNodeIdOrderByChangeTimeDesc(node.getId()));
+        }
+        collectTitlesFromLogs(aliases, changeLogRepository.findByTitleInvolved(target));
+        return aliases.stream().filter(t -> t != null && !t.isBlank()).toList();
+    }
+
+    private void collectTitlesFromLogs(Set<String> aliases, List<FlowNodeChangeLog> logs) {
+        for (FlowNodeChangeLog log : logs) {
+            if (log.getOldTitle() != null && !log.getOldTitle().isBlank()) {
+                aliases.add(log.getOldTitle());
+            }
+            if (log.getNewTitle() != null && !log.getNewTitle().isBlank()) {
+                aliases.add(log.getNewTitle());
+            }
+        }
+    }
+
+    private FlowNodeChangeLogDto toChangeDto(FlowNodeChangeLog log) {
+        FlowNodeChangeLogDto dto = new FlowNodeChangeLogDto();
+        dto.setId(log.getId());
+        dto.setNodeId(log.getNodeId());
+        dto.setOldTitle(log.getOldTitle());
+        dto.setNewTitle(log.getNewTitle());
+        dto.setOldDescription(log.getOldDescription());
+        dto.setNewDescription(log.getNewDescription());
+        dto.setChangeBy(log.getChangeBy());
+        dto.setChangeTime(log.getChangeTime());
+        dto.setTitleChanged(!Objects.equals(normalizeNullable(log.getOldTitle()), normalizeNullable(log.getNewTitle())));
+        dto.setDescriptionChanged(!Objects.equals(
+                normalizeNullable(log.getOldDescription()),
+                normalizeNullable(log.getNewDescription())));
+        return dto;
+    }
+
+    private String normalizeNullable(String value) {
+        if (value == null || value.isBlank()) {
+            return "";
+        }
+        return value.trim();
+    }
+
+    private FlowNode requireActiveNode(String nodeId) {
+        FlowNode node = flowNodeRepository.findById(nodeId)
+                .orElseThrow(() -> new IllegalArgumentException("节点不存在"));
+        if (node.isDeleted()) {
+            throw new IllegalArgumentException("节点已删除");
+        }
+        return node;
+    }
+
+    private void softDeleteSubtree(String nodeId, String deletedBy) {
+        List<FlowNode> children = flowNodeRepository.findByParentIdAndDeletedFalseOrderBySortOrderAsc(nodeId);
+        for (FlowNode child : children) {
+            softDeleteSubtree(child.getId(), deletedBy);
+        }
+        FlowNode node = flowNodeRepository.findById(nodeId)
+                .orElseThrow(() -> new IllegalArgumentException("节点不存在"));
+        if (!node.isDeleted()) {
+            node.setDeleted(true);
+            node.setDeletedBy(deletedBy);
+            node.setDeletedTime(java.time.LocalDateTime.now());
+            flowNodeRepository.save(node);
+        }
     }
 
     private FlowNodeTreeDto buildTree(List<FlowNode> nodes) {

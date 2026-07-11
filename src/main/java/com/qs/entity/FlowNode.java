@@ -40,6 +40,15 @@ public class FlowNode {
     @Column(name = "CREATE_TIME", nullable = false)
     private LocalDateTime createTime;
 
+    @Column(name = "DELETED", nullable = false)
+    private boolean deleted;
+
+    @Column(name = "DELETED_BY", length = 50)
+    private String deletedBy;
+
+    @Column(name = "DELETED_TIME")
+    private LocalDateTime deletedTime;
+
     @PrePersist
     public void prePersist() {
         if (id == null || id.isBlank()) {
@@ -48,6 +57,7 @@ public class FlowNode {
         if (createTime == null) {
             createTime = LocalDateTime.now();
         }
+        deleted = false;
     }
 
     public String getId() {
@@ -112,5 +122,29 @@ public class FlowNode {
 
     public void setCreateTime(LocalDateTime createTime) {
         this.createTime = createTime;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
+    }
+
+    public String getDeletedBy() {
+        return deletedBy;
+    }
+
+    public void setDeletedBy(String deletedBy) {
+        this.deletedBy = deletedBy;
+    }
+
+    public LocalDateTime getDeletedTime() {
+        return deletedTime;
+    }
+
+    public void setDeletedTime(LocalDateTime deletedTime) {
+        this.deletedTime = deletedTime;
     }
 }
