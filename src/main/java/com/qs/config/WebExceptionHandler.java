@@ -23,17 +23,35 @@ public class WebExceptionHandler {
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public String handleIllegalArgument(IllegalArgumentException ex, Model model, HttpServletRequest request) {
+    public Object handleIllegalArgument(IllegalArgumentException ex, Model model, HttpServletRequest request) {
         log.warn("请求 {} 参数错误: {}", request.getRequestURI(), ex.getMessage());
+        if (isApiRequest(request)) {
+            return ResponseEntity.badRequest().body(apiError(ex.getMessage()));
+        }
         model.addAttribute("message", ex.getMessage());
         return "error";
     }
 
     @ExceptionHandler(Exception.class)
-    public String handleGeneral(Exception ex, Model model, HttpServletRequest request) {
+    public Object handleGeneral(Exception ex, Model model, HttpServletRequest request) {
         log.error("请求 {} 发生异常", request.getRequestURI(), ex);
+        if (isApiRequest(request)) {
+            String msg = ex.getMessage() != null && !ex.getMessage().isBlank()
+                    ? ex.getMessage()
+                    : "系统处理请求时发生错误";
+            return ResponseEntity.internalServerError().body(apiError(msg));
+        }
         model.addAttribute("message", "系统处理请求时发生错误，请稍后重试或联系管理员。");
         return "error";
+    }
+
+    private boolean isApiRequest(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        return uri != null && uri.startsWith("/api/");
+    }
+
+    private java.util.Map<String, String> apiError(String message) {
+        return java.util.Map.of("error", message != null ? message : "请求失败");
     }
 
     private boolean isIgnoredResource(String uri) {

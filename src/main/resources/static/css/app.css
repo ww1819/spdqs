@@ -896,3 +896,204 @@ body.auth-page {
     color: rgba(255, 255, 255, 0.85);
     user-select: none;
 }
+
+/* ===== 项目分析 — 流程树 ===== */
+.flow-panel .panel-body {
+    min-height: 480px;
+}
+
+.flow-canvas-wrap {
+    position: relative;
+    overflow: auto;
+    min-height: 480px;
+    padding: 48px 32px 64px;
+    background: linear-gradient(180deg, #f8fafc 0%, #f0f2f5 100%);
+}
+
+.flow-lines {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.flow-canvas {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    min-width: min-content;
+}
+
+.flow-loading {
+    color: var(--text-secondary);
+    padding: 24px;
+}
+
+.flow-tree-root {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.flow-node-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.flow-card-zone {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 42px;
+}
+
+.flow-card {
+    position: relative;
+    min-width: 160px;
+    max-width: 220px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+    transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.flow-card-zone:hover .flow-card {
+    border-color: #93c5fd;
+    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.12);
+}
+
+.flow-card-toolbar {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    background: var(--sidebar-bg);
+    color: #fff;
+    border-radius: 6px;
+    padding: 6px 4px;
+    gap: 4px;
+    z-index: 10;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.flow-card-toolbar::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--sidebar-bg);
+}
+
+.flow-card-zone:hover .flow-card-toolbar {
+    display: flex;
+}
+
+.flow-tool-btn {
+    border: none;
+    background: transparent;
+    color: #e2e8f0;
+    font-size: 0.8rem;
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    line-height: 1.2;
+}
+
+.flow-tool-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+}
+
+.flow-tool-danger:hover {
+    background: rgba(220, 38, 38, 0.35);
+}
+
+.flow-card-body {
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-align: center;
+}
+
+.flow-card-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text);
+    word-break: break-word;
+}
+
+.flow-desc-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--success);
+    flex-shrink: 0;
+}
+
+.flow-children {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 32px;
+    padding-top: 28px;
+}
+
+.flow-branch {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.flow-line {
+    fill: none;
+    stroke: #94a3b8;
+    stroke-width: 2;
+}
+
+.flow-toast {
+    position: fixed;
+    top: 20px;
+    right: 24px;
+    z-index: 2000;
+    background: var(--sidebar-bg);
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.flow-toast.show {
+    opacity: 1;
+}
+
+.desc-view {
+    white-space: pre-wrap;
+    line-height: 1.6;
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    min-height: 120px;
+}
+
+.table-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}

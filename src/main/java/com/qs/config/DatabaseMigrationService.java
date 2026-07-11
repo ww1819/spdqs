@@ -31,6 +31,8 @@ public class DatabaseMigrationService {
         migrateTicketUpgradeColumns();
         migrateTicketNoColumn();
         migrateProcessNotesToFollowUp();
+        migrateAnalysisProjectTable();
+        migrateFlowNodeTable();
         log.info("数据库结构检查完成");
     }
 
@@ -296,6 +298,45 @@ public class DatabaseMigrationService {
         log.info("添加字段 {}.{}", table, column);
         jdbcTemplate.execute("ALTER TABLE " + table + " ADD COLUMN " + column + " " + definition);
         return true;
+    }
+
+    private void migrateAnalysisProjectTable() {
+        if (tableExists("T_ANALYSIS_PROJECT")) {
+            return;
+        }
+        log.info("创建表 T_ANALYSIS_PROJECT");
+        jdbcTemplate.execute("""
+                CREATE TABLE T_ANALYSIS_PROJECT (
+                   ID VARCHAR(36) NOT NULL,
+                   NAME VARCHAR(200) NOT NULL,
+                   DESCRIPTION TEXT,
+                   CREATE_BY VARCHAR(50),
+                   CREATE_TIME DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                   PRIMARY KEY (ID)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """);
+    }
+
+    private void migrateFlowNodeTable() {
+        if (tableExists("T_FLOW_NODE")) {
+            return;
+        }
+        log.info("创建表 T_FLOW_NODE");
+        jdbcTemplate.execute("""
+                CREATE TABLE T_FLOW_NODE (
+                   ID VARCHAR(36) NOT NULL,
+                   PROJECT_ID VARCHAR(36) NOT NULL,
+                   PARENT_ID VARCHAR(36),
+                   TITLE VARCHAR(200) NOT NULL,
+                   DESCRIPTION TEXT,
+                   SORT_ORDER INT NOT NULL DEFAULT 0,
+                   CREATE_BY VARCHAR(50),
+                   CREATE_TIME DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                   PRIMARY KEY (ID),
+                   KEY IDX_FLOW_NODE_PROJECT (PROJECT_ID),
+                   KEY IDX_FLOW_NODE_PARENT (PARENT_ID)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """);
     }
 
     private void createIndexIfMissing(String table, String indexName, String ddl) {
