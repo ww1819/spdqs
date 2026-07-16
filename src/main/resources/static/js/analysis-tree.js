@@ -185,7 +185,7 @@
         const toolbar = document.createElement('div');
         toolbar.className = 'flow-card-toolbar';
         toolbar.innerHTML =
-            '<button type="button" class="flow-tool-btn" data-action="new">新建流程</button>' +
+            '<button type="button" class="flow-tool-btn" data-action="new">新增流程</button>' +
             '<button type="button" class="flow-tool-btn" data-action="edit">修改</button>' +
             '<button type="button" class="flow-tool-btn" data-action="history">变更记录</button>' +
             '<button type="button" class="flow-tool-btn flow-tool-danger" data-action="delete">删除</button>';
@@ -770,9 +770,12 @@
             const btn = e.target.closest('[data-action]');
             if (!btn || !popupNode) return;
             const action = btn.getAttribute('data-action');
-            const node = popupNode;
+            // 合并层级 flatten 节点可能不含 description/children，操作前解析完整树节点
+            const node = (treeData && findNodeById(treeData, popupNode.id)) || popupNode;
             hideMenuPopup();
-            if (action === 'tickets') {
+            if (action === 'new') {
+                openNewFlow(node.id);
+            } else if (action === 'tickets') {
                 window.location.href = ticketListUrl(node.title);
             } else if (action === 'edit') {
                 openEdit(node);
