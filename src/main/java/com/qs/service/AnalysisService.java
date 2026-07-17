@@ -203,6 +203,43 @@ public class AnalysisService {
                 .toList();
     }
 
+    /**
+     * 按分析项目（系统）加载功能菜单标题；未选系统时返回空列表。
+     * 多系统时取并集去重排序。
+     */
+    public List<String> listMenuTitlesByProjectIds(List<String> projectIds) {
+        if (projectIds == null || projectIds.isEmpty()) {
+            return List.of();
+        }
+        Set<String> titles = new LinkedHashSet<>();
+        for (String projectId : projectIds) {
+            if (projectId == null || projectId.isBlank()) {
+                continue;
+            }
+            flowNodeRepository.findByProjectIdAndDeletedFalseOrderBySortOrderAsc(projectId.trim())
+                    .stream()
+                    .map(FlowNode::getTitle)
+                    .filter(t -> t != null && !t.isBlank())
+                    .forEach(titles::add);
+        }
+        return titles.stream().sorted(String::compareToIgnoreCase).toList();
+    }
+
+    /** 多个菜单标题解析别名（当前名 + 曾用名）并集 */
+    public List<String> resolveMenuAliases(List<String> menus) {
+        if (menus == null || menus.isEmpty()) {
+            return List.of();
+        }
+        Set<String> aliases = new LinkedHashSet<>();
+        for (String menu : menus) {
+            if (menu == null || menu.isBlank()) {
+                continue;
+            }
+            aliases.addAll(resolveMenuAliases(menu.trim()));
+        }
+        return aliases.stream().filter(t -> t != null && !t.isBlank()).toList();
+    }
+
     public List<FlowNodeChangeLogDto> listNodeChanges(String nodeId) {
         flowNodeRepository.findById(nodeId)
                 .orElseThrow(() -> new IllegalArgumentException("节点不存在"));

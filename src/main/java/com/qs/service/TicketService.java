@@ -61,35 +61,41 @@ public class TicketService {
 
     public List<Ticket> search(String status, String handler, String submitter, String keyword) {
         return search(status == null || status.isBlank() ? null : List.of(status),
-                handler, submitter, keyword, null, null, null);
-    }
-
-    public List<Ticket> search(String status, String handler, String submitter, String keyword, String menu) {
-        return search(status == null || status.isBlank() ? null : List.of(status),
-                handler, submitter, keyword, menu, null, null);
+                handler, submitter, keyword, null, null);
     }
 
     public List<Ticket> search(List<String> statuses, String handler, String submitter, String keyword,
-                               String menu, List<String> menuAliases, String archiveId) {
+                               List<String> menuAliases, List<String> archiveIds) {
         String kw = normalize(keyword);
-        List<String> aliases = menuAliases;
-        if ((aliases == null || aliases.isEmpty()) && menu != null && !menu.isBlank()) {
-            aliases = List.of(menu.trim());
-        }
-        List<String> finalAliases = aliases;
+        List<String> finalAliases = menuAliases == null ? List.of() : menuAliases.stream()
+                .filter(s -> s != null && !s.isBlank())
+                .map(String::trim)
+                .distinct()
+                .toList();
         List<String> statusList = normalizeStatusList(statuses);
-        String projectId = archiveId == null || archiveId.isBlank() ? null : archiveId.trim();
+        List<String> projectIds = normalizeIdList(archiveIds);
         return attachFollowUpFlags(ticketRepository.findAllWithArchive().stream()
                 .filter(t -> statusList.isEmpty() || matchesAnyStatus(t, statusList))
-                .filter(t -> projectId == null
-                        || (t.getArchive() != null && projectId.equals(t.getArchive().getId())))
+                .filter(t -> projectIds.isEmpty()
+                        || (t.getArchive() != null && projectIds.contains(t.getArchive().getId())))
                 .filter(t -> handler == null || handler.isBlank()
                         || (t.getHandler() != null && t.getHandler().contains(handler)))
                 .filter(t -> submitter == null || submitter.isBlank()
                         || (t.getSubmitter() != null && t.getSubmitter().contains(submitter)))
                 .filter(t -> kw == null || matchesKeyword(t, kw))
-                .filter(t -> finalAliases == null || finalAliases.isEmpty() || matchesMenuAliases(t, finalAliases))
+                .filter(t -> finalAliases.isEmpty() || matchesMenuAliases(t, finalAliases))
                 .toList());
+    }
+
+    private List<String> normalizeIdList(List<String> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        return ids.stream()
+                .filter(s -> s != null && !s.isBlank())
+                .map(String::trim)
+                .distinct()
+                .toList();
     }
 
     private List<String> normalizeStatusList(List<String> statuses) {

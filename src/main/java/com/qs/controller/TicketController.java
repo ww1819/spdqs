@@ -51,35 +51,58 @@ public class TicketController {
 
     @GetMapping
     public String list(@RequestParam(required = false) List<String> status,
-                       @RequestParam(required = false) String archiveId,
+                       @RequestParam(required = false) List<String> archiveId,
+                       @RequestParam(required = false) List<String> systemId,
+                       @RequestParam(required = false) List<String> menu,
                        @RequestParam(required = false) String handler,
                        @RequestParam(required = false) String submitter,
                        @RequestParam(required = false) String keyword,
-                       @RequestParam(required = false) String menu,
                        Model model,
                        @AuthenticationPrincipal UserDetails userDetails) {
         addUserToModel(model, userDetails);
         reminderService.checkAndCreateNow();
-        List<String> statusFilters = status == null ? List.of() : status.stream()
+        List<String> statusFilters = cleanList(status);
+        List<String> archiveFilters = cleanList(archiveId);
+        List<String> systemFilters = cleanList(systemId);
+        List<String> menuFilters = cleanList(menu);
+
+        List<String> menuOptions = analysisService.listMenuTitlesByProjectIds(systemFilters);
+        List<String> menuAliases;
+        if (!menuFilters.isEmpty()) {
+            menuAliases = analysisService.resolveMenuAliases(menuFilters);
+        } else if (!systemFilters.isEmpty()) {
+            menuAliases = menuOptions;
+        } else {
+            menuAliases = List.of();
+        }
+
+        model.addAttribute("returnUrl", "/tickets");
+        model.addAttribute("tickets", ticketService.search(
+                statusFilters, handler, submitter, keyword, menuAliases, archiveFilters));
+        model.addAttribute("statusFilters", statusFilters);
+        model.addAttribute("archiveIdFilters", archiveFilters);
+        model.addAttribute("systemIdFilters", systemFilters);
+        model.addAttribute("menuFilters", menuFilters);
+        model.addAttribute("handlerFilter", handler);
+        model.addAttribute("submitterFilter", submitter);
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("menuOptions", menuOptions);
+        model.addAttribute("archiveOptions", archiveService.listOptions());
+        model.addAttribute("systemOptions", analysisService.listProjects());
+        model.addAttribute("ticketStatuses", Arrays.asList(TicketStatus.values()));
+        model.addAttribute("activeTab", "tickets");
+        return "ticket/list";
+    }
+
+    private static List<String> cleanList(List<String> values) {
+        if (values == null || values.isEmpty()) {
+            return List.of();
+        }
+        return values.stream()
                 .filter(s -> s != null && !s.isBlank())
                 .map(String::trim)
                 .distinct()
                 .toList();
-        model.addAttribute("returnUrl", "/tickets");
-        model.addAttribute("tickets", ticketService.search(
-                statusFilters, handler, submitter, keyword, menu,
-                analysisService.resolveMenuAliases(menu), archiveId));
-        model.addAttribute("statusFilters", statusFilters);
-        model.addAttribute("archiveIdFilter", archiveId);
-        model.addAttribute("handlerFilter", handler);
-        model.addAttribute("submitterFilter", submitter);
-        model.addAttribute("keyword", keyword);
-        model.addAttribute("menuFilter", menu);
-        model.addAttribute("menuOptions", analysisService.listDistinctMenuTitles());
-        model.addAttribute("archiveOptions", archiveService.listOptions());
-        model.addAttribute("ticketStatuses", Arrays.asList(TicketStatus.values()));
-        model.addAttribute("activeTab", "tickets");
-        return "ticket/list";
     }
 
     @GetMapping("/new")

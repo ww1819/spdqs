@@ -7,12 +7,7 @@
     <main class="app-main">
         <header class="app-header">
             <h1>工单列表</h1>
-            <p class="header-desc">
-                提交与跟踪项目工单
-                <span th:if="${menuFilter != null and !#strings.isEmpty(menuFilter)}" class="ms-2">
-                    · 功能菜单：<strong th:text="${menuFilter}">菜单</strong>
-                </span>
-            </p>
+            <p class="header-desc">提交与跟踪项目工单</p>
         </header>
         <div class="app-content">
             <div th:replace="~{fragments/page-header :: alerts}"></div>
@@ -40,16 +35,58 @@
                             </div>
                         </div>
                         <div id="statusHiddenInputs"></div>
-                        <select name="archiveId" class="form-select form-select-sm" style="width: 160px;" title="项目">
-                            <option value="">全部项目</option>
-                            <option th:each="opt : ${archiveOptions}" th:value="${opt.id}" th:text="${opt.projectName}"
-                                    th:selected="${archiveIdFilter == opt.id}"></option>
-                        </select>
-                        <select name="menu" class="form-select form-select-sm" style="width: 160px;" title="功能菜单">
-                            <option value="">全部功能菜单</option>
-                            <option th:each="m : ${menuOptions}" th:value="${m}" th:text="${m}"
-                                    th:selected="${menuFilter == m}"></option>
-                        </select>
+
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle status-filter-btn"
+                                    type="button" id="archiveFilterBtn" data-bs-toggle="dropdown"
+                                    data-bs-auto-close="outside" aria-expanded="false" style="min-width: 130px;">
+                                <span id="archiveFilterLabel">全部项目</span>
+                            </button>
+                            <div class="dropdown-menu status-filter-menu p-2" aria-labelledby="archiveFilterBtn">
+                                <label class="status-filter-item" th:each="opt : ${archiveOptions}">
+                                    <input type="checkbox" class="form-check-input archive-option" th:value="${opt.id}"
+                                           th:checked="${archiveIdFilters != null and #lists.contains(archiveIdFilters, opt.id)}">
+                                    <span th:text="${opt.projectName}">项目</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div id="archiveHiddenInputs"></div>
+
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle status-filter-btn"
+                                    type="button" id="systemFilterBtn" data-bs-toggle="dropdown"
+                                    data-bs-auto-close="outside" aria-expanded="false" style="min-width: 130px;">
+                                <span id="systemFilterLabel">全部系统</span>
+                            </button>
+                            <div class="dropdown-menu status-filter-menu p-2" aria-labelledby="systemFilterBtn">
+                                <label class="status-filter-item" th:each="sys : ${systemOptions}">
+                                    <input type="checkbox" class="form-check-input system-option" th:value="${sys.id}"
+                                           th:checked="${systemIdFilters != null and #lists.contains(systemIdFilters, sys.id)}">
+                                    <span th:text="${sys.name}">系统</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div id="systemHiddenInputs"></div>
+
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle status-filter-btn"
+                                    type="button" id="menuFilterBtn" data-bs-toggle="dropdown"
+                                    data-bs-auto-close="outside" aria-expanded="false" style="min-width: 140px;">
+                                <span id="menuFilterLabel">全部功能菜单</span>
+                            </button>
+                            <div class="dropdown-menu status-filter-menu p-2" aria-labelledby="menuFilterBtn"
+                                 id="menuFilterMenu">
+                                <div id="menuFilterEmpty" class="px-2 py-1 text-muted small"
+                                     th:if="${menuOptions == null or #lists.isEmpty(menuOptions)}">请先选择系统</div>
+                                <label class="status-filter-item menu-option-item" th:each="m : ${menuOptions}">
+                                    <input type="checkbox" class="form-check-input menu-option" th:value="${m}"
+                                           th:checked="${menuFilters != null and #lists.contains(menuFilters, m)}">
+                                    <span th:text="${m}">菜单</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div id="menuHiddenInputs"></div>
+
                         <input type="text" name="handler" class="form-control form-control-sm" style="width: 100px;"
                                placeholder="处理人" th:value="${handlerFilter}">
                         <input type="text" name="submitter" class="form-control form-control-sm" style="width: 100px;"
@@ -129,38 +166,116 @@
 <script>
 (function () {
     const form = document.getElementById('ticketFilterForm');
-    const label = document.getElementById('statusFilterLabel');
-    const hiddenBox = document.getElementById('statusHiddenInputs');
-    if (!form || !label || !hiddenBox) return;
+    if (!form) return;
 
-    function selectedStatuses() {
-        return Array.from(form.querySelectorAll('.status-option:checked')).map((el) => el.value);
+    function selectedValues(selector) {
+        return Array.from(form.querySelectorAll(selector + ':checked')).map((el) => el.value);
     }
 
-    function syncStatusUi() {
-        const values = selectedStatuses();
+    function syncMultiFilter(optionSelector, labelEl, hiddenBox, emptyLabel, singleAsIs, countPrefix, inputName) {
+        const values = selectedValues(optionSelector);
         if (values.length === 0) {
-            label.textContent = '全部状态';
-        } else if (values.length === 1) {
-            label.textContent = values[0];
+            labelEl.textContent = emptyLabel;
+        } else if (values.length === 1 && singleAsIs) {
+            const checked = form.querySelector(optionSelector + ':checked');
+            const text = checked && checked.nextElementSibling ? checked.nextElementSibling.textContent.trim() : values[0];
+            labelEl.textContent = text || values[0];
         } else {
-            label.textContent = '状态(' + values.length + ')';
+            labelEl.textContent = countPrefix + '(' + values.length + ')';
         }
         hiddenBox.innerHTML = '';
         values.forEach((value) => {
             const input = document.createElement('input');
             input.type = 'hidden';
-            input.name = 'status';
+            input.name = inputName;
             input.value = value;
             hiddenBox.appendChild(input);
         });
+        return values;
     }
 
-    form.querySelectorAll('.status-option').forEach((el) => {
-        el.addEventListener('change', syncStatusUi);
+    const statusLabel = document.getElementById('statusFilterLabel');
+    const statusHidden = document.getElementById('statusHiddenInputs');
+    const archiveLabel = document.getElementById('archiveFilterLabel');
+    const archiveHidden = document.getElementById('archiveHiddenInputs');
+    const systemLabel = document.getElementById('systemFilterLabel');
+    const systemHidden = document.getElementById('systemHiddenInputs');
+    const menuLabel = document.getElementById('menuFilterLabel');
+    const menuHidden = document.getElementById('menuHiddenInputs');
+    const menuMenu = document.getElementById('menuFilterMenu');
+
+    function syncAll() {
+        syncMultiFilter('.status-option', statusLabel, statusHidden, '全部状态', true, '状态', 'status');
+        syncMultiFilter('.archive-option', archiveLabel, archiveHidden, '全部项目', true, '项目', 'archiveId');
+        syncMultiFilter('.system-option', systemLabel, systemHidden, '全部系统', true, '系统', 'systemId');
+        syncMultiFilter('.menu-option', menuLabel, menuHidden, '全部功能菜单', true, '菜单', 'menu');
+    }
+
+    function renderMenus(titles, keepSelected) {
+        const selected = new Set(keepSelected || selectedValues('.menu-option'));
+        menuMenu.innerHTML = '';
+        if (!titles || titles.length === 0) {
+            const empty = document.createElement('div');
+            empty.id = 'menuFilterEmpty';
+            empty.className = 'px-2 py-1 text-muted small';
+            empty.textContent = '请先选择系统';
+            menuMenu.appendChild(empty);
+            syncMultiFilter('.menu-option', menuLabel, menuHidden, '全部功能菜单', true, '菜单', 'menu');
+            return;
+        }
+        titles.forEach((title) => {
+            const label = document.createElement('label');
+            label.className = 'status-filter-item menu-option-item';
+            const input = document.createElement('input');
+            input.type = 'checkbox';
+            input.className = 'form-check-input menu-option';
+            input.value = title;
+            input.checked = selected.has(title);
+            input.addEventListener('change', syncAll);
+            const span = document.createElement('span');
+            span.textContent = title;
+            label.appendChild(input);
+            label.appendChild(span);
+            menuMenu.appendChild(label);
+        });
+        syncAll();
+    }
+
+    let menuLoadSeq = 0;
+    async function reloadMenusFromSystems() {
+        const systemIds = selectedValues('.system-option');
+        const seq = ++menuLoadSeq;
+        if (systemIds.length === 0) {
+            renderMenus([], []);
+            return;
+        }
+        const params = new URLSearchParams();
+        systemIds.forEach((id) => params.append('projectId', id));
+        try {
+            const resp = await fetch('/api/analysis/menus?' + params.toString(), {
+                headers: { 'Accept': 'application/json' }
+            });
+            if (!resp.ok) throw new Error('load failed');
+            const titles = await resp.json();
+            if (seq !== menuLoadSeq) return;
+            renderMenus(Array.isArray(titles) ? titles : [], selectedValues('.menu-option'));
+        } catch (e) {
+            if (seq !== menuLoadSeq) return;
+            renderMenus([], []);
+        }
+    }
+
+    form.querySelectorAll('.status-option, .archive-option, .menu-option').forEach((el) => {
+        el.addEventListener('change', syncAll);
     });
-    form.addEventListener('submit', syncStatusUi);
-    syncStatusUi();
+    form.querySelectorAll('.system-option').forEach((el) => {
+        el.addEventListener('change', () => {
+            syncAll();
+            reloadMenusFromSystems();
+        });
+    });
+    form.addEventListener('submit', syncAll);
+    syncAll();
 })();
 </script>
 <div th:replace="~{fragments/cell-clamp-tooltip :: cellClampTooltip}"></div>

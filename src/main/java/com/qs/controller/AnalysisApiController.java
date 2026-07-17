@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -30,6 +31,12 @@ public class AnalysisApiController {
     public AnalysisApiController(AnalysisService analysisService, UserService userService) {
         this.analysisService = analysisService;
         this.userService = userService;
+    }
+
+    /** 按系统（分析项目）加载功能菜单标题；未传 projectId 时返回空列表 */
+    @GetMapping("/menus")
+    public List<String> menus(@RequestParam(required = false) List<String> projectId) {
+        return analysisService.listMenuTitlesByProjectIds(projectId);
     }
 
     @GetMapping("/{projectId}/tree")
