@@ -45,6 +45,7 @@
                                 <div class="table-actions">
                                     <a th:href="@{/analysis/{id}(id=${item.id})}" class="btn btn-outline-primary btn-sm">进入</a>
                                     <a th:href="@{/analysis/{id}/export(id=${item.id})}" class="btn btn-outline-secondary btn-sm">导出</a>
+                                    <a th:href="@{/analysis/{id}/export-excel(id=${item.id})}" class="btn btn-outline-success btn-sm" title="按合并层级样式导出 Excel">导出Excel</a>
                                     <form th:action="@{/analysis/{id}/delete(id=${item.id})}" method="post" class="d-inline"
                                           onsubmit="return confirm('确定删除该项目及全部流程？');">
                                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
