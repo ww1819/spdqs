@@ -27,6 +27,10 @@ public class FlowNode {
     @Column(name = "TITLE", nullable = false, length = 200)
     private String title;
 
+    /** 拼音首字母简码（大写），由 TITLE 生成，供检索 */
+    @Column(name = "PINYIN_CODE", length = 100)
+    private String pinyinCode;
+
     @Lob
     @Column(name = "DESCRIPTION")
     private String description;
@@ -90,6 +94,14 @@ public class FlowNode {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getPinyinCode() {
+        return pinyinCode;
+    }
+
+    public void setPinyinCode(String pinyinCode) {
+        this.pinyinCode = pinyinCode;
     }
 
     public String getDescription() {

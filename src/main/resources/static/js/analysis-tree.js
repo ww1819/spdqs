@@ -24,6 +24,7 @@
     let activeNodeId = null;
     let popupNode = null;
     let editingNode = null;
+    let searchKeyword = '';
     let currentView = localStorage.getItem('spdqs-analysis-view') || 'tree';
 
     function csrfHeaders() {
@@ -111,12 +112,45 @@
         }
     }
 
+    function nodeMatchesKeyword(node, kw) {
+        if (!kw) return true;
+        const q = kw.toLowerCase();
+        const title = String(node.title || '').toLowerCase();
+        const py = String(node.pinyinCode || '').toLowerCase();
+        return title.includes(q) || py.includes(q);
+    }
+
+    /** 保留匹配节点及其祖先，便于树/合并层级仍可读 */
+    function filterTreeByKeyword(node, kw) {
+        if (!node) return null;
+        if (!kw) return node;
+        const children = (node.children || [])
+            .map((c) => filterTreeByKeyword(c, kw))
+            .filter(Boolean);
+        if (nodeMatchesKeyword(node, kw) || children.length > 0) {
+            return Object.assign({}, node, { children: children });
+        }
+        return null;
+    }
+
+    function getDisplayTree() {
+        const kw = (searchKeyword || '').trim();
+        if (!treeData) return null;
+        if (!kw) return treeData;
+        return filterTreeByKeyword(treeData, kw);
+    }
+
     function renderTree() {
-        if (!treeData || !canvas) return;
+        if (!canvas) return;
+        const display = getDisplayTree();
         canvas.innerHTML = '';
+        if (!display) {
+            canvas.innerHTML = '<div class="flow-loading text-muted">无匹配流程，请调整检索条件</div>';
+            return;
+        }
         const root = document.createElement('div');
         root.className = 'flow-tree-root';
-        root.appendChild(renderNode(treeData));
+        root.appendChild(renderNode(display));
         canvas.appendChild(root);
         requestAnimationFrame(() => requestAnimationFrame(drawLines));
     }
@@ -352,8 +386,14 @@
     }
 
     function renderMergeTable() {
-        if (!treeData || !mergeHead || !mergeBody) return;
-        const rows = flattenPaths(treeData, []);
+        if (!mergeHead || !mergeBody) return;
+        const display = getDisplayTree();
+        if (!display) {
+            mergeHead.innerHTML = '';
+            mergeBody.innerHTML = '<tr><td class="text-muted">无匹配流程，请调整检索条件</td></tr>';
+            return;
+        }
+        const rows = flattenPaths(display, []);
         const depth = rows.reduce((max, row) => Math.max(max, row.length), 0);
         if (depth === 0) {
             mergeHead.innerHTML = '';
@@ -541,6 +581,12 @@
         const node = editingNode || {};
         document.getElementById('editTitleView').textContent = node.title || '—';
         document.getElementById('editFlowTitle').value = node.title || '';
+        const pyEl = document.getElementById('editPinyinCode');
+        if (pyEl) {
+            pyEl.textContent = node.pinyinCode && String(node.pinyinCode).trim()
+                ? node.pinyinCode
+                : '—';
+        }
         const desc = node.description && String(node.description).trim()
             ? node.description
             : '（暂无功能描述）';
@@ -689,9 +735,6 @@
             }
             treeData = data;
             editingNode = findNodeById(treeData, activeNodeId) || editingNode;
-            if (editingNode) {
-                editingNode.title = title;
-            }
             refreshEditViews();
             renderCurrentView();
             showToast('名称已更新');
@@ -699,6 +742,61 @@
             alert(e.message || '保存失败');
         }
     });
+
+    const searchInput = document.getElementById('flowSearchInput');
+    const btnClearSearch = document.getElementById('btnClearFlowSearch');
+    const btnRebuildPinyin = document.getElementById('btnRebuildPinyin');
+    let searchTimer = null;
+    function applySearch(kw) {
+        searchKeyword = (kw || '').trim();
+        renderCurrentView();
+    }
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => applySearch(searchInput.value), 200);
+        });
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                clearTimeout(searchTimer);
+                applySearch(searchInput.value);
+            }
+        });
+    }
+    if (btnClearSearch) {
+        btnClearSearch.addEventListener('click', () => {
+            if (searchInput) searchInput.value = '';
+            applySearch('');
+            searchInput?.focus();
+        });
+    }
+    if (btnRebuildPinyin) {
+        btnRebuildPinyin.addEventListener('click', async () => {
+            if (!projectId) return;
+            if (!confirm('按当前名称重新生成本项目全部流程的拼音简码？')) return;
+            try {
+                const res = await fetch('/api/analysis/' + encodeURIComponent(projectId) + '/pinyin/rebuild', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: csrfHeaders()
+                });
+                const data = await readJsonResponse(res);
+                if (!res.ok) {
+                    throw new Error(data.error || '生成失败');
+                }
+                treeData = data;
+                if (editingNode && editingNode.id) {
+                    editingNode = findNodeById(treeData, editingNode.id) || editingNode;
+                    refreshEditViews();
+                }
+                renderCurrentView();
+                showToast('拼音简码已重新生成');
+            } catch (e) {
+                alert(e.message || '生成失败');
+            }
+        });
+    }
 
     document.getElementById('btnEditDesc').addEventListener('click', () => {
         document.getElementById('editFlowDesc').value = editingNode?.description || '';

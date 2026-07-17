@@ -12,12 +12,19 @@
                     <p class="header-desc mb-0" th:text="${project.description ?: '流程树画布 — 悬停卡片可操作'}">流程树画布</p>
                 </div>
                 <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <div class="input-group input-group-sm" style="width: 240px;">
+                        <input type="search" class="form-control" id="flowSearchInput"
+                               placeholder="名称 / 拼音简码" autocomplete="off">
+                        <button type="button" class="btn btn-outline-secondary" id="btnClearFlowSearch" title="清除检索">×</button>
+                    </div>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="btnRebuildPinyin" title="按名称重新生成全部简码">生成简码</button>
                     <div class="btn-group btn-group-sm" role="group" aria-label="视图切换">
                         <button type="button" class="btn btn-primary" id="btnViewTree" data-view="tree">树图视图</button>
                         <button type="button" class="btn btn-outline-primary" id="btnViewTable" data-view="table">合并层级</button>
                     </div>
                     <button type="button" class="btn btn-outline-primary btn-sm" id="btnCopyFlow">复制流程</button>
                     <a th:href="@{/analysis/{id}/export(id=${project.id})}" class="btn btn-outline-secondary btn-sm">导出</a>
+                    <a th:href="@{/analysis/{id}/export-excel(id=${project.id})}" class="btn btn-outline-success btn-sm" title="按合并层级样式导出 Excel">导出Excel</a>
                     <a href="/analysis" class="btn btn-outline-secondary btn-sm">返回列表</a>
                 </div>
             </div>
@@ -89,6 +96,7 @@
                     </div>
                     <div id="editTitleView" class="edit-readonly"></div>
                     <input type="text" class="form-control d-none" id="editFlowTitle" placeholder="功能菜单名称">
+                    <div class="form-text mt-2">拼音简码：<span id="editPinyinCode" class="text-body-secondary">—</span>（保存名称时自动更新）</div>
                 </div>
                 <div class="edit-section">
                     <div class="d-flex justify-content-between align-items-center mb-2">

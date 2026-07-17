@@ -7,6 +7,7 @@ public class FlowNodeTreeDto {
 
     private String id;
     private String title;
+    private String pinyinCode;
     private String description;
     private boolean hasDescription;
     private List<FlowNodeTreeDto> children = new ArrayList<>();
@@ -15,8 +16,13 @@ public class FlowNodeTreeDto {
     }
 
     public FlowNodeTreeDto(String id, String title, String description) {
+        this(id, title, null, description);
+    }
+
+    public FlowNodeTreeDto(String id, String title, String pinyinCode, String description) {
         this.id = id;
         this.title = title;
+        this.pinyinCode = pinyinCode;
         this.description = description;
         this.hasDescription = description != null && !description.isBlank();
     }
@@ -35,6 +41,14 @@ public class FlowNodeTreeDto {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getPinyinCode() {
+        return pinyinCode;
+    }
+
+    public void setPinyinCode(String pinyinCode) {
+        this.pinyinCode = pinyinCode;
     }
 
     public String getDescription() {

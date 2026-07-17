@@ -89,6 +89,21 @@ public class AnalysisController {
                 .body(text.getBytes(StandardCharsets.UTF_8));
     }
 
+    /** 合并层级样式 Excel（单元格纵向合并同祖先） */
+    @GetMapping("/{id}/export-excel")
+    public ResponseEntity<byte[]> exportExcel(@PathVariable String id) {
+        AnalysisProject project = analysisService.getProject(id);
+        byte[] bytes = analysisService.exportProjectMergeExcel(id);
+        String filename = project.getName().replaceAll("[\\\\/:*?\"<>|]", "_") + "-合并层级.xlsx";
+        String encoded = URLEncoder.encode(filename, StandardCharsets.UTF_8).replace("+", "%20");
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encoded)
+                .contentType(MediaType.parseMediaType(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(bytes);
+    }
+
     @PostMapping("/{id}/delete")
     public String delete(@PathVariable String id, RedirectAttributes redirectAttributes) {
         try {

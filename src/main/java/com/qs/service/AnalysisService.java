@@ -8,6 +8,7 @@ import com.qs.entity.FlowNodeChangeLog;
 import com.qs.repository.AnalysisProjectRepository;
 import com.qs.repository.FlowNodeChangeLogRepository;
 import com.qs.repository.FlowNodeRepository;
+import com.qs.util.PinyinCodeUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,15 +28,18 @@ public class AnalysisService {
     private final FlowNodeRepository flowNodeRepository;
     private final FlowNodeChangeLogRepository changeLogRepository;
     private final AnalysisTextExporter textExporter;
+    private final AnalysisMergeExcelExporter mergeExcelExporter;
 
     public AnalysisService(AnalysisProjectRepository projectRepository,
                            FlowNodeRepository flowNodeRepository,
                            FlowNodeChangeLogRepository changeLogRepository,
-                           AnalysisTextExporter textExporter) {
+                           AnalysisTextExporter textExporter,
+                           AnalysisMergeExcelExporter mergeExcelExporter) {
         this.projectRepository = projectRepository;
         this.flowNodeRepository = flowNodeRepository;
         this.changeLogRepository = changeLogRepository;
         this.textExporter = textExporter;
+        this.mergeExcelExporter = mergeExcelExporter;
     }
 
     public List<AnalysisProject> listProjects() {
@@ -64,6 +68,7 @@ public class AnalysisService {
         rootNode.setProjectId(project.getId());
         rootNode.setParentId(null);
         rootNode.setTitle(root);
+        rootNode.setPinyinCode(PinyinCodeUtil.toJianpin(root));
         rootNode.setSortOrder(0);
         rootNode.setCreateBy(createBy);
         flowNodeRepository.save(rootNode);
@@ -104,6 +109,7 @@ public class AnalysisService {
         node.setProjectId(parent.getProjectId());
         node.setParentId(parentId);
         node.setTitle(title.trim());
+        node.setPinyinCode(PinyinCodeUtil.toJianpin(title.trim()));
         node.setSortOrder(nextOrder);
         node.setCreateBy(createBy);
         flowNodeRepository.save(node);
@@ -124,6 +130,7 @@ public class AnalysisService {
             String newTitle = title.trim();
             if (!Objects.equals(oldTitle, newTitle)) {
                 node.setTitle(newTitle);
+                node.setPinyinCode(PinyinCodeUtil.toJianpin(newTitle));
                 titleChanged = true;
             }
         }
@@ -151,6 +158,18 @@ public class AnalysisService {
         return getProjectTree(node.getProjectId());
     }
 
+    /** 按当前名称全量重建项目下流程拼音简码 */
+    @Transactional
+    public FlowNodeTreeDto rebuildPinyinCodes(String projectId) {
+        getProject(projectId);
+        List<FlowNode> nodes = flowNodeRepository.findByProjectIdAndDeletedFalseOrderBySortOrderAsc(projectId);
+        for (FlowNode node : nodes) {
+            node.setPinyinCode(PinyinCodeUtil.toJianpin(node.getTitle()));
+        }
+        flowNodeRepository.saveAll(nodes);
+        return getProjectTree(projectId);
+    }
+
     @Transactional
     public FlowNodeTreeDto deleteNode(String nodeId, String deletedBy) {
         FlowNode node = requireActiveNode(nodeId);
@@ -166,6 +185,12 @@ public class AnalysisService {
         AnalysisProject project = getProject(projectId);
         FlowNodeTreeDto tree = getProjectTree(projectId);
         return textExporter.export(project, tree);
+    }
+
+    public byte[] exportProjectMergeExcel(String projectId) {
+        AnalysisProject project = getProject(projectId);
+        FlowNodeTreeDto tree = getProjectTree(projectId);
+        return mergeExcelExporter.export(project, tree);
     }
 
     /** 全部功能菜单标题（去重排序），供工单列表筛选 */
@@ -271,6 +296,7 @@ public class AnalysisService {
             dtoMap.put(node.getId(), new FlowNodeTreeDto(
                     node.getId(),
                     node.getTitle(),
+                    node.getPinyinCode(),
                     node.getDescription()
             ));
             if (node.getParentId() != null) {

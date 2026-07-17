@@ -1,9 +1,13 @@
 package com.qs.config;
 
+import com.qs.util.PinyinCodeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class DatabaseMigrationService {
@@ -34,6 +38,7 @@ public class DatabaseMigrationService {
         migrateAnalysisProjectTable();
         migrateFlowNodeTable();
         migrateFlowNodeDeletedColumns();
+        migrateFlowNodePinyinCodeColumn();
         migrateFlowNodeChangeTable();
         migrateArchiveNodeTable();
         migrateArchiveNodeStageTable();
@@ -332,6 +337,7 @@ public class DatabaseMigrationService {
                    PROJECT_ID VARCHAR(36) NOT NULL,
                    PARENT_ID VARCHAR(36),
                    TITLE VARCHAR(200) NOT NULL,
+                   PINYIN_CODE VARCHAR(100),
                    DESCRIPTION TEXT,
                    SORT_ORDER INT NOT NULL DEFAULT 0,
                    CREATE_BY VARCHAR(50),
@@ -354,6 +360,25 @@ public class DatabaseMigrationService {
         addColumnIfMissing("T_FLOW_NODE", "DELETED_BY", "VARCHAR(50)");
         addColumnIfMissing("T_FLOW_NODE", "DELETED_TIME", "DATETIME");
         jdbcTemplate.update("UPDATE T_FLOW_NODE SET DELETED = 0 WHERE DELETED IS NULL");
+    }
+
+    private void migrateFlowNodePinyinCodeColumn() {
+        if (!tableExists("T_FLOW_NODE")) {
+            return;
+        }
+        addColumnIfMissing("T_FLOW_NODE", "PINYIN_CODE", "VARCHAR(100)");
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
+                "SELECT ID, TITLE FROM T_FLOW_NODE WHERE PINYIN_CODE IS NULL OR TRIM(PINYIN_CODE) = ''");
+        int updated = 0;
+        for (Map<String, Object> row : rows) {
+            String id = String.valueOf(row.get("ID"));
+            String title = row.get("TITLE") == null ? "" : String.valueOf(row.get("TITLE"));
+            String code = PinyinCodeUtil.toJianpin(title);
+            updated += jdbcTemplate.update("UPDATE T_FLOW_NODE SET PINYIN_CODE = ? WHERE ID = ?", code, id);
+        }
+        if (updated > 0) {
+            log.info("已回填流程拼音简码 {} 条", updated);
+        }
     }
 
     private void migrateFlowNodeChangeTable() {

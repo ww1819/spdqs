@@ -42,6 +42,12 @@ public class AnalysisApiController {
         return analysisService.exportProjectText(projectId);
     }
 
+    /** 按名称全量重建本项目流程拼音简码 */
+    @PostMapping("/{projectId}/pinyin/rebuild")
+    public FlowNodeTreeDto rebuildPinyin(@PathVariable String projectId) {
+        return analysisService.rebuildPinyinCodes(projectId);
+    }
+
     @PostMapping("/nodes")
     public FlowNodeTreeDto createNode(@RequestBody CreateFlowNodeRequest request,
                                       @AuthenticationPrincipal UserDetails userDetails) {
