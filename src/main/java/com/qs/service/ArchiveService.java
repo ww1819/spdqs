@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class ArchiveService {
@@ -34,8 +35,13 @@ public class ArchiveService {
     }
 
     public List<ArchiveView> listAll(String statusFilter, String keyword) {
+        return listAll(statusFilter, keyword, null);
+    }
+
+    public List<ArchiveView> listAll(String statusFilter, String keyword, Set<String> allowedArchiveIds) {
         String kw = normalize(keyword);
         return archiveRepository.findAllByOrderByCreateTimeDesc().stream()
+                .filter(a -> allowedArchiveIds == null || allowedArchiveIds.contains(a.getId()))
                 .map(this::toView)
                 .filter(view -> statusFilter == null || statusFilter.isBlank()
                         || view.getStatusLabel().equals(statusFilter))
@@ -44,11 +50,16 @@ public class ArchiveService {
     }
 
     public List<ArchiveView> listAll(String statusFilter) {
-        return listAll(statusFilter, null);
+        return listAll(statusFilter, null, null);
     }
 
     public List<ArchiveOptionDto> listOptions() {
+        return listOptions(null);
+    }
+
+    public List<ArchiveOptionDto> listOptions(Set<String> allowedArchiveIds) {
         return archiveRepository.findAllByOrderByCreateTimeDesc().stream()
+                .filter(a -> allowedArchiveIds == null || allowedArchiveIds.contains(a.getId()))
                 .map(archive -> {
                     ArchiveStatus status = calculateStatus(archive);
                     long days = calculateDaysToExpire(archive.getMaintExpireDate());

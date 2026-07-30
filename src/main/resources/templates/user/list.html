@@ -7,7 +7,7 @@
     <main class="app-main">
         <header class="app-header">
             <h1>账号管理</h1>
-            <p class="header-desc">审核注册账号、启用停用与修改账号信息</p>
+            <p class="header-desc">审核注册账号、启用停用、修改信息与权限授权</p>
         </header>
         <div class="app-content">
             <div th:replace="~{fragments/page-header :: alerts}"></div>
@@ -36,6 +36,7 @@
                             <td th:text="${#temporals.format(u.createTime, 'yyyy-MM-dd HH:mm')}">时间</td>
                             <td class="cell-actions">
                                 <a th:href="@{/users/{id}/edit(id=${u.id})}">编辑</a>
+                                <a th:href="@{/users/{id}/permissions(id=${u.id})}">授权</a>
                                 <form th:if="${!u.enabled}" th:action="@{/users/{id}/enable(id=${u.id})}" method="post" class="d-inline">
                                     <button type="submit" class="btn btn-link btn-sm p-0 border-0">启用</button>
                                 </form>

@@ -1,9 +1,12 @@
 package com.qs.config;
 
+import com.qs.enums.MenuCode;
+import com.qs.service.PermissionService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
@@ -11,6 +14,7 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Set;
 
 @Component
 public class RememberLoginSuccessHandler implements AuthenticationSuccessHandler {
@@ -20,6 +24,12 @@ public class RememberLoginSuccessHandler implements AuthenticationSuccessHandler
     public static final String PARAM_REMEMBER = "rememberMe";
 
     private static final int MAX_AGE_SECONDS = (int) Duration.ofDays(30).toSeconds();
+
+    private final PermissionService permissionService;
+
+    public RememberLoginSuccessHandler(PermissionService permissionService) {
+        this.permissionService = permissionService;
+    }
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -33,7 +43,25 @@ public class RememberLoginSuccessHandler implements AuthenticationSuccessHandler
             clearCookie(response, COOKIE_USER);
             clearCookie(response, COOKIE_PASS);
         }
-        response.sendRedirect(request.getContextPath() + "/dashboard");
+        response.sendRedirect(request.getContextPath() + resolveHomePath(authentication));
+    }
+
+    private String resolveHomePath(Authentication authentication) {
+        String username = authentication.getName();
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof UserDetails userDetails) {
+            username = userDetails.getUsername();
+        }
+        Set<String> menus = permissionService.getMenuCodesByUsername(username);
+        if (menus.contains(MenuCode.DASHBOARD.getCode())) {
+            return "/dashboard";
+        }
+        for (MenuCode menu : MenuCode.allMenus()) {
+            if (menus.contains(menu.getCode())) {
+                return menu.getPathPrefix();
+            }
+        }
+        return "/profile";
     }
 
     static boolean isRememberRequested(HttpServletRequest request) {

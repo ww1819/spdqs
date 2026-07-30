@@ -7,26 +7,34 @@
         <span class="sidebar-brand-text">档案工单系统</span>
     </div>
     <nav class="sidebar-nav">
-        <a class="sidebar-link" th:classappend="${activeTab == 'dashboard'} ? 'active'" href="/dashboard">
+        <a class="sidebar-link" th:if="${allowedMenus != null and allowedMenus.contains('dashboard')}"
+           th:classappend="${activeTab == 'dashboard'} ? 'active'" href="/dashboard">
             <span class="sidebar-icon">▣</span> 工作台
         </a>
-        <a class="sidebar-link" th:classappend="${activeTab == 'archives'} ? 'active'" href="/archives">
+        <a class="sidebar-link" th:if="${allowedMenus != null and allowedMenus.contains('archives')}"
+           th:classappend="${activeTab == 'archives'} ? 'active'" href="/archives">
             <span class="sidebar-icon">☰</span> 档案列表
         </a>
-        <a class="sidebar-link" th:classappend="${activeTab == 'tickets'} ? 'active'" href="/tickets">
+        <a class="sidebar-link" th:if="${allowedMenus != null and allowedMenus.contains('tickets')}"
+           th:classappend="${activeTab == 'tickets'} ? 'active'" href="/tickets">
             <span class="sidebar-icon">☷</span> 工单列表
         </a>
-        <a class="sidebar-link" th:classappend="${activeTab == 'analysis'} ? 'active'" href="/analysis">
+        <a class="sidebar-link" th:if="${allowedMenus != null and allowedMenus.contains('analysis')}"
+           th:classappend="${activeTab == 'analysis'} ? 'active'" href="/analysis">
             <span class="sidebar-icon">◇</span> 项目分析
         </a>
-        <a class="sidebar-link" th:classappend="${activeTab == 'users'} ? 'active'" href="/users">
+        <a class="sidebar-link" th:if="${allowedMenus != null and allowedMenus.contains('users')}"
+           th:classappend="${activeTab == 'users'} ? 'active'" href="/users">
             <span class="sidebar-icon">👤</span> 账号管理
         </a>
-        <div class="sidebar-divider"></div>
-        <a class="sidebar-link sidebar-link-sub" href="/archives/new">
+        <div class="sidebar-divider"
+             th:if="${allowedMenus != null and (allowedMenus.contains('archives') or allowedMenus.contains('tickets'))}"></div>
+        <a class="sidebar-link sidebar-link-sub" th:if="${allowedMenus != null and allowedMenus.contains('archives')}"
+           href="/archives/new">
             <span class="sidebar-icon">+</span> 新建档案
         </a>
-        <a class="sidebar-link sidebar-link-sub" href="/tickets/new">
+        <a class="sidebar-link sidebar-link-sub" th:if="${allowedMenus != null and allowedMenus.contains('tickets')}"
+           href="/tickets/new">
             <span class="sidebar-icon">+</span> 新建工单
         </a>
     </nav>

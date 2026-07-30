@@ -1,27 +1,36 @@
 package com.qs.controller;
 
 import com.qs.entity.User;
+import com.qs.enums.MenuCode;
+import com.qs.service.ArchiveService;
+import com.qs.service.PermissionService;
 import com.qs.service.UserService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.List;
+
 @Controller
 @RequestMapping("/users")
 public class UserController {
 
     private final UserService userService;
+    private final PermissionService permissionService;
+    private final ArchiveService archiveService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, PermissionService permissionService,
+                          ArchiveService archiveService) {
         this.userService = userService;
+        this.permissionService = permissionService;
+        this.archiveService = archiveService;
     }
 
     @GetMapping
@@ -39,6 +48,35 @@ public class UserController {
         model.addAttribute("user", userService.getById(id));
         model.addAttribute("activeTab", "users");
         return "user/form";
+    }
+
+    @GetMapping("/{id}/permissions")
+    public String permissionsForm(@PathVariable String id, Model model,
+                                  @AuthenticationPrincipal UserDetails userDetails) {
+        addUserToModel(model, userDetails);
+        User user = userService.getById(id);
+        model.addAttribute("user", user);
+        model.addAttribute("allMenus", MenuCode.allMenus());
+        model.addAttribute("selectedMenus", permissionService.getMenuCodes(user.getId()));
+        model.addAttribute("archives", archiveService.listOptions());
+        model.addAttribute("selectedArchives", permissionService.getAssignedArchiveIds(user.getId()));
+        model.addAttribute("activeTab", "users");
+        return "user/permissions";
+    }
+
+    @PostMapping("/{id}/permissions")
+    public String savePermissions(@PathVariable String id,
+                                  @RequestParam(required = false) List<String> menus,
+                                  @RequestParam(required = false) List<String> archives,
+                                  RedirectAttributes redirectAttributes) {
+        try {
+            permissionService.savePermissions(id, menus, archives);
+            redirectAttributes.addFlashAttribute("success", "权限已保存");
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+            return "redirect:/users/" + id + "/permissions";
+        }
+        return "redirect:/users";
     }
 
     @PostMapping("/save")

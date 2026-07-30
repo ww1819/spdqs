@@ -42,6 +42,8 @@ public class DatabaseMigrationService {
         migrateFlowNodeChangeTable();
         migrateArchiveNodeTable();
         migrateArchiveNodeStageTable();
+        migrateUserMenuPermTable();
+        migrateUserArchivePermTable();
         log.info("数据库结构检查完成");
     }
 
@@ -456,6 +458,43 @@ public class DatabaseMigrationService {
                     """, names[i], i, colors[i]);
         }
         log.info("已初始化默认项目节点阶段");
+    }
+
+    private void migrateUserMenuPermTable() {
+        if (tableExists("T_USER_MENU_PERM")) {
+            return;
+        }
+        log.info("创建表 T_USER_MENU_PERM");
+        jdbcTemplate.execute("""
+                CREATE TABLE T_USER_MENU_PERM (
+                   ID VARCHAR(36) NOT NULL,
+                   USER_ID VARCHAR(36) NOT NULL,
+                   MENU_CODE VARCHAR(50) NOT NULL,
+                   CREATE_TIME DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                   PRIMARY KEY (ID),
+                   UNIQUE KEY UK_USER_MENU (USER_ID, MENU_CODE),
+                   KEY IDX_USER_MENU_USER (USER_ID)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """);
+    }
+
+    private void migrateUserArchivePermTable() {
+        if (tableExists("T_USER_ARCHIVE_PERM")) {
+            return;
+        }
+        log.info("创建表 T_USER_ARCHIVE_PERM");
+        jdbcTemplate.execute("""
+                CREATE TABLE T_USER_ARCHIVE_PERM (
+                   ID VARCHAR(36) NOT NULL,
+                   USER_ID VARCHAR(36) NOT NULL,
+                   ARCHIVE_ID VARCHAR(36) NOT NULL,
+                   CREATE_TIME DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                   PRIMARY KEY (ID),
+                   UNIQUE KEY UK_USER_ARCHIVE (USER_ID, ARCHIVE_ID),
+                   KEY IDX_USER_ARCHIVE_USER (USER_ID),
+                   KEY IDX_USER_ARCHIVE_ARCHIVE (ARCHIVE_ID)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """);
     }
 
     private void createIndexIfMissing(String table, String indexName, String ddl) {

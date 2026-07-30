@@ -12,6 +12,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 public class DashboardService {
@@ -28,9 +29,13 @@ public class DashboardService {
     }
 
     public DashboardView build(String currentUser) {
+        return build(currentUser, null);
+    }
+
+    public DashboardView build(String currentUser, Set<String> allowedArchiveIds) {
         reminderService.checkAndCreateNow();
 
-        List<ArchiveView> allArchives = archiveService.listAll(null);
+        List<ArchiveView> allArchives = archiveService.listAll(null, null, allowedArchiveIds);
         List<ArchiveView> maintAlerts = allArchives.stream()
                 .filter(v -> v.getStatus() == ArchiveStatus.EXPIRING_SOON
                         || v.getStatus() == ArchiveStatus.EXPIRED)
@@ -43,21 +48,31 @@ public class DashboardService {
             statusCounts.put(status.getLabel(), count);
         }
 
-        List<Ticket> allTickets = ticketService.listAll();
-        long activeTickets = allTickets.stream()
+        List<Ticket> scopedTickets = ticketService.listAll().stream()
+                .filter(t -> allowedArchiveIds == null
+                        || (t.getArchive() != null && allowedArchiveIds.contains(t.getArchive().getId())))
+                .toList();
+        long activeTickets = scopedTickets.stream()
                 .filter(t -> TicketStatus.isActive(t.getStatus()))
                 .count();
-        long completedTickets = allTickets.stream()
+        long completedTickets = scopedTickets.stream()
                 .filter(t -> TicketStatus.COMPLETED.getLabel().equals(t.getStatus()))
                 .count();
         List<Ticket> recentTickets = ticketService.listForDashboard().stream()
+                .filter(t -> allowedArchiveIds == null
+                        || (t.getArchive() != null && allowedArchiveIds.contains(t.getArchive().getId())))
                 .limit(20)
                 .toList();
 
         List<Ticket> myTodos = ticketService.findMyTodos(currentUser).stream()
+                .filter(t -> allowedArchiveIds == null
+                        || (t.getArchive() != null && allowedArchiveIds.contains(t.getArchive().getId())))
                 .sorted(TicketService.dashboardTicketOrder())
                 .toList();
-        List<Ticket> todayFollowUps = ticketService.findTodayFollowUps();
+        List<Ticket> todayFollowUps = ticketService.findTodayFollowUps().stream()
+                .filter(t -> allowedArchiveIds == null
+                        || (t.getArchive() != null && allowedArchiveIds.contains(t.getArchive().getId())))
+                .toList();
         List<Reminder> unread = reminderService.listUnread(currentUser);
 
         return new DashboardView(maintAlerts, myTodos, todayFollowUps, unread,

@@ -16,10 +16,13 @@ public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final PermissionService permissionService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder,
+                       PermissionService permissionService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.permissionService = permissionService;
     }
 
     @Override
@@ -58,6 +61,7 @@ public class UserService implements UserDetailsService {
         user.setPassword(passwordEncoder.encode(rawPassword));
         user.setEnabled(false);
         userRepository.save(user);
+        permissionService.grantDefaultMenus(user.getId());
     }
 
     @Transactional
@@ -69,6 +73,8 @@ public class UserService implements UserDetailsService {
             user.setPassword(passwordEncoder.encode(rawPassword));
             user.setEnabled(true);
             userRepository.save(user);
+            permissionService.grantAllMenus(user.getId());
+            permissionService.grantAllArchives(user.getId());
         }
     }
 

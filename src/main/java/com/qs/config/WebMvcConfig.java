@@ -8,9 +8,12 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebMvcConfig implements WebMvcConfigurer {
 
     private final AccountStatusInterceptor accountStatusInterceptor;
+    private final PermissionInterceptor permissionInterceptor;
 
-    public WebMvcConfig(AccountStatusInterceptor accountStatusInterceptor) {
+    public WebMvcConfig(AccountStatusInterceptor accountStatusInterceptor,
+                        PermissionInterceptor permissionInterceptor) {
         this.accountStatusInterceptor = accountStatusInterceptor;
+        this.permissionInterceptor = permissionInterceptor;
     }
 
     @Override
@@ -21,6 +24,20 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/login",
                         "/register",
                         "/logout",
+                        "/css/**",
+                        "/js/**",
+                        "/favicon.ico",
+                        "/favicon.svg",
+                        "/error"
+                );
+        registry.addInterceptor(permissionInterceptor)
+                .addPathPatterns("/**")
+                .excludePathPatterns(
+                        "/login",
+                        "/register",
+                        "/logout",
+                        "/profile",
+                        "/profile/**",
                         "/css/**",
                         "/js/**",
                         "/favicon.ico",

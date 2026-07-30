@@ -12,6 +12,8 @@ import com.qs.service.ArchiveAttachmentService;
 
 import com.qs.service.ArchiveService;
 
+import com.qs.service.PermissionService;
+
 import com.qs.service.TicketService;
 
 import com.qs.service.UserService;
@@ -48,6 +50,8 @@ import java.util.Arrays;
 
 import java.util.List;
 
+import java.util.Set;
+
 
 
 @Controller
@@ -66,11 +70,14 @@ public class ArchiveController {
 
     private final ArchiveAttachmentService attachmentService;
 
+    private final PermissionService permissionService;
+
 
 
     public ArchiveController(ArchiveService archiveService, TicketService ticketService,
 
-                             UserService userService, ArchiveAttachmentService attachmentService) {
+                             UserService userService, ArchiveAttachmentService attachmentService,
+                             PermissionService permissionService) {
 
         this.archiveService = archiveService;
 
@@ -79,6 +86,8 @@ public class ArchiveController {
         this.userService = userService;
 
         this.attachmentService = attachmentService;
+
+        this.permissionService = permissionService;
 
     }
 
@@ -96,9 +105,11 @@ public class ArchiveController {
 
         addUserToModel(model, userDetails);
 
+        Set<String> allowed = permissionService.getAllowedArchiveIds(userDetails.getUsername());
+
         model.addAttribute("returnUrl", "/archives");
 
-        model.addAttribute("archives", archiveService.listAll(status, keyword));
+        model.addAttribute("archives", archiveService.listAll(status, keyword, allowed));
 
         model.addAttribute("statusFilter", status);
 
@@ -136,6 +147,8 @@ public class ArchiveController {
 
                          @AuthenticationPrincipal UserDetails userDetails) {
 
+        ensureArchiveAccess(userDetails, id);
+
         addUserToModel(model, userDetails);
 
         model.addAttribute("view", archiveService.getView(id));
@@ -160,6 +173,8 @@ public class ArchiveController {
 
                         @AuthenticationPrincipal UserDetails userDetails) {
 
+        ensureArchiveAccess(userDetails, id);
+
         addUserToModel(model, userDetails);
 
         model.addAttribute("view", archiveService.getView(id));
@@ -181,6 +196,8 @@ public class ArchiveController {
     public String editForm(@PathVariable String id, Model model,
 
                            @AuthenticationPrincipal UserDetails userDetails) {
+
+        ensureArchiveAccess(userDetails, id);
 
         addUserToModel(model, userDetails);
 
@@ -204,7 +221,11 @@ public class ArchiveController {
 
                        RedirectAttributes redirectAttributes) {
 
-        if (archive.getId() != null && !archive.getId().isBlank()) {
+        boolean isNew = archive.getId() == null || archive.getId().isBlank();
+
+        if (!isNew) {
+
+            ensureArchiveAccess(userDetails, archive.getId());
 
             Archive existing = archiveService.getById(archive.getId());
 
@@ -223,6 +244,18 @@ public class ArchiveController {
         }
 
         Archive saved = archiveService.save(archive);
+
+        if (isNew) {
+
+            var user = userService.findByUsername(userDetails.getUsername());
+
+            if (user != null) {
+
+                permissionService.grantArchiveToUser(user.getId(), saved.getId());
+
+            }
+
+        }
 
         redirectAttributes.addFlashAttribute("success", "档案保存成功，可继续上传附件");
 
@@ -308,7 +341,11 @@ public class ArchiveController {
 
     @PostMapping("/{id}/delete")
 
-    public String delete(@PathVariable String id, RedirectAttributes redirectAttributes) {
+    public String delete(@PathVariable String id,
+                         @AuthenticationPrincipal UserDetails userDetails,
+                         RedirectAttributes redirectAttributes) {
+
+        ensureArchiveAccess(userDetails, id);
 
         archiveService.delete(id);
 
@@ -335,6 +372,18 @@ public class ArchiveController {
             var user = userService.findByUsername(userDetails.getUsername());
 
             model.addAttribute("currentUser", user != null ? user.getDisplayName() : userDetails.getUsername());
+
+        }
+
+    }
+
+
+
+    private void ensureArchiveAccess(UserDetails userDetails, String archiveId) {
+
+        if (userDetails == null || !permissionService.canAccessArchive(userDetails.getUsername(), archiveId)) {
+
+            throw new IllegalArgumentException("无权访问该医院/项目档案");
 
         }
 
