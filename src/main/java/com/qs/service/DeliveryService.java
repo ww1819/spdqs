@@ -9,10 +9,10 @@ import com.qs.entity.Delivery;
 import com.qs.entity.Product;
 import com.qs.enums.DeliveryStatus;
 import com.qs.repository.CustomerRepository;
-import com.qs.repository.DeliveryNodeRepository;
 import com.qs.repository.DeliveryRepository;
 import com.qs.repository.ProductRepository;
 import com.qs.repository.TicketRepository;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,20 +36,20 @@ public class DeliveryService {
     private final ProductRepository productRepository;
     private final TicketRepository ticketRepository;
     private final DeliveryAttachmentService attachmentService;
-    private final DeliveryNodeRepository deliveryNodeRepository;
+    private final DeliveryNodeService deliveryNodeService;
 
     public DeliveryService(DeliveryRepository deliveryRepository,
                            CustomerRepository customerRepository,
                            ProductRepository productRepository,
                            TicketRepository ticketRepository,
                            DeliveryAttachmentService attachmentService,
-                           DeliveryNodeRepository deliveryNodeRepository) {
+                           @Lazy DeliveryNodeService deliveryNodeService) {
         this.deliveryRepository = deliveryRepository;
         this.customerRepository = customerRepository;
         this.productRepository = productRepository;
         this.ticketRepository = ticketRepository;
         this.attachmentService = attachmentService;
-        this.deliveryNodeRepository = deliveryNodeRepository;
+        this.deliveryNodeService = deliveryNodeService;
     }
 
     public List<DeliveryView> listAll(String statusFilter, String keyword, Set<String> allowedDeliveryIds) {
@@ -138,7 +138,7 @@ public class DeliveryService {
         } catch (IOException ex) {
             throw new IllegalStateException("删除交付附件失败", ex);
         }
-        deliveryNodeRepository.deleteByDeliveryId(id);
+        deliveryNodeService.deleteByDeliveryId(id);
         ticketRepository.findAllWithDelivery().stream()
                 .filter(t -> t.getDelivery().getId().equals(id))
                 .forEach(t -> ticketRepository.deleteById(t.getId()));

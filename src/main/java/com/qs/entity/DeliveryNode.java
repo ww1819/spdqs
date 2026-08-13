@@ -53,6 +53,15 @@ public class DeliveryNode {
     @Column(name = "CREATE_TIME", nullable = false)
     private LocalDateTime createTime;
 
+    @Column(name = "CONFIRMED", nullable = false)
+    private boolean confirmed;
+
+    @Column(name = "CONFIRMED_BY", length = 50)
+    private String confirmedBy;
+
+    @Column(name = "CONFIRMED_TIME")
+    private LocalDateTime confirmedTime;
+
     @PrePersist
     public void prePersist() {
         if (id == null || id.isBlank()) {
@@ -152,6 +161,30 @@ public class DeliveryNode {
 
     public void setCreateTime(LocalDateTime createTime) {
         this.createTime = createTime;
+    }
+
+    public boolean isConfirmed() {
+        return confirmed;
+    }
+
+    public void setConfirmed(boolean confirmed) {
+        this.confirmed = confirmed;
+    }
+
+    public String getConfirmedBy() {
+        return confirmedBy;
+    }
+
+    public void setConfirmedBy(String confirmedBy) {
+        this.confirmedBy = confirmedBy;
+    }
+
+    public LocalDateTime getConfirmedTime() {
+        return confirmedTime;
+    }
+
+    public void setConfirmedTime(LocalDateTime confirmedTime) {
+        this.confirmedTime = confirmedTime;
     }
 
     public boolean isRange() {

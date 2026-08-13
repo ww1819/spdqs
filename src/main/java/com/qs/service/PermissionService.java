@@ -168,9 +168,10 @@ public class PermissionService {
                     grantDefaultMenus(user.getId());
                 }
             } else {
-                // 存量账号：有档案权限则补使用单位；有账号管理则补服务商
+                // 存量账号：有产品交付则补使用单位+服务商；有账号管理再兜底补一次
                 if (menuPermRepository.existsByUserIdAndMenuCode(user.getId(), MenuCode.ARCHIVES.getCode())) {
                     grantMenuIfAbsent(user.getId(), MenuCode.CUSTOMERS);
+                    grantMenuIfAbsent(user.getId(), MenuCode.PARTNERS);
                 }
                 if (menuPermRepository.existsByUserIdAndMenuCode(user.getId(), MenuCode.USERS.getCode())) {
                     grantMenuIfAbsent(user.getId(), MenuCode.CUSTOMERS);

@@ -1,6 +1,7 @@
 package com.qs.dto;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class DeliveryNodeDto {
 
@@ -16,6 +17,11 @@ public class DeliveryNodeDto {
     private boolean range;
     private String dateLabel;
     private String statusLabel;
+    private boolean confirmed;
+    private String confirmedBy;
+    private LocalDateTime confirmedTime;
+    private int attachmentCount;
+    private int memoCount;
 
     public String getId() {
         return id;
@@ -111,5 +117,45 @@ public class DeliveryNodeDto {
 
     public void setStatusLabel(String statusLabel) {
         this.statusLabel = statusLabel;
+    }
+
+    public boolean isConfirmed() {
+        return confirmed;
+    }
+
+    public void setConfirmed(boolean confirmed) {
+        this.confirmed = confirmed;
+    }
+
+    public String getConfirmedBy() {
+        return confirmedBy;
+    }
+
+    public void setConfirmedBy(String confirmedBy) {
+        this.confirmedBy = confirmedBy;
+    }
+
+    public LocalDateTime getConfirmedTime() {
+        return confirmedTime;
+    }
+
+    public void setConfirmedTime(LocalDateTime confirmedTime) {
+        this.confirmedTime = confirmedTime;
+    }
+
+    public int getAttachmentCount() {
+        return attachmentCount;
+    }
+
+    public void setAttachmentCount(int attachmentCount) {
+        this.attachmentCount = attachmentCount;
+    }
+
+    public int getMemoCount() {
+        return memoCount;
+    }
+
+    public void setMemoCount(int memoCount) {
+        this.memoCount = memoCount;
     }
 }

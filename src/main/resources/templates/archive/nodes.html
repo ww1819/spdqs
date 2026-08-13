@@ -72,6 +72,9 @@
                                 <th>类型</th>
                                 <th>时间</th>
                                 <th>状态</th>
+                                <th>确认</th>
+                                <th>附件</th>
+                                <th>备忘</th>
                                 <th>备注</th>
                                 <th>操作</th>
                             </tr>
@@ -121,7 +124,7 @@
                         <input type="date" id="nodeStartDate" class="form-control" required>
                     </div>
                     <div class="col-md-6" id="endDateWrap">
-                        <label class="form-label">结束日期 <span class="text-danger">*</span></label>
+                        <label class="form-label">结束日期 <span class="text-secondary small">（可空=至今）</span></label>
                         <input type="date" id="nodeEndDate" class="form-control">
                     </div>
                 </div>
@@ -165,6 +168,90 @@
                     <tbody id="stageManageBody"></tbody>
                 </table>
                 <div class="form-text mt-2">可拖拽左侧把手调整顺序；也可手动改序号。输入小数（如 1.55）表示插入到整数位之间：小数进位为整数，其后阶段序号自动 +1。重命名会同步更新已有节点；删除前需确保没有节点在使用该阶段。</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="nodeChangesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="nodeChangesTitle">修改记录</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="nodeChangesEmpty" class="text-muted">暂无修改记录</div>
+                <div class="table-responsive">
+                    <table class="data-table" id="nodeChangesTable">
+                        <thead>
+                        <tr>
+                            <th>字段</th>
+                            <th>原值</th>
+                            <th>新值</th>
+                            <th>修改人</th>
+                            <th>时间</th>
+                        </tr>
+                        </thead>
+                        <tbody id="nodeChangesBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="nodeFilesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="nodeFilesTitle">节点附件</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label small">上传附件</label>
+                    <div class="d-flex gap-2 align-items-center">
+                        <input type="file" id="nodeFilesInput" class="form-control form-control-sm" multiple>
+                        <button type="button" class="btn btn-outline-primary btn-sm text-nowrap" id="btnUploadNodeFiles">上传</button>
+                    </div>
+                    <div class="form-text">单个最大 50MB；确认存档后不可删除</div>
+                </div>
+                <div id="nodeFilesEmpty" class="text-muted">暂无附件</div>
+                <ul class="attachment-file-list" id="nodeFilesList"></ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="nodeMemosModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="nodeMemosTitle">节点备忘录</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label small">追加情况说明</label>
+                    <textarea id="nodeMemoContent" class="form-control" rows="3"
+                              placeholder="节点确认后仍可补录本阶段情况"></textarea>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <div class="form-text mb-0">确认后不可删除；节点已确认固化后仍可继续追加</div>
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="btnAddNodeMemo">添加</button>
+                    </div>
+                </div>
+                <div id="nodeMemosEmpty" class="text-muted">暂无备忘录</div>
+                <ul class="attachment-file-list" id="nodeMemosList"></ul>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">关闭</button>

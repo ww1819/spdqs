@@ -8,7 +8,9 @@ import com.qs.repository.DeliveryNodeRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -17,12 +19,21 @@ public class DeliveryNodeService {
     private final DeliveryNodeRepository deliveryNodeRepository;
     private final DeliveryService deliveryService;
     private final ArchiveNodeStageService stageService;
+    private final DeliveryNodeChangeLogService changeLogService;
+    private final DeliveryNodeAttachmentService attachmentService;
+    private final DeliveryNodeMemoService memoService;
 
     public DeliveryNodeService(DeliveryNodeRepository deliveryNodeRepository, DeliveryService deliveryService,
-                               ArchiveNodeStageService stageService) {
+                               ArchiveNodeStageService stageService,
+                               DeliveryNodeChangeLogService changeLogService,
+                               DeliveryNodeAttachmentService attachmentService,
+                               DeliveryNodeMemoService memoService) {
         this.deliveryNodeRepository = deliveryNodeRepository;
         this.deliveryService = deliveryService;
         this.stageService = stageService;
+        this.changeLogService = changeLogService;
+        this.attachmentService = attachmentService;
+        this.memoService = memoService;
     }
 
     public List<DeliveryNodeDto> listByDeliveryId(String deliveryId) {
@@ -30,6 +41,16 @@ public class DeliveryNodeService {
         return deliveryNodeRepository.findByDeliveryIdOrderByStartDateAscSortOrderAsc(deliveryId).stream()
                 .map(this::toDto)
                 .toList();
+    }
+
+    public DeliveryNode getOwnedNode(String deliveryId, String nodeId) {
+        deliveryService.getById(deliveryId);
+        DeliveryNode node = deliveryNodeRepository.findById(nodeId)
+                .orElseThrow(() -> new IllegalArgumentException("节点不存在"));
+        if (!deliveryId.equals(node.getDeliveryId())) {
+            throw new IllegalArgumentException("节点不属于该产品交付");
+        }
+        return node;
     }
 
     @Transactional
@@ -45,33 +66,70 @@ public class DeliveryNodeService {
     }
 
     @Transactional
-    public List<DeliveryNodeDto> update(String deliveryId, String nodeId, DeliveryNodeRequest request) {
+    public List<DeliveryNodeDto> update(String deliveryId, String nodeId, DeliveryNodeRequest request,
+                                        String changeBy) {
         DeliveryNode node = getOwnedNode(deliveryId, nodeId);
+        DeliveryNode before = snapshot(node);
         applyRequest(node, request);
+        changeLogService.recordUpdates(before, node, changeBy);
         deliveryNodeRepository.save(node);
+        return listByDeliveryId(deliveryId);
+    }
+
+    @Transactional
+    public List<DeliveryNodeDto> confirm(String deliveryId, String nodeId, String confirmedBy) {
+        DeliveryNode node = getOwnedNode(deliveryId, nodeId);
+        if (!node.isConfirmed()) {
+            node.setConfirmed(true);
+            node.setConfirmedBy(confirmedBy);
+            node.setConfirmedTime(LocalDateTime.now());
+            deliveryNodeRepository.save(node);
+        }
         return listByDeliveryId(deliveryId);
     }
 
     @Transactional
     public List<DeliveryNodeDto> delete(String deliveryId, String nodeId) {
         DeliveryNode node = getOwnedNode(deliveryId, nodeId);
+        if (node.isConfirmed()) {
+            throw new IllegalArgumentException("节点已确认，不可删除");
+        }
+        try {
+            attachmentService.deleteByNodeId(nodeId);
+        } catch (IOException ex) {
+            throw new IllegalStateException("删除节点附件失败", ex);
+        }
+        memoService.deleteByNodeId(nodeId);
+        changeLogService.deleteByNodeId(nodeId);
         deliveryNodeRepository.delete(node);
         return listByDeliveryId(deliveryId);
     }
 
     @Transactional
     public void deleteByDeliveryId(String deliveryId) {
+        deliveryNodeRepository.findByDeliveryIdOrderByStartDateAscSortOrderAsc(deliveryId).forEach(node -> {
+            try {
+                attachmentService.deleteByNodeId(node.getId());
+            } catch (IOException ignored) {
+                // best-effort cleanup
+            }
+            memoService.deleteByNodeId(node.getId());
+            changeLogService.deleteByNodeId(node.getId());
+        });
         deliveryNodeRepository.deleteByDeliveryId(deliveryId);
     }
 
-    private DeliveryNode getOwnedNode(String deliveryId, String nodeId) {
-        deliveryService.getById(deliveryId);
-        DeliveryNode node = deliveryNodeRepository.findById(nodeId)
-                .orElseThrow(() -> new IllegalArgumentException("节点不存在"));
-        if (!deliveryId.equals(node.getDeliveryId())) {
-            throw new IllegalArgumentException("节点不属于该产品交付");
-        }
-        return node;
+    private DeliveryNode snapshot(DeliveryNode source) {
+        DeliveryNode copy = new DeliveryNode();
+        copy.setId(source.getId());
+        copy.setDeliveryId(source.getDeliveryId());
+        copy.setStage(source.getStage());
+        copy.setTitle(source.getTitle());
+        copy.setNodeType(source.getNodeType());
+        copy.setStartDate(source.getStartDate());
+        copy.setEndDate(source.getEndDate());
+        copy.setRemark(source.getRemark());
+        return copy;
     }
 
     private void applyRequest(DeliveryNode node, DeliveryNodeRequest request) {
@@ -100,10 +158,7 @@ public class DeliveryNodeService {
         node.setNodeType(type.getLabel());
         node.setStartDate(request.getStartDate());
         if (type == DeliveryNodeType.RANGE) {
-            if (request.getEndDate() == null) {
-                throw new IllegalArgumentException("时间段节点须填写结束日期");
-            }
-            if (request.getEndDate().isBefore(request.getStartDate())) {
+            if (request.getEndDate() != null && request.getEndDate().isBefore(request.getStartDate())) {
                 throw new IllegalArgumentException("结束日期不能早于开始日期");
             }
             node.setEndDate(request.getEndDate());
@@ -127,21 +182,30 @@ public class DeliveryNodeService {
         dto.setRange(node.isRange());
         dto.setDateLabel(formatDateLabel(node));
         dto.setStatusLabel(resolveStatus(node));
+        dto.setConfirmed(node.isConfirmed());
+        dto.setConfirmedBy(node.getConfirmedBy());
+        dto.setConfirmedTime(node.getConfirmedTime());
+        dto.setAttachmentCount((int) attachmentService.countByNodeId(node.getId()));
+        dto.setMemoCount((int) memoService.countByNodeId(node.getId()));
         return dto;
     }
 
     private String formatDateLabel(DeliveryNode node) {
-        if (node.isRange() && node.getEndDate() != null) {
-            return node.getStartDate() + " ~ " + node.getEndDate();
+        if (node.isRange()) {
+            String end = node.getEndDate() == null ? "至今" : String.valueOf(node.getEndDate());
+            return node.getStartDate() + " ~ " + end;
         }
         return String.valueOf(node.getStartDate());
     }
 
     private String resolveStatus(DeliveryNode node) {
         LocalDate today = LocalDate.now();
-        if (node.isRange() && node.getEndDate() != null) {
+        if (node.isRange()) {
             if (today.isBefore(node.getStartDate())) {
                 return "未开始";
+            }
+            if (node.getEndDate() == null) {
+                return "进行中";
             }
             if (today.isAfter(node.getEndDate())) {
                 return "已结束";

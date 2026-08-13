@@ -48,7 +48,7 @@ public enum MenuCode {
 
     /** 新注册用户默认菜单（不含账号管理、项目分析） */
     public static List<MenuCode> defaultMenusForNewUser() {
-        return List.of(DASHBOARD, ARCHIVES, CUSTOMERS, TICKETS);
+        return List.of(DASHBOARD, ARCHIVES, CUSTOMERS, PARTNERS, TICKETS);
     }
 
     public static List<MenuCode> allMenus() {

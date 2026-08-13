@@ -203,7 +203,6 @@
         });
     };
 
-    // Keep old names used by 已处理/已完成/待反馈 modals (Bootstrap still OK for those)
     window.appendCsrfToAction = appendCsrfToAction;
     window.showBsModal = function (modalId) {
         var el = document.getElementById(modalId);

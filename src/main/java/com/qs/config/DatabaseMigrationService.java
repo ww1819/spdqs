@@ -52,6 +52,10 @@ public class DatabaseMigrationService {
         migrateUserMenuPermTable();
         migrateUserDeliveryPermTable();
         migrateDeliveryModel();
+        migrateDeliveryNodeConfirmColumns();
+        migrateDeliveryNodeChangeTable();
+        migrateDeliveryNodeAttachmentTable();
+        migrateDeliveryNodeMemoTable();
         log.info("数据库结构检查完成");
     }
 
@@ -1035,6 +1039,98 @@ public class DatabaseMigrationService {
         }
         log.info("删除列 {}.{}", table, column);
         jdbcTemplate.execute("ALTER TABLE " + table + " DROP COLUMN " + column);
+    }
+
+    private void migrateDeliveryNodeConfirmColumns() {
+        if (!tableExists("T_DELIVERY_NODE")) {
+            return;
+        }
+        if (!columnExists("T_DELIVERY_NODE", "CONFIRMED")) {
+            log.info("新增列 T_DELIVERY_NODE.CONFIRMED");
+            jdbcTemplate.execute(
+                    "ALTER TABLE T_DELIVERY_NODE ADD COLUMN CONFIRMED TINYINT(1) NOT NULL DEFAULT 0");
+        }
+        if (!columnExists("T_DELIVERY_NODE", "CONFIRMED_BY")) {
+            log.info("新增列 T_DELIVERY_NODE.CONFIRMED_BY");
+            jdbcTemplate.execute("ALTER TABLE T_DELIVERY_NODE ADD COLUMN CONFIRMED_BY VARCHAR(50)");
+        }
+        if (!columnExists("T_DELIVERY_NODE", "CONFIRMED_TIME")) {
+            log.info("新增列 T_DELIVERY_NODE.CONFIRMED_TIME");
+            jdbcTemplate.execute("ALTER TABLE T_DELIVERY_NODE ADD COLUMN CONFIRMED_TIME DATETIME");
+        }
+    }
+
+    private void migrateDeliveryNodeChangeTable() {
+        if (tableExists("T_DELIVERY_NODE_CHANGE")) {
+            return;
+        }
+        log.info("创建表 T_DELIVERY_NODE_CHANGE");
+        jdbcTemplate.execute("""
+                CREATE TABLE T_DELIVERY_NODE_CHANGE (
+                   ID VARCHAR(36) NOT NULL,
+                   NODE_ID VARCHAR(36) NOT NULL,
+                   DELIVERY_ID VARCHAR(36) NOT NULL,
+                   FIELD_NAME VARCHAR(50) NOT NULL,
+                   FIELD_LABEL VARCHAR(50),
+                   OLD_VALUE TEXT,
+                   NEW_VALUE TEXT,
+                   CHANGE_BY VARCHAR(50),
+                   CHANGE_TIME DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                   PRIMARY KEY (ID),
+                   KEY IDX_DELIVERY_NODE_CHANGE_NODE (NODE_ID),
+                   KEY IDX_DELIVERY_NODE_CHANGE_DELIVERY (DELIVERY_ID)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """);
+    }
+
+    private void migrateDeliveryNodeAttachmentTable() {
+        if (tableExists("T_DELIVERY_NODE_ATTACHMENT")) {
+            return;
+        }
+        log.info("创建表 T_DELIVERY_NODE_ATTACHMENT");
+        jdbcTemplate.execute("""
+                CREATE TABLE T_DELIVERY_NODE_ATTACHMENT (
+                   ID VARCHAR(36) NOT NULL,
+                   NODE_ID VARCHAR(36) NOT NULL,
+                   DELIVERY_ID VARCHAR(36) NOT NULL,
+                   ORIGINAL_NAME VARCHAR(255) NOT NULL,
+                   STORED_NAME VARCHAR(255) NOT NULL,
+                   RELATIVE_PATH VARCHAR(500) NOT NULL,
+                   CONTENT_TYPE VARCHAR(100),
+                   FILE_SIZE BIGINT,
+                   CREATE_BY VARCHAR(50),
+                   CREATE_TIME DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                   CONFIRMED TINYINT(1) NOT NULL DEFAULT 0,
+                   CONFIRMED_BY VARCHAR(50),
+                   CONFIRMED_TIME DATETIME,
+                   PRIMARY KEY (ID),
+                   KEY IDX_NODE_ATTACH_NODE (NODE_ID),
+                   KEY IDX_NODE_ATTACH_DELIVERY (DELIVERY_ID)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """);
+    }
+
+    private void migrateDeliveryNodeMemoTable() {
+        if (tableExists("T_DELIVERY_NODE_MEMO")) {
+            return;
+        }
+        log.info("创建表 T_DELIVERY_NODE_MEMO");
+        jdbcTemplate.execute("""
+                CREATE TABLE T_DELIVERY_NODE_MEMO (
+                   ID VARCHAR(36) NOT NULL,
+                   NODE_ID VARCHAR(36) NOT NULL,
+                   DELIVERY_ID VARCHAR(36) NOT NULL,
+                   CONTENT TEXT NOT NULL,
+                   CREATE_BY VARCHAR(50),
+                   CREATE_TIME DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                   CONFIRMED TINYINT(1) NOT NULL DEFAULT 0,
+                   CONFIRMED_BY VARCHAR(50),
+                   CONFIRMED_TIME DATETIME,
+                   PRIMARY KEY (ID),
+                   KEY IDX_NODE_MEMO_NODE (NODE_ID),
+                   KEY IDX_NODE_MEMO_DELIVERY (DELIVERY_ID)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """);
     }
 
     private boolean foreignKeyExists(String table, String constraintName) {

@@ -18,7 +18,7 @@ public interface ReminderRepository extends JpaRepository<Reminder, String> {
                        @Param("remindDate") LocalDate remindDate,
                        @Param("remindHour") int remindHour);
 
-    @Query("SELECT r FROM Reminder r JOIN FETCH r.ticket t JOIN FETCH t.archive "
+    @Query("SELECT r FROM Reminder r JOIN FETCH r.ticket t JOIN FETCH t.delivery "
             + "WHERE r.targetUser = :targetUser AND r.isRead = '0' ORDER BY r.createTime DESC")
     List<Reminder> findUnreadByTargetUser(@Param("targetUser") String targetUser);
 

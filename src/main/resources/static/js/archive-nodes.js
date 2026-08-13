@@ -16,10 +16,15 @@
     const stageManageBody = document.getElementById('stageManageBody');
     const nodeModal = new bootstrap.Modal(document.getElementById('nodeModal'));
     const stageManageModal = new bootstrap.Modal(document.getElementById('stageManageModal'));
+    const nodeChangesModal = new bootstrap.Modal(document.getElementById('nodeChangesModal'));
+    const nodeFilesModal = new bootstrap.Modal(document.getElementById('nodeFilesModal'));
+    const nodeMemosModal = new bootstrap.Modal(document.getElementById('nodeMemosModal'));
 
     let nodes = [];
     let stages = [];
     let editingId = null;
+    let filesNodeId = null;
+    let memosNodeId = null;
 
     function csrfHeaders() {
         const token = document.querySelector('meta[name="_csrf"]')?.content;
@@ -305,20 +310,36 @@
         }
         tableEmpty?.classList.add('d-none');
         document.getElementById('nodeTable')?.classList.remove('d-none');
-        tableBody.innerHTML = nodes.map((n) => `
+        tableBody.innerHTML = nodes.map((n) => {
+            const confirmTag = n.confirmed
+                ? '<span class="tag tag-success">已确认</span>'
+                : '<span class="tag tag-default">未确认</span>';
+            const actions = [
+                '<button type="button" class="btn btn-link btn-sm p-0" data-edit="' + n.id + '">编辑</button>',
+                '<button type="button" class="btn btn-link btn-sm p-0" data-files="' + n.id + '">附件(' + (n.attachmentCount || 0) + ')</button>',
+                '<button type="button" class="btn btn-link btn-sm p-0" data-memos="' + n.id + '">备忘(' + (n.memoCount || 0) + ')</button>',
+                '<button type="button" class="btn btn-link btn-sm p-0" data-changes="' + n.id + '">修改记录</button>'
+            ];
+            if (!n.confirmed) {
+                actions.push('<button type="button" class="btn btn-link btn-sm p-0" data-confirm="' + n.id + '">确认</button>');
+                actions.push('<button type="button" class="btn btn-link btn-sm text-danger p-0" data-del="' + n.id + '">删除</button>');
+            } else {
+                actions.push('<span class="text-muted small">不可删</span>');
+            }
+            return `
             <tr>
                 <td><span class="tag ${stageClass(n.stage)}">${escapeHtml(n.stage)}</span></td>
                 <td>${escapeHtml(n.title)}</td>
                 <td>${escapeHtml(n.nodeType)}</td>
                 <td>${escapeHtml(n.dateLabel)}</td>
                 <td><span class="tag ${statusClass(n.statusLabel)}">${escapeHtml(n.statusLabel)}</span></td>
+                <td>${confirmTag}</td>
+                <td>${n.attachmentCount || 0}</td>
+                <td>${n.memoCount || 0}</td>
                 <td class="cell-clamp">${escapeHtml(n.remark || '—')}</td>
-                <td class="cell-actions">
-                    <button type="button" class="btn btn-link btn-sm p-0" data-edit="${n.id}">编辑</button>
-                    <button type="button" class="btn btn-link btn-sm text-danger p-0" data-del="${n.id}">删除</button>
-                </td>
-            </tr>
-        `).join('');
+                <td class="cell-actions">${actions.join(' ')}</td>
+            </tr>`;
+        }).join('');
     }
 
     function renderTimeline() {
@@ -337,6 +358,7 @@
         nodes.forEach((n) => {
             if (n.startDate) dates.push(new Date(n.startDate));
             if (n.endDate) dates.push(new Date(n.endDate));
+            else if (n.range) dates.push(today);
         });
         dates.push(today);
         let min = new Date(Math.min(...dates));
@@ -372,9 +394,10 @@
 
         nodes.forEach((n, idx) => {
             const lane = idx % 3;
-            if (n.range && n.endDate) {
+            if (n.range) {
                 const left = pct(n.startDate);
-                const right = pct(n.endDate);
+                const endStr = n.endDate || today.toISOString().slice(0, 10);
+                const right = pct(endStr);
                 const width = Math.max(1.2, right - left);
                 html += `<div class="timeline-range ${stageClass(n.stage)}" style="left:${left}%;width:${width}%;top:${28 + lane * 34}px"
                     title="${escapeHtml(n.title)} (${escapeHtml(n.dateLabel)})">
@@ -424,10 +447,6 @@
         }
         if (!payload.startDate) {
             alert('请填写日期');
-            return;
-        }
-        if (payload.nodeType === '时间段' && !payload.endDate) {
-            alert('时间段须填写结束日期');
             return;
         }
         const url = editingId
@@ -618,15 +637,347 @@
         }
     });
 
+    async function confirmNode(id) {
+        const node = nodes.find((n) => n.id === id);
+        if (!confirm('确认存档节点「' + (node?.title || '') + '」？确认后不可删除。')) return;
+        try {
+            const res = await fetch('/api/archives/' + encodeURIComponent(archiveId) + '/nodes/' + encodeURIComponent(id) + '/confirm', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: csrfHeaders()
+            });
+            const data = await readJson(res);
+            if (!res.ok) throw new Error(data.error || '确认失败');
+            nodes = data;
+            renderAll();
+            showToast('节点已确认');
+        } catch (e) {
+            alert(e.message || '确认失败');
+        }
+    }
+
+    function formatDateTime(value) {
+        if (!value) return '—';
+        return String(value).replace('T', ' ').substring(0, 19);
+    }
+
+    async function openChanges(id) {
+        const node = nodes.find((n) => n.id === id);
+        document.getElementById('nodeChangesTitle').textContent = '修改记录 · ' + (node?.title || '');
+        const body = document.getElementById('nodeChangesBody');
+        const empty = document.getElementById('nodeChangesEmpty');
+        const table = document.getElementById('nodeChangesTable');
+        try {
+            const res = await fetch('/api/archives/' + encodeURIComponent(archiveId) + '/nodes/' + encodeURIComponent(id) + '/changes', {
+                credentials: 'same-origin',
+                headers: { 'Accept': 'application/json' }
+            });
+            const data = await readJson(res);
+            if (!res.ok) throw new Error(data.error || '加载失败');
+            if (!data.length) {
+                body.innerHTML = '';
+                empty?.classList.remove('d-none');
+                table?.classList.add('d-none');
+            } else {
+                empty?.classList.add('d-none');
+                table?.classList.remove('d-none');
+                body.innerHTML = data.map((c) => `
+                    <tr>
+                        <td>${escapeHtml(c.fieldLabel || c.fieldName)}</td>
+                        <td class="cell-clamp">${escapeHtml(c.oldValue || '—')}</td>
+                        <td class="cell-clamp">${escapeHtml(c.newValue || '—')}</td>
+                        <td>${escapeHtml(c.changeBy || '—')}</td>
+                        <td>${escapeHtml(formatDateTime(c.changeTime))}</td>
+                    </tr>
+                `).join('');
+            }
+            nodeChangesModal.show();
+        } catch (e) {
+            alert(e.message || '加载修改记录失败');
+        }
+    }
+
+    function renderNodeFiles(list) {
+        const empty = document.getElementById('nodeFilesEmpty');
+        const ul = document.getElementById('nodeFilesList');
+        if (!list.length) {
+            ul.innerHTML = '';
+            empty?.classList.remove('d-none');
+            return;
+        }
+        empty?.classList.add('d-none');
+        ul.innerHTML = list.map((f) => {
+            const size = f.fileSize != null ? (Math.round(f.fileSize / 102.4) / 10) + ' KB' : '';
+            const status = f.confirmed
+                ? '<span class="tag tag-success ms-2">已存档</span>'
+                : '<span class="tag tag-default ms-2">未确认</span>';
+            const actions = [
+                '<a class="link-tech ms-2" href="/api/archives/' + encodeURIComponent(archiveId)
+                    + '/nodes/' + encodeURIComponent(filesNodeId)
+                    + '/attachments/' + encodeURIComponent(f.id) + '/download">下载</a>'
+            ];
+            if (!f.confirmed) {
+                actions.push('<button type="button" class="btn btn-link btn-sm p-0 ms-2" data-file-confirm="' + f.id + '">确认存档</button>');
+                actions.push('<button type="button" class="btn btn-link btn-sm text-danger p-0 ms-2" data-file-del="' + f.id + '">删除</button>');
+            }
+            return '<li class="attachment-file-item">'
+                + '<span>' + escapeHtml(f.originalName) + '</span>'
+                + '<span class="text-muted small ms-2">' + size + '</span>'
+                + '<span class="text-muted small ms-2">' + escapeHtml(formatDateTime(f.createTime)) + '</span>'
+                + status + actions.join('')
+                + '</li>';
+        }).join('');
+    }
+
+    async function loadNodeFiles() {
+        if (!filesNodeId) return;
+        const res = await fetch('/api/archives/' + encodeURIComponent(archiveId) + '/nodes/' + encodeURIComponent(filesNodeId) + '/attachments', {
+            credentials: 'same-origin',
+            headers: { 'Accept': 'application/json' }
+        });
+        const data = await readJson(res);
+        if (!res.ok) throw new Error(data.error || '加载附件失败');
+        renderNodeFiles(data);
+    }
+
+    async function openFiles(id) {
+        filesNodeId = id;
+        const node = nodes.find((n) => n.id === id);
+        document.getElementById('nodeFilesTitle').textContent = '节点附件 · ' + (node?.title || '');
+        document.getElementById('nodeFilesInput').value = '';
+        try {
+            await loadNodeFiles();
+            nodeFilesModal.show();
+        } catch (e) {
+            alert(e.message || '加载附件失败');
+        }
+    }
+
+    async function uploadNodeFiles() {
+        if (!filesNodeId) return;
+        const input = document.getElementById('nodeFilesInput');
+        if (!input?.files?.length) {
+            alert('请选择文件');
+            return;
+        }
+        const form = new FormData();
+        Array.from(input.files).forEach((f) => form.append('files', f));
+        const token = document.querySelector('meta[name="_csrf"]')?.content;
+        const header = document.querySelector('meta[name="_csrf_header"]')?.content;
+        const headers = { 'Accept': 'application/json' };
+        if (token && header) headers[header] = token;
+        try {
+            const res = await fetch('/api/archives/' + encodeURIComponent(archiveId) + '/nodes/' + encodeURIComponent(filesNodeId) + '/attachments', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers,
+                body: form
+            });
+            const data = await readJson(res);
+            if (!res.ok) throw new Error(data.error || '上传失败');
+            renderNodeFiles(data);
+            input.value = '';
+            await loadNodes();
+            showToast('上传成功');
+        } catch (e) {
+            alert(e.message || '上传失败');
+        }
+    }
+
+    async function confirmNodeFile(attachmentId) {
+        if (!filesNodeId) return;
+        if (!confirm('确认存档该附件？确认后不可删除。')) return;
+        try {
+            const res = await fetch('/api/archives/' + encodeURIComponent(archiveId) + '/nodes/'
+                + encodeURIComponent(filesNodeId) + '/attachments/' + encodeURIComponent(attachmentId) + '/confirm', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: csrfHeaders()
+            });
+            const data = await readJson(res);
+            if (!res.ok) throw new Error(data.error || '确认失败');
+            renderNodeFiles(data);
+            showToast('附件已确认存档');
+        } catch (e) {
+            alert(e.message || '确认失败');
+        }
+    }
+
+    async function deleteNodeFile(attachmentId) {
+        if (!filesNodeId) return;
+        if (!confirm('确定删除该附件？')) return;
+        try {
+            const res = await fetch('/api/archives/' + encodeURIComponent(archiveId) + '/nodes/'
+                + encodeURIComponent(filesNodeId) + '/attachments/' + encodeURIComponent(attachmentId), {
+                method: 'DELETE',
+                credentials: 'same-origin',
+                headers: csrfHeaders()
+            });
+            const data = await readJson(res);
+            if (!res.ok) throw new Error(data.error || '删除失败');
+            renderNodeFiles(data);
+            await loadNodes();
+            showToast('附件已删除');
+        } catch (e) {
+            alert(e.message || '删除失败');
+        }
+    }
+
+    function renderNodeMemos(list) {
+        const empty = document.getElementById('nodeMemosEmpty');
+        const ul = document.getElementById('nodeMemosList');
+        if (!list.length) {
+            ul.innerHTML = '';
+            empty?.classList.remove('d-none');
+            return;
+        }
+        empty?.classList.add('d-none');
+        ul.innerHTML = list.map((m) => {
+            const status = m.confirmed
+                ? '<span class="tag tag-success ms-2">已确认</span>'
+                : '<span class="tag tag-default ms-2">未确认</span>';
+            const actions = [];
+            if (!m.confirmed) {
+                actions.push('<button type="button" class="btn btn-link btn-sm p-0 ms-2" data-memo-confirm="' + m.id + '">确认</button>');
+                actions.push('<button type="button" class="btn btn-link btn-sm text-danger p-0 ms-2" data-memo-del="' + m.id + '">删除</button>');
+            }
+            return '<li class="attachment-file-item">'
+                + '<div class="flex-grow-1">'
+                + '<div style="white-space:pre-wrap;">' + escapeHtml(m.content || '') + '</div>'
+                + '<div class="text-muted small mt-1">'
+                + escapeHtml(m.createBy || '—') + ' · ' + escapeHtml(formatDateTime(m.createTime))
+                + '</div></div>'
+                + status + actions.join('')
+                + '</li>';
+        }).join('');
+    }
+
+    async function loadNodeMemos() {
+        if (!memosNodeId) return;
+        const res = await fetch('/api/archives/' + encodeURIComponent(archiveId) + '/nodes/'
+            + encodeURIComponent(memosNodeId) + '/memos', {
+            credentials: 'same-origin',
+            headers: { 'Accept': 'application/json' }
+        });
+        const data = await readJson(res);
+        if (!res.ok) throw new Error(data.error || '加载备忘录失败');
+        renderNodeMemos(data);
+    }
+
+    async function openMemos(id) {
+        memosNodeId = id;
+        const node = nodes.find((n) => n.id === id);
+        document.getElementById('nodeMemosTitle').textContent = '备忘录 · ' + (node?.title || '');
+        document.getElementById('nodeMemoContent').value = '';
+        try {
+            await loadNodeMemos();
+            nodeMemosModal.show();
+        } catch (e) {
+            alert(e.message || '加载备忘录失败');
+        }
+    }
+
+    async function addNodeMemo() {
+        if (!memosNodeId) return;
+        const content = document.getElementById('nodeMemoContent')?.value || '';
+        if (!content.trim()) {
+            alert('请填写备忘内容');
+            return;
+        }
+        try {
+            const res = await fetch('/api/archives/' + encodeURIComponent(archiveId) + '/nodes/'
+                + encodeURIComponent(memosNodeId) + '/memos', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: csrfHeaders(),
+                body: JSON.stringify({ content: content.trim() })
+            });
+            const data = await readJson(res);
+            if (!res.ok) throw new Error(data.error || '添加失败');
+            renderNodeMemos(data);
+            document.getElementById('nodeMemoContent').value = '';
+            await loadNodes();
+            showToast('备忘已添加');
+        } catch (e) {
+            alert(e.message || '添加失败');
+        }
+    }
+
+    async function confirmNodeMemo(memoId) {
+        if (!memosNodeId) return;
+        if (!confirm('确认该备忘录？确认后不可删除。')) return;
+        try {
+            const res = await fetch('/api/archives/' + encodeURIComponent(archiveId) + '/nodes/'
+                + encodeURIComponent(memosNodeId) + '/memos/' + encodeURIComponent(memoId) + '/confirm', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: csrfHeaders()
+            });
+            const data = await readJson(res);
+            if (!res.ok) throw new Error(data.error || '确认失败');
+            renderNodeMemos(data);
+            showToast('备忘已确认');
+        } catch (e) {
+            alert(e.message || '确认失败');
+        }
+    }
+
+    async function deleteNodeMemo(memoId) {
+        if (!memosNodeId) return;
+        if (!confirm('确定删除该备忘录？')) return;
+        try {
+            const res = await fetch('/api/archives/' + encodeURIComponent(archiveId) + '/nodes/'
+                + encodeURIComponent(memosNodeId) + '/memos/' + encodeURIComponent(memoId), {
+                method: 'DELETE',
+                credentials: 'same-origin',
+                headers: csrfHeaders()
+            });
+            const data = await readJson(res);
+            if (!res.ok) throw new Error(data.error || '删除失败');
+            renderNodeMemos(data);
+            await loadNodes();
+            showToast('备忘已删除');
+        } catch (e) {
+            alert(e.message || '删除失败');
+        }
+    }
+
     tableBody?.addEventListener('click', (e) => {
         const editId = e.target.getAttribute('data-edit');
         const delId = e.target.getAttribute('data-del');
+        const confirmId = e.target.getAttribute('data-confirm');
+        const changesId = e.target.getAttribute('data-changes');
+        const filesId = e.target.getAttribute('data-files');
+        const memosId = e.target.getAttribute('data-memos');
         if (editId) {
             const node = nodes.find((n) => n.id === editId);
             if (node) openEdit(node);
         } else if (delId) {
             deleteNode(delId);
+        } else if (confirmId) {
+            confirmNode(confirmId);
+        } else if (changesId) {
+            openChanges(changesId);
+        } else if (filesId) {
+            openFiles(filesId);
+        } else if (memosId) {
+            openMemos(memosId);
         }
+    });
+
+    document.getElementById('btnUploadNodeFiles')?.addEventListener('click', uploadNodeFiles);
+    document.getElementById('nodeFilesList')?.addEventListener('click', (e) => {
+        const confirmId = e.target.getAttribute('data-file-confirm');
+        const delId = e.target.getAttribute('data-file-del');
+        if (confirmId) confirmNodeFile(confirmId);
+        else if (delId) deleteNodeFile(delId);
+    });
+    document.getElementById('btnAddNodeMemo')?.addEventListener('click', addNodeMemo);
+    document.getElementById('nodeMemosList')?.addEventListener('click', (e) => {
+        const confirmId = e.target.getAttribute('data-memo-confirm');
+        const delId = e.target.getAttribute('data-memo-del');
+        if (confirmId) confirmNodeMemo(confirmId);
+        else if (delId) deleteNodeMemo(delId);
     });
 
     syncTypeUi();

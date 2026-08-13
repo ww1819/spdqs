@@ -134,7 +134,7 @@ public class TicketController {
         model.addAttribute("submitterFilter", submitter);
         model.addAttribute("keyword", keyword);
         model.addAttribute("menuOptions", menuOptions);
-        model.addAttribute("archiveOptions", deliveryService.listOptions(allowedArchives));
+        model.addAttribute("deliveryOptions", deliveryService.listOptions(allowedArchives));
         model.addAttribute("systemOptions", analysisService.listProjects());
         model.addAttribute("ticketStatuses", Arrays.asList(TicketStatus.values()));
         model.addAttribute("activeTab", "tickets");
@@ -161,7 +161,7 @@ public class TicketController {
         ticket.setSubmitter(user != null ? user.getDisplayName() : userDetails.getUsername());
         ticket.setStatus(TicketStatus.SUBMITTED.getLabel());
         model.addAttribute("ticket", ticket);
-        model.addAttribute("archiveOptions", deliveryService.listOptions(allowedArchives));
+        model.addAttribute("deliveryOptions", deliveryService.listOptions(allowedArchives));
         model.addAttribute("orderTypes", Arrays.asList(OrderType.values()));
         model.addAttribute("ticketStatuses", Arrays.asList(TicketStatus.values()));
         model.addAttribute("activeTab", "tickets");
@@ -241,7 +241,7 @@ public class TicketController {
         model.addAttribute("ticket", ticket);
         addAttachmentModel(model, id);
         model.addAttribute("followUps", ticketService.listFollowUps(id));
-        model.addAttribute("archiveOptions", deliveryService.listOptions(allowedArchives));
+        model.addAttribute("deliveryOptions", deliveryService.listOptions(allowedArchives));
         model.addAttribute("orderTypes", Arrays.asList(OrderType.values()));
         model.addAttribute("ticketStatuses", Arrays.asList(TicketStatus.values()));
         model.addAttribute("activeTab", "tickets");

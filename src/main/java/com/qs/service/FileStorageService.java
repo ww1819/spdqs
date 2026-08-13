@@ -32,6 +32,10 @@ public class FileStorageService {
         return storeUnder("archives", deliveryId, file);
     }
 
+    public String storeDeliveryNode(String deliveryId, String nodeId, MultipartFile file) throws IOException {
+        return storeUnder("archives/" + deliveryId + "/nodes", nodeId, file);
+    }
+
     private String storeUnder(String category, String ownerId, MultipartFile file) throws IOException {
         String ext = extractExtension(file.getOriginalFilename());
         String storedName = UUID.randomUUID().toString().replace("-", "") + ext;
