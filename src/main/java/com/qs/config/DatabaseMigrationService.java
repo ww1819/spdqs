@@ -27,8 +27,10 @@ public class DatabaseMigrationService {
         migrateTicketTable();
         migrateTicketFollowUpTable();
         migrateTicketProcessTable();
+        migrateTicketChangeTable();
         migrateTicketAttachmentTable();
         migrateTicketAttachmentTypeColumn();
+        migrateTicketAttachmentConfirmedColumns();
         migrateArchiveAttachmentTable();
         migrateReminderTable();
         migrateSysSeqTable();
@@ -166,6 +168,27 @@ public class DatabaseMigrationService {
                 """);
     }
 
+    private void migrateTicketChangeTable() {
+        if (tableExists("T_TICKET_CHANGE")) {
+            return;
+        }
+        log.info("创建表 T_TICKET_CHANGE");
+        jdbcTemplate.execute("""
+                CREATE TABLE T_TICKET_CHANGE (
+                   ID VARCHAR(36) NOT NULL,
+                   TICKET_ID VARCHAR(36) NOT NULL,
+                   FIELD_NAME VARCHAR(50) NOT NULL,
+                   FIELD_LABEL VARCHAR(50),
+                   OLD_VALUE TEXT,
+                   NEW_VALUE TEXT,
+                   CHANGE_BY VARCHAR(50),
+                   CHANGE_TIME DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                   PRIMARY KEY (ID),
+                   KEY IDX_T_TICKET_CHANGE_TICKET (TICKET_ID)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """);
+    }
+
     private void migrateTicketAttachmentTable() {
         if (tableExists("T_TICKET_ATTACHMENT")) {
             return;
@@ -183,6 +206,9 @@ public class DatabaseMigrationService {
                    FILE_SIZE BIGINT,
                    CREATE_BY VARCHAR(50),
                    CREATE_TIME DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                   CONFIRMED TINYINT(1) NOT NULL DEFAULT 0,
+                   CONFIRMED_BY VARCHAR(50),
+                   CONFIRMED_TIME DATETIME,
                    PRIMARY KEY (ID),
                    KEY IDX_T_ATTACH_TICKET (TICKET_ID),
                    CONSTRAINT FK_T_ATTACH_TICKET FOREIGN KEY (TICKET_ID) REFERENCES T_TICKET (ID)
@@ -207,6 +233,27 @@ public class DatabaseMigrationService {
         log.info("扩展列 T_TICKET_ATTACHMENT.ATTACHMENT_TYPE -> VARCHAR(20)");
         jdbcTemplate.execute(
                 "ALTER TABLE T_TICKET_ATTACHMENT MODIFY COLUMN ATTACHMENT_TYPE VARCHAR(20) NOT NULL");
+    }
+
+    private void migrateTicketAttachmentConfirmedColumns() {
+        if (!tableExists("T_TICKET_ATTACHMENT")) {
+            return;
+        }
+        if (!columnExists("T_TICKET_ATTACHMENT", "CONFIRMED")) {
+            log.info("新增列 T_TICKET_ATTACHMENT.CONFIRMED");
+            jdbcTemplate.execute(
+                    "ALTER TABLE T_TICKET_ATTACHMENT ADD COLUMN CONFIRMED TINYINT(1) NOT NULL DEFAULT 0");
+        }
+        if (!columnExists("T_TICKET_ATTACHMENT", "CONFIRMED_BY")) {
+            log.info("新增列 T_TICKET_ATTACHMENT.CONFIRMED_BY");
+            jdbcTemplate.execute(
+                    "ALTER TABLE T_TICKET_ATTACHMENT ADD COLUMN CONFIRMED_BY VARCHAR(50)");
+        }
+        if (!columnExists("T_TICKET_ATTACHMENT", "CONFIRMED_TIME")) {
+            log.info("新增列 T_TICKET_ATTACHMENT.CONFIRMED_TIME");
+            jdbcTemplate.execute(
+                    "ALTER TABLE T_TICKET_ATTACHMENT ADD COLUMN CONFIRMED_TIME DATETIME");
+        }
     }
 
     private void migrateArchiveAttachmentTable() {

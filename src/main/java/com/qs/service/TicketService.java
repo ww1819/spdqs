@@ -2,6 +2,7 @@ package com.qs.service;
 
 import com.qs.entity.Archive;
 import com.qs.entity.Ticket;
+import com.qs.entity.TicketChangeLog;
 import com.qs.entity.TicketFollowUp;
 import com.qs.enums.TicketStatus;
 import com.qs.repository.ReminderRepository;
@@ -28,18 +29,20 @@ public class TicketService {
     private final TicketFollowUpService followUpService;
     private final TicketAttachmentService attachmentService;
     private final TicketProcessService processService;
+    private final TicketChangeLogService changeLogService;
     private final JdbcTemplate jdbcTemplate;
 
     public TicketService(TicketRepository ticketRepository, ArchiveService archiveService,
                          ReminderRepository reminderRepository, TicketFollowUpService followUpService,
                          TicketAttachmentService attachmentService, TicketProcessService processService,
-                         JdbcTemplate jdbcTemplate) {
+                         TicketChangeLogService changeLogService, JdbcTemplate jdbcTemplate) {
         this.ticketRepository = ticketRepository;
         this.archiveService = archiveService;
         this.reminderRepository = reminderRepository;
         this.followUpService = followUpService;
         this.attachmentService = attachmentService;
         this.processService = processService;
+        this.changeLogService = changeLogService;
         this.jdbcTemplate = jdbcTemplate;
     }
 
@@ -155,12 +158,18 @@ public class TicketService {
 
     @Transactional
     public Ticket save(Ticket ticket, String archiveId, String newFollowUp, String createBy) {
+        Ticket existing = null;
         if (ticket.getId() != null && !ticket.getId().isBlank()) {
-            Ticket existing = getById(ticket.getId());
+            existing = getById(ticket.getId());
             if (isExpectedDateChanged(existing.getExpectedCompleteDate(), ticket.getExpectedCompleteDate())
                     && (newFollowUp == null || newFollowUp.isBlank())) {
                 throw new IllegalArgumentException("修改预计完成时间须填写跟进记录");
             }
+            // 表单未带的字段从旧单保留
+            ticket.setTicketNo(existing.getTicketNo());
+            ticket.setUpgradeBy(existing.getUpgradeBy());
+            ticket.setUpgradeTime(existing.getUpgradeTime());
+            ticket.setCreateTime(existing.getCreateTime());
         }
         Archive archive = archiveService.getById(archiveId);
         ticket.setArchive(archive);
@@ -170,6 +179,9 @@ public class TicketService {
         ticket.setProcessNote(null);
         if (ticket.getTicketNo() == null) {
             ticket.setTicketNo(allocateTicketNo());
+        }
+        if (existing != null) {
+            changeLogService.recordUpdates(existing, ticket, createBy);
         }
         Ticket saved = ticketRepository.save(ticket);
         followUpService.addFollowUp(saved, newFollowUp, createBy);
@@ -209,13 +221,28 @@ public class TicketService {
         processService.markCompletedWithProcess(id, null, createBy);
     }
 
+    public List<TicketChangeLog> listChangeLogs(String ticketId) {
+        return changeLogService.listByTicketId(ticketId);
+    }
+
+    public boolean canDelete(String id) {
+        return !processService.hasAny(id) && !attachmentService.hasAnyReport(id);
+    }
+
     @Transactional
     public void delete(String id) {
+        if (processService.hasAny(id)) {
+            throw new IllegalArgumentException("该工单已有处理进程记录，不允许删除");
+        }
+        if (attachmentService.hasAnyReport(id)) {
+            throw new IllegalArgumentException("该工单已有确认资料，暂不支持删除");
+        }
         try {
             attachmentService.deleteByTicketId(id);
         } catch (IOException e) {
             throw new IllegalStateException("删除工单附件失败", e);
         }
+        changeLogService.deleteByTicketId(id);
         processService.deleteByTicketId(id);
         followUpService.deleteByTicketId(id);
         reminderRepository.deleteByTicketId(id);

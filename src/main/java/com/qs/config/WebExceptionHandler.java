@@ -47,7 +47,11 @@ public class WebExceptionHandler {
 
     private boolean isApiRequest(HttpServletRequest request) {
         String uri = request.getRequestURI();
-        return uri != null && uri.startsWith("/api/");
+        if (uri != null && uri.startsWith("/api/")) {
+            return true;
+        }
+        String accept = request.getHeader("Accept");
+        return accept != null && accept.contains("application/json");
     }
 
     private java.util.Map<String, String> apiError(String message) {

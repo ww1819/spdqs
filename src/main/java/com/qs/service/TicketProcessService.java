@@ -10,9 +10,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 public class TicketProcessService {
@@ -111,6 +115,17 @@ public class TicketProcessService {
         processRepository.save(newProcess(ticket, parentId, TicketProcessAction.COMPLETE, null, note, createBy));
         ticket.setStatus(TicketStatus.COMPLETED.getLabel());
         ticketRepository.save(ticket);
+    }
+
+    public boolean hasAny(String ticketId) {
+        return processRepository.countByTicketId(ticketId) > 0;
+    }
+
+    public Set<String> findTicketIdsWithAnyProcess(Collection<String> ticketIds) {
+        if (ticketIds == null || ticketIds.isEmpty()) {
+            return Collections.emptySet();
+        }
+        return new HashSet<>(processRepository.findTicketIdsHavingProcess(ticketIds));
     }
 
     @Transactional

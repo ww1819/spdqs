@@ -24,7 +24,20 @@ public interface TicketAttachmentRepository extends JpaRepository<TicketAttachme
     List<String> findTicketIdsByType(@Param("ticketIds") Collection<String> ticketIds,
                                      @Param("type") AttachmentType type);
 
-    @Modifying
+    @Query("SELECT DISTINCT a.ticket.id FROM TicketAttachment a WHERE a.ticket.id IN :ticketIds "
+            + "AND a.attachmentType = :type AND a.confirmed = true")
+    List<String> findTicketIdsByTypeAndConfirmed(@Param("ticketIds") Collection<String> ticketIds,
+                                                 @Param("type") AttachmentType type);
+
+    @Query("SELECT a FROM TicketAttachment a WHERE a.ticket.id IN :ticketIds AND a.attachmentType = :type "
+            + "ORDER BY a.createTime DESC")
+    List<TicketAttachment> findByTicketIdsAndType(@Param("ticketIds") Collection<String> ticketIds,
+                                                  @Param("type") AttachmentType type);
+
+    @Query("SELECT COUNT(a) FROM TicketAttachment a WHERE a.ticket.id = :ticketId AND a.attachmentType IN :types")
+    long countByTicketIdAndTypes(@Param("ticketId") String ticketId, @Param("types") Collection<AttachmentType> types);
+
+    @Modifying(clearAutomatically = true)
     @Query("DELETE FROM TicketAttachment a WHERE a.ticket.id = :ticketId")
     void deleteByTicketId(@Param("ticketId") String ticketId);
 

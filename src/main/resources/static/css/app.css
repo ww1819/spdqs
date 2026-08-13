@@ -294,10 +294,39 @@ a.stat-card-link:hover {
 .stat-value.text-success { color: var(--success) !important; }
 
 /* ===== 数据表格 ===== */
+.data-table-scroll {
+    overflow-x: auto;
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-gutter: stable;
+}
+
+.data-table-scroll::-webkit-scrollbar {
+    height: 10px;
+}
+
+.data-table-scroll::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 6px;
+}
+
+.data-table-scroll::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+.data-table-scroll::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
 .data-table {
     width: 100%;
     margin: 0;
     font-size: 0.875rem;
+}
+
+.data-table.data-table-wide {
+    width: max-content;
+    min-width: 100%;
 }
 
 .data-table thead th {
@@ -315,6 +344,17 @@ a.stat-card-link:hover {
     border-bottom: 1px solid var(--border);
     vertical-align: middle;
     color: var(--text);
+}
+
+.data-table .cell-op {
+    white-space: nowrap;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.data-table .cell-op a,
+.data-table .cell-op button {
+    font-size: 0.8rem;
 }
 
 .data-table tbody tr:last-child td {
@@ -505,6 +545,53 @@ a.stat-card-link:hover {
     border-radius: 4px;
     font-size: 0.75rem;
     font-weight: 500;
+}
+
+button.tag {
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+/* 工单列表：原生 dialog（不依赖 Bootstrap Modal） */
+dialog.ticket-dialog {
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 10px;
+    padding: 0;
+    max-width: 560px;
+    width: calc(100% - 32px);
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.18);
+}
+dialog.ticket-dialog.ticket-dialog-lg {
+    max-width: 760px;
+}
+dialog.ticket-dialog::backdrop {
+    background: rgba(15, 23, 42, 0.45);
+}
+.ticket-dialog-panel {
+    background: #fff;
+}
+.ticket-dialog-header,
+.ticket-dialog-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+}
+.ticket-dialog-header {
+    border-bottom: 1px solid var(--border, #e5e7eb);
+}
+.ticket-dialog-footer {
+    border-top: 1px solid var(--border, #e5e7eb);
+    justify-content: flex-end;
+}
+.ticket-dialog-body {
+    padding: 14px 16px;
+}
+.ticket-dialog-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
 }
 
 .tag-default { background: #f3f4f6; color: #4b5563; }

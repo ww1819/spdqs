@@ -6,12 +6,19 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface TicketProcessRepository extends JpaRepository<TicketProcess, String> {
 
     @Query("SELECT p FROM TicketProcess p WHERE p.ticket.id = :ticketId ORDER BY p.createTime ASC")
     List<TicketProcess> findByTicketIdOrderByCreateTimeAsc(@Param("ticketId") String ticketId);
+
+    @Query("SELECT COUNT(p) FROM TicketProcess p WHERE p.ticket.id = :ticketId")
+    long countByTicketId(@Param("ticketId") String ticketId);
+
+    @Query("SELECT DISTINCT p.ticket.id FROM TicketProcess p WHERE p.ticket.id IN :ticketIds")
+    List<String> findTicketIdsHavingProcess(@Param("ticketIds") Collection<String> ticketIds);
 
     @Modifying(clearAutomatically = true)
     @Query("DELETE FROM TicketProcess p WHERE p.ticket.id = :ticketId")

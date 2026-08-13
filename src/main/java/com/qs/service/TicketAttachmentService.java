@@ -13,8 +13,10 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -62,6 +64,56 @@ public class TicketAttachmentService {
         return !listConfirmations(ticketId).isEmpty();
     }
 
+    public List<TicketAttachment> listPlanConfirmations(String ticketId) {
+        return attachmentRepository.findByTicketIdAndType(ticketId, AttachmentType.PLAN_CONFIRM);
+    }
+
+    public Set<String> findTicketIdsWithPlanConfirmation(Collection<String> ticketIds) {
+        if (ticketIds == null || ticketIds.isEmpty()) {
+            return Collections.emptySet();
+        }
+        return new HashSet<>(attachmentRepository.findTicketIdsByType(ticketIds, AttachmentType.PLAN_CONFIRM));
+    }
+
+    public Set<String> findTicketIdsWithLockedConfirmation(Collection<String> ticketIds) {
+        if (ticketIds == null || ticketIds.isEmpty()) {
+            return Collections.emptySet();
+        }
+        return new HashSet<>(attachmentRepository.findTicketIdsByTypeAndConfirmed(ticketIds, AttachmentType.CONFIRM));
+    }
+
+    public Set<String> findTicketIdsWithLockedPlanConfirmation(Collection<String> ticketIds) {
+        if (ticketIds == null || ticketIds.isEmpty()) {
+            return Collections.emptySet();
+        }
+        return new HashSet<>(attachmentRepository.findTicketIdsByTypeAndConfirmed(ticketIds, AttachmentType.PLAN_CONFIRM));
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, List<TicketAttachment>> mapReportsByTicketIds(Collection<String> ticketIds, AttachmentType type) {
+        if (ticketIds == null || ticketIds.isEmpty() || type == null) {
+            return Collections.emptyMap();
+        }
+        Map<String, List<TicketAttachment>> result = new LinkedHashMap<>();
+        for (TicketAttachment attachment : attachmentRepository.findByTicketIdsAndType(ticketIds, type)) {
+            String tid = attachment.getTicket() != null ? attachment.getTicket().getId() : null;
+            if (tid == null || tid.isBlank()) {
+                continue;
+            }
+            result.computeIfAbsent(tid, k -> new java.util.ArrayList<>()).add(attachment);
+        }
+        return result;
+    }
+
+    public boolean hasPlanConfirmation(String ticketId) {
+        return !listPlanConfirmations(ticketId).isEmpty();
+    }
+
+    public boolean hasAnyReport(String ticketId) {
+        return attachmentRepository.countByTicketIdAndTypes(ticketId,
+                List.of(AttachmentType.CONFIRM, AttachmentType.PLAN_CONFIRM)) > 0;
+    }
+
     public TicketAttachment getById(String id) {
         return attachmentRepository.findByIdWithTicket(id)
                 .orElseThrow(() -> new IllegalArgumentException("附件不存在"));
@@ -86,6 +138,7 @@ public class TicketAttachmentService {
         attachment.setContentType(file.getContentType());
         attachment.setFileSize(file.getSize());
         attachment.setCreateBy(createBy);
+        attachment.setConfirmed(false);
         attachmentRepository.save(attachment);
     }
 
@@ -101,8 +154,26 @@ public class TicketAttachmentService {
     }
 
     @Transactional
+    public void confirmReport(String attachmentId, String confirmedBy) {
+        TicketAttachment attachment = getById(attachmentId);
+        if (!attachment.isReportType()) {
+            throw new IllegalArgumentException("仅方案确认报告或完成确认报告可执行确认存档");
+        }
+        if (attachment.isConfirmed()) {
+            return;
+        }
+        attachment.setConfirmed(true);
+        attachment.setConfirmedBy(confirmedBy);
+        attachment.setConfirmedTime(java.time.LocalDateTime.now());
+        attachmentRepository.save(attachment);
+    }
+
+    @Transactional
     public void delete(String attachmentId) throws IOException {
         TicketAttachment attachment = getById(attachmentId);
+        if (attachment.isReportType() && attachment.isConfirmed()) {
+            throw new IllegalArgumentException("该报告已确认存档，暂不支持删除");
+        }
         fileStorageService.delete(attachment.getRelativePath());
         attachmentRepository.delete(attachment);
     }
@@ -129,8 +200,10 @@ public class TicketAttachmentService {
         if (type == AttachmentType.IMAGE && !isImage(file)) {
             throw new IllegalArgumentException("仅支持上传图片文件（jpg、png、gif、webp 等）");
         }
-        if (type == AttachmentType.CONFIRM && !isConfirmationFile(file)) {
-            throw new IllegalArgumentException("确认报告仅支持 PDF 或图片（jpg、png、gif、webp 等）");
+        if ((type == AttachmentType.CONFIRM || type == AttachmentType.PLAN_CONFIRM) && !isConfirmationFile(file)) {
+            throw new IllegalArgumentException(
+                    (type == AttachmentType.PLAN_CONFIRM ? "方案确认报告" : "确认报告")
+                            + "仅支持 PDF 或图片（jpg、png、gif、webp 等）");
         }
     }
 

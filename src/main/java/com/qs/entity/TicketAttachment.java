@@ -52,6 +52,16 @@ public class TicketAttachment {
     @Column(name = "CREATE_TIME", nullable = false)
     private LocalDateTime createTime;
 
+    /** 方案/完成确认报告：确认后锁定，禁止删除 */
+    @Column(name = "CONFIRMED", nullable = false)
+    private boolean confirmed;
+
+    @Column(name = "CONFIRMED_BY", length = 50)
+    private String confirmedBy;
+
+    @Column(name = "CONFIRMED_TIME")
+    private LocalDateTime confirmedTime;
+
     @PrePersist
     public void prePersist() {
         if (id == null || id.isBlank()) {
@@ -60,6 +70,7 @@ public class TicketAttachment {
         if (createTime == null) {
             createTime = LocalDateTime.now();
         }
+        confirmed = false;
     }
 
     public String getId() {
@@ -142,7 +153,35 @@ public class TicketAttachment {
         this.createTime = createTime;
     }
 
+    public boolean isConfirmed() {
+        return confirmed;
+    }
+
+    public void setConfirmed(boolean confirmed) {
+        this.confirmed = confirmed;
+    }
+
+    public String getConfirmedBy() {
+        return confirmedBy;
+    }
+
+    public void setConfirmedBy(String confirmedBy) {
+        this.confirmedBy = confirmedBy;
+    }
+
+    public LocalDateTime getConfirmedTime() {
+        return confirmedTime;
+    }
+
+    public void setConfirmedTime(LocalDateTime confirmedTime) {
+        this.confirmedTime = confirmedTime;
+    }
+
     public boolean isImage() {
         return attachmentType == AttachmentType.IMAGE;
+    }
+
+    public boolean isReportType() {
+        return attachmentType == AttachmentType.CONFIRM || attachmentType == AttachmentType.PLAN_CONFIRM;
     }
 }

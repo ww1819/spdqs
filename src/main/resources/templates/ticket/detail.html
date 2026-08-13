@@ -32,6 +32,8 @@
                 <a th:href="@{/tickets/{id}/confirmation-export(id=${ticket.id})}"
                    class="btn btn-outline-secondary btn-sm">导出Word</a>
                 <button type="button" class="btn btn-outline-secondary btn-sm"
+                        data-bs-toggle="modal" data-bs-target="#planConfirmUploadModal">上传方案确认</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm"
                         data-bs-toggle="modal" data-bs-target="#confirmUploadModal">上传确认报告</button>
                 <a th:href="@{/archives/{id}(id=${ticket.archive.id})}" class="btn btn-outline-secondary btn-sm">查看档案</a>
                 <a th:href="@{/tickets/{id}/edit(id=${ticket.id})}" class="btn btn-primary btn-sm">编辑</a>
@@ -153,12 +155,46 @@
             </div>
 
             <div class="detail-section">
+                <h6 class="d-flex align-items-center gap-2 flex-wrap">
+                    方案确认报告
+                    <span th:if="${hasPlanConfirmation}" class="tag tag-info">已上传</span>
+                    <span th:unless="${hasPlanConfirmation}" class="tag tag-warning">未上传</span>
+                    <button type="button" class="btn btn-outline-secondary btn-sm ms-auto"
+                            data-bs-toggle="modal" data-bs-target="#planConfirmUploadModal">上传方案确认</button>
+                </h6>
+                <p class="small text-muted mb-2">请上传双方确认后的方案文件。确认存档后将保留存档版本，便于后续查阅。</p>
+                <div th:if="${ticketPlanConfirmations == null or #lists.isEmpty(ticketPlanConfirmations)}" class="text-muted small mb-2">暂无方案确认报告</div>
+                <ul class="attachment-file-list" th:unless="${ticketPlanConfirmations == null or #lists.isEmpty(ticketPlanConfirmations)}">
+                    <li th:each="f : ${ticketPlanConfirmations}" class="attachment-file-item">
+                        <a th:href="@{/tickets/attachments/{id}(id=${f.id})}" class="link-tech" th:text="${f.originalName}">file</a>
+                        <span class="text-muted small ms-2"
+                              th:text="${f.createBy != null ? f.createBy + ' · ' : ''}"></span>
+                        <span class="text-muted small"
+                              th:text="${#temporals.format(f.createTime, 'yyyy-MM-dd HH:mm')}"></span>
+                        <span th:if="${f.confirmed}" class="tag tag-primary ms-1">已存档</span>
+                        <form th:if="${!f.confirmed}" th:action="@{/tickets/attachments/{id}/confirm(id=${f.id})}" method="post" class="d-inline ms-2"
+                              onsubmit="return confirm('确认后将存档该方案确认报告。确定？')">
+                            <input type="hidden" name="ticketId" th:value="${ticket.id}">
+                            <input type="hidden" name="returnTo" value="detail">
+                            <button type="submit" class="btn btn-link btn-sm p-0">确认存档</button>
+                        </form>
+                        <form th:if="${!f.confirmed}" th:action="@{/tickets/attachments/{id}/delete(id=${f.id})}" method="post" class="d-inline ms-2"
+                              onsubmit="return confirm('确定删除该方案确认报告？可重新上传。')">
+                            <input type="hidden" name="ticketId" th:value="${ticket.id}">
+                            <input type="hidden" name="returnTo" value="detail">
+                            <button type="submit" class="btn btn-link btn-sm text-danger p-0">删除</button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="detail-section">
                 <h6 class="d-flex align-items-center gap-2">
-                    客户确认报告
+                    完成确认报告
                     <span th:if="${hasConfirmation}" class="tag tag-success">已上传</span>
                     <span th:unless="${hasConfirmation}" class="tag tag-warning">未上传</span>
                 </h6>
-                <p class="small text-muted mb-2">重大需求与重要变更请打印确认报告，由客户签字后上传扫描件作为凭证。</p>
+                <p class="small text-muted mb-2">请上传完成后的确认文件。确认存档后将保留存档版本，便于后续查阅。</p>
                 <div th:if="${ticketConfirmations == null or #lists.isEmpty(ticketConfirmations)}" class="text-muted small mb-2">暂无确认报告</div>
                 <ul class="attachment-file-list" th:unless="${ticketConfirmations == null or #lists.isEmpty(ticketConfirmations)}">
                     <li th:each="f : ${ticketConfirmations}" class="attachment-file-item">
@@ -167,8 +203,15 @@
                               th:text="${f.createBy != null ? f.createBy + ' · ' : ''}"></span>
                         <span class="text-muted small"
                               th:text="${#temporals.format(f.createTime, 'yyyy-MM-dd HH:mm')}"></span>
-                        <form th:action="@{/tickets/attachments/{id}/delete(id=${f.id})}" method="post" class="d-inline ms-2"
-                              onsubmit="return confirm('确定删除该确认报告？')">
+                        <span th:if="${f.confirmed}" class="tag tag-success ms-1">已存档</span>
+                        <form th:if="${!f.confirmed}" th:action="@{/tickets/attachments/{id}/confirm(id=${f.id})}" method="post" class="d-inline ms-2"
+                              onsubmit="return confirm('确认后将存档该完成确认报告。确定？')">
+                            <input type="hidden" name="ticketId" th:value="${ticket.id}">
+                            <input type="hidden" name="returnTo" value="detail">
+                            <button type="submit" class="btn btn-link btn-sm p-0">确认存档</button>
+                        </form>
+                        <form th:if="${!f.confirmed}" th:action="@{/tickets/attachments/{id}/delete(id=${f.id})}" method="post" class="d-inline ms-2"
+                              onsubmit="return confirm('确定删除该完成确认报告？可重新上传。')">
                             <input type="hidden" name="ticketId" th:value="${ticket.id}">
                             <input type="hidden" name="returnTo" value="detail">
                             <button type="submit" class="btn btn-link btn-sm text-danger p-0">删除</button>
@@ -178,6 +221,28 @@
             </div>
 
             <div th:replace="~{fragments/ticket-attachments :: attachmentSection(ticket=${ticket}, editable=true, returnTo='detail')}"></div>
+            <div class="detail-section">
+                <h6>修改记录</h6>
+                <div th:if="${changeLogs == null or #lists.isEmpty(changeLogs)}" class="text-muted small">暂无修改记录</div>
+                <div class="followup-timeline" th:unless="${changeLogs == null or #lists.isEmpty(changeLogs)}">
+                    <div class="followup-item" th:each="c : ${changeLogs}">
+                        <div class="followup-meta">
+                            <span class="tag tag-default" th:text="${c.fieldLabel ?: c.fieldName}">字段</span>
+                            <span th:text="${c.changeBy ?: '—'}"></span>
+                            <span class="text-muted ms-2"
+                                  th:text="${#temporals.format(c.changeTime, 'yyyy-MM-dd HH:mm')}"></span>
+                        </div>
+                        <div class="followup-content small">
+                            <span class="text-muted">原：</span>
+                            <span th:text="${c.oldValue != null and !c.oldValue.isEmpty() ? c.oldValue : '（空）'}">—</span>
+                            <span class="text-muted mx-1">→</span>
+                            <span class="text-muted">新：</span>
+                            <span th:text="${c.newValue != null and !c.newValue.isEmpty() ? c.newValue : '（空）'}">—</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="detail-section">
                 <h6>跟进记录</h6>
                 <div th:if="${followUps != null and !#lists.isEmpty(followUps)}" class="followup-timeline">
@@ -215,7 +280,7 @@
         </div>
     </main>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/bootstrap.bundle.min.js"></script>
 <div class="modal fade" id="handledModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <form class="modal-content" th:action="@{/tickets/{id}/handled(id=${ticket.id})}" method="post">
@@ -287,6 +352,25 @@
         </form>
     </div>
 </div>
+<div class="modal fade" id="planConfirmUploadModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content" th:action="@{/tickets/{id}/plan-confirmation(id=${ticket.id})}" method="post" enctype="multipart/form-data">
+            <div class="modal-header py-2">
+                <h5 class="modal-title fs-6">上传方案确认报告</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small mb-3">请上传双方确认后的方案文件（PDF / 图片），便于留存与后续查阅。</p>
+                <input type="hidden" name="returnTo" value="detail">
+                <input type="file" name="file" class="form-control form-control-sm" accept=".pdf,image/*" required>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+                <button type="submit" class="btn btn-primary btn-sm">上传</button>
+            </div>
+        </form>
+    </div>
+</div>
 <div class="modal fade" id="confirmUploadModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <form class="modal-content" th:action="@{/tickets/{id}/confirmation(id=${ticket.id})}" method="post" enctype="multipart/form-data">
@@ -295,7 +379,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p class="small mb-3">支持 PDF 或图片。签字扫描件上传后可作为验收证据。</p>
+                <p class="small mb-3">请上传完成后的确认文件（PDF / 图片），便于留存与后续查阅。</p>
                 <input type="hidden" name="returnTo" value="detail">
                 <input type="file" name="file" class="form-control form-control-sm" accept=".pdf,image/*" required>
             </div>
