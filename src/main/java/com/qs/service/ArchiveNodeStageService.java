@@ -9,6 +9,7 @@ import com.qs.repository.ArchiveNodeStageDefRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -46,10 +47,7 @@ public class ArchiveNodeStageService {
         }
         ArchiveNodeStageDef stage = new ArchiveNodeStageDef();
         stage.setName(name);
-        int sortOrder = request.getSortOrder() != null ? request.getSortOrder() : nextSortOrder();
-        if (sortOrder < 0) {
-            throw new IllegalArgumentException("序号不能小于 0");
-        }
+        int sortOrder = resolveSortOrderForWrite(request.getSortOrder(), null);
         stage.setSortOrder(sortOrder);
         stage.setColorKey(resolveColorKey(request.getColorKey(), stage.getSortOrder()));
         stage.setCreateBy(createBy);
@@ -80,10 +78,7 @@ public class ArchiveNodeStageService {
             stage.setName(newName);
         }
         if (request.getSortOrder() != null) {
-            if (request.getSortOrder() < 0) {
-                throw new IllegalArgumentException("序号不能小于 0");
-            }
-            stage.setSortOrder(request.getSortOrder());
+            stage.setSortOrder(resolveSortOrderForWrite(request.getSortOrder(), stage));
         }
         if (request.getColorKey() != null && !request.getColorKey().isBlank()) {
             stage.setColorKey(request.getColorKey().trim());
@@ -140,6 +135,53 @@ public class ArchiveNodeStageService {
             stage.setSortOrder(i);
             stage.setColorKey(DEFAULT_COLORS[i]);
             stage.setCreateBy("system");
+            stageRepository.save(stage);
+        }
+    }
+
+    /**
+     * 解析写入序号：
+     * <ul>
+     *   <li>空：新增时取 max+1</li>
+     *   <li>整数：直接使用</li>
+     *   <li>小数（如 1.55）：进位为 ceil，并将「目标序号及之后」的其他阶段整体 +1，实现插入</li>
+     * </ul>
+     */
+    private int resolveSortOrderForWrite(Double raw, ArchiveNodeStageDef current) {
+        if (raw == null) {
+            if (current != null) {
+                return current.getSortOrder();
+            }
+            return nextSortOrder();
+        }
+        if (raw < 0) {
+            throw new IllegalArgumentException("序号不能小于 0");
+        }
+        if (isFractional(raw)) {
+            int target = (int) Math.ceil(raw);
+            boolean needShift = current == null || current.getSortOrder() != target;
+            if (needShift) {
+                shiftSortOrdersFrom(target, current != null ? current.getId() : null);
+            }
+            return target;
+        }
+        return (int) Math.rint(raw);
+    }
+
+    private static boolean isFractional(double value) {
+        return Math.abs(value - Math.rint(value)) > 1e-9;
+    }
+
+    /** 将 sortOrder &gt;= fromInclusive 的其他阶段序号 +1（从大到小更新，避免瞬时碰撞） */
+    private void shiftSortOrdersFrom(int fromInclusive, String excludeId) {
+        List<ArchiveNodeStageDef> toShift = stageRepository.findByDeletedFalseOrderBySortOrderAscCreateTimeAsc()
+                .stream()
+                .filter(s -> excludeId == null || !excludeId.equals(s.getId()))
+                .filter(s -> s.getSortOrder() >= fromInclusive)
+                .sorted(Comparator.comparingInt(ArchiveNodeStageDef::getSortOrder).reversed())
+                .toList();
+        for (ArchiveNodeStageDef stage : toShift) {
+            stage.setSortOrder(stage.getSortOrder() + 1);
             stageRepository.save(stage);
         }
     }

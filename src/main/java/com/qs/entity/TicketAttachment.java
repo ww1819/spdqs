@@ -28,7 +28,7 @@ public class TicketAttachment {
     private Ticket ticket;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "ATTACHMENT_TYPE", nullable = false, length = 10)
+    @Column(name = "ATTACHMENT_TYPE", nullable = false, length = 20)
     private AttachmentType attachmentType;
 
     @Column(name = "ORIGINAL_NAME", nullable = false, length = 255)

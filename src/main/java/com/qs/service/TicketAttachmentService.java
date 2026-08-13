@@ -10,6 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -42,6 +45,21 @@ public class TicketAttachmentService {
 
     public List<TicketAttachment> listFiles(String ticketId) {
         return attachmentRepository.findByTicketIdAndType(ticketId, AttachmentType.FILE);
+    }
+
+    public List<TicketAttachment> listConfirmations(String ticketId) {
+        return attachmentRepository.findByTicketIdAndType(ticketId, AttachmentType.CONFIRM);
+    }
+
+    public Set<String> findTicketIdsWithConfirmation(Collection<String> ticketIds) {
+        if (ticketIds == null || ticketIds.isEmpty()) {
+            return Collections.emptySet();
+        }
+        return new HashSet<>(attachmentRepository.findTicketIdsByType(ticketIds, AttachmentType.CONFIRM));
+    }
+
+    public boolean hasConfirmation(String ticketId) {
+        return !listConfirmations(ticketId).isEmpty();
     }
 
     public TicketAttachment getById(String id) {
@@ -111,6 +129,23 @@ public class TicketAttachmentService {
         if (type == AttachmentType.IMAGE && !isImage(file)) {
             throw new IllegalArgumentException("仅支持上传图片文件（jpg、png、gif、webp 等）");
         }
+        if (type == AttachmentType.CONFIRM && !isConfirmationFile(file)) {
+            throw new IllegalArgumentException("确认报告仅支持 PDF 或图片（jpg、png、gif、webp 等）");
+        }
+    }
+
+    private boolean isConfirmationFile(MultipartFile file) {
+        if (isImage(file)) {
+            return true;
+        }
+        String name = file.getOriginalFilename();
+        if (name == null) {
+            return false;
+        }
+        String lower = name.toLowerCase(Locale.ROOT);
+        String contentType = file.getContentType();
+        return lower.endsWith(".pdf")
+                || (contentType != null && contentType.toLowerCase(Locale.ROOT).contains("pdf"));
     }
 
     private boolean isImage(MultipartFile file) {

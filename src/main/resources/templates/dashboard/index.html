@@ -120,6 +120,8 @@
                                         <span class="tag tag-default" th:if="${t.status == '已提交'}" th:text="${t.status}">状态</span>
                                         <span class="tag tag-info" th:if="${t.status == '沟通中'}" th:text="${t.status}">状态</span>
                                         <span class="tag tag-warning" th:if="${t.status == '处理中'}" th:text="${t.status}">状态</span>
+                                        <span class="tag tag-primary" th:if="${t.status == '已处理'}" th:text="${t.status}">状态</span>
+                                        <span class="tag tag-warning" th:if="${t.status == '待反馈调整'}" th:text="${t.status}">状态</span>
                                         <span class="tag tag-danger" th:if="${t.status == '待升级'}" th:text="${t.status}">状态</span>
                                         <span class="tag tag-success" th:if="${t.status == '已完成'}" th:text="${t.status}">状态</span>
                                     </td>

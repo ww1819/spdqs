@@ -364,13 +364,16 @@ a.stat-card-link:hover {
 }
 
 .data-table .cell-actions {
-    white-space: nowrap;
+    white-space: normal;
+    min-width: 168px;
+    max-width: 240px;
+    line-height: 1.7;
 }
 
 .data-table .cell-actions a,
 .data-table .cell-actions button {
     font-size: 0.8rem;
-    margin-right: 8px;
+    margin-right: 6px;
 }
 
 .table-empty {
@@ -506,9 +509,40 @@ a.stat-card-link:hover {
 
 .tag-default { background: #f3f4f6; color: #4b5563; }
 .tag-info { background: #dbeafe; color: #1d4ed8; }
+.tag-primary { background: #e0e7ff; color: #3730a3; }
 .tag-warning { background: #fef3c7; color: #b45309; }
 .tag-danger { background: #fee2e2; color: #b91c1c; }
 .tag-success { background: #d1fae5; color: #047857; }
+
+.process-timeline { display: flex; flex-direction: column; gap: 12px; }
+.process-card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    background: #fff;
+}
+.process-card-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 6px;
+    font-size: 0.85rem;
+}
+.process-replies {
+    margin-top: 10px;
+    padding-left: 12px;
+    border-left: 3px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.process-reply {
+    background: #f8fafc;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 0.9rem;
+}
 
 /* ===== 工具栏 ===== */
 .toolbar {

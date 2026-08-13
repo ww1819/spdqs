@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,6 +19,10 @@ public interface TicketAttachmentRepository extends JpaRepository<TicketAttachme
     @Query("SELECT a FROM TicketAttachment a WHERE a.ticket.id = :ticketId AND a.attachmentType = :type ORDER BY a.createTime DESC")
     List<TicketAttachment> findByTicketIdAndType(@Param("ticketId") String ticketId,
                                                  @Param("type") AttachmentType type);
+
+    @Query("SELECT DISTINCT a.ticket.id FROM TicketAttachment a WHERE a.ticket.id IN :ticketIds AND a.attachmentType = :type")
+    List<String> findTicketIdsByType(@Param("ticketIds") Collection<String> ticketIds,
+                                     @Param("type") AttachmentType type);
 
     @Modifying
     @Query("DELETE FROM TicketAttachment a WHERE a.ticket.id = :ticketId")

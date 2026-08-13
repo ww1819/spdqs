@@ -3,7 +3,8 @@ package com.qs.dto;
 public class ArchiveNodeStageRequest {
 
     private String name;
-    private Integer sortOrder;
+    /** 支持小数：如 1.55 表示插入到 1 与 2 之间，服务端进位并为后续序号腾位 */
+    private Double sortOrder;
     private String colorKey;
 
     public String getName() {
@@ -14,11 +15,11 @@ public class ArchiveNodeStageRequest {
         this.name = name;
     }
 
-    public Integer getSortOrder() {
+    public Double getSortOrder() {
         return sortOrder;
     }
 
-    public void setSortOrder(Integer sortOrder) {
+    public void setSortOrder(Double sortOrder) {
         this.sortOrder = sortOrder;
     }
 

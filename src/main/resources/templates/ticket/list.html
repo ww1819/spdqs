@@ -131,6 +131,8 @@
                                 <span class="tag tag-default" th:if="${item.status == '已提交'}" th:text="${item.status}">状态</span>
                                 <span class="tag tag-info" th:if="${item.status == '沟通中'}" th:text="${item.status}">状态</span>
                                 <span class="tag tag-warning" th:if="${item.status == '处理中'}" th:text="${item.status}">状态</span>
+                                <span class="tag tag-primary" th:if="${item.status == '已处理'}" th:text="${item.status}">状态</span>
+                                <span class="tag tag-warning" th:if="${item.status == '待反馈调整'}" th:text="${item.status}">状态</span>
                                 <span class="tag tag-danger" th:if="${item.status == '待升级'}" th:text="${item.status}">状态</span>
                                 <span class="tag tag-success" th:if="${item.status == '已完成'}" th:text="${item.status}">状态</span>
                             </td>
@@ -149,6 +151,25 @@
                             <td class="cell-actions">
                                 <a th:href="@{/tickets/{id}(id=${item.id})}">详情</a>
                                 <a th:href="@{/tickets/{id}/edit(id=${item.id})}">编辑</a>
+                                <button type="button" class="btn btn-link btn-sm p-0 border-0"
+                                        th:if="${item.status != '已完成' and item.status != '已处理'}"
+                                        th:attr="data-ticket-id=${item.id}, data-project=${item.archive.projectName}"
+                                        onclick="openHandledModal(this)">已处理</button>
+                                <button type="button" class="btn btn-link btn-sm p-0 border-0 text-success"
+                                        th:if="${item.status == '已处理'}"
+                                        th:attr="data-ticket-id=${item.id}, data-project=${item.archive.projectName}"
+                                        onclick="openCompleteModal(this)">已完成</button>
+                                <button type="button" class="btn btn-link btn-sm p-0 border-0 text-warning"
+                                        th:if="${item.status == '已处理'}"
+                                        th:attr="data-ticket-id=${item.id}, data-project=${item.archive.projectName}"
+                                        onclick="openNeedFeedbackModal(this)">待反馈调整</button>
+                                <a th:href="@{/tickets/{id}/confirmation-print(id=${item.id})}" target="_blank" rel="noopener">打印</a>
+                                <a th:href="@{/tickets/{id}/confirmation-export(id=${item.id})}">导出Word</a>
+                                <button type="button" class="btn btn-link btn-sm p-0 border-0"
+                                        th:attr="data-ticket-id=${item.id}, data-project=${item.archive.projectName}"
+                                        onclick="openConfirmUpload(this)">上传确认</button>
+                                <span th:if="${confirmTicketIds != null and confirmTicketIds.contains(item.id)}"
+                                      class="tag tag-success ms-1" title="已上传客户签字确认报告">已确认</span>
                                 <form th:action="@{/tickets/{id}/delete(id=${item.id})}" method="post" class="d-inline"
                                       onsubmit="return confirm('确定删除该工单？')">
                                     <button type="submit" class="btn btn-link btn-sm text-danger p-0 border-0">删除</button>
@@ -163,6 +184,133 @@
     </main>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- 已处理 -->
+<div class="modal fade" id="handledModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content" id="handledForm" method="post">
+            <div class="modal-header py-2">
+                <h5 class="modal-title fs-6">记录已处理</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-muted mb-2" id="handledProject">—</p>
+                <input type="hidden" name="returnTo" value="list">
+                <div class="mb-2">
+                    <label class="form-label small mb-1">处理方式</label>
+                    <select name="handleMethod" class="form-select form-select-sm" required>
+                        <option value="">请选择</option>
+                        <option value="代码修复">代码修复</option>
+                        <option value="配置调整">配置调整</option>
+                        <option value="数据修正">数据修正</option>
+                        <option value="说明答复">说明答复</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label small mb-1">处理说明</label>
+                    <textarea name="content" class="form-control form-control-sm" rows="4"
+                              placeholder="说明改了什么、验证方式、影响范围等" required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+                <button type="submit" class="btn btn-primary btn-sm">提交并标记已处理</button>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- 待反馈调整 -->
+<div class="modal fade" id="needFeedbackModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content" id="needFeedbackForm" method="post">
+            <div class="modal-header py-2">
+                <h5 class="modal-title fs-6">待反馈调整</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-muted mb-2" id="needFeedbackProject">—</p>
+                <p class="small mb-2">现场核对后与预期尚有偏差，请说明需调整点，便于开发继续处理（温和协作，非否定工作）。</p>
+                <input type="hidden" name="returnTo" value="list">
+                <textarea name="content" class="form-control form-control-sm" rows="4"
+                          placeholder="例如：列表已好，导出仍显示英文；希望与页面一致" required></textarea>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+                <button type="submit" class="btn btn-warning btn-sm">提交反馈</button>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- 已完成（可填核对说明） -->
+<div class="modal fade" id="completeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content" id="completeForm" method="post">
+            <div class="modal-header py-2">
+                <h5 class="modal-title fs-6">确认已完成</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-muted mb-2" id="completeProject">—</p>
+                <input type="hidden" name="returnTo" value="list">
+                <textarea name="content" class="form-control form-control-sm" rows="3"
+                          placeholder="可选：核对通过说明"></textarea>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+                <button type="submit" class="btn btn-success btn-sm">确认完成</button>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- 上传确认报告 -->
+<div class="modal fade" id="confirmUploadModal" tabindex="-1" aria-labelledby="confirmUploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content" id="confirmUploadForm" method="post" enctype="multipart/form-data">
+            <div class="modal-header py-2">
+                <h5 class="modal-title fs-6" id="confirmUploadModalLabel">上传确认报告</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-muted mb-2" id="confirmUploadProject">—</p>
+                <p class="small mb-3">请上传客户签字后的扫描件或照片（PDF / JPG / PNG），作为重大需求与变更的确认凭证。</p>
+                <input type="hidden" name="returnTo" value="list">
+                <input type="file" name="file" class="form-control form-control-sm" accept=".pdf,image/*" required>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+                <button type="submit" class="btn btn-primary btn-sm">上传</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+function openTicketActionModal(btn, formId, projectLabelId, actionSuffix, modalId) {
+    const ticketId = btn.getAttribute('data-ticket-id');
+    const project = btn.getAttribute('data-project') || '';
+    document.getElementById(formId).action = '/tickets/' + ticketId + '/' + actionSuffix;
+    document.getElementById(projectLabelId).textContent = '项目：' + project;
+    bootstrap.Modal.getOrCreateInstance(document.getElementById(modalId)).show();
+}
+function openHandledModal(btn) {
+    openTicketActionModal(btn, 'handledForm', 'handledProject', 'handled', 'handledModal');
+}
+function openNeedFeedbackModal(btn) {
+    openTicketActionModal(btn, 'needFeedbackForm', 'needFeedbackProject', 'need-feedback', 'needFeedbackModal');
+}
+function openCompleteModal(btn) {
+    openTicketActionModal(btn, 'completeForm', 'completeProject', 'complete', 'completeModal');
+}
+function openConfirmUpload(btn) {
+    const ticketId = btn.getAttribute('data-ticket-id');
+    const project = btn.getAttribute('data-project') || '';
+    const form = document.getElementById('confirmUploadForm');
+    const label = document.getElementById('confirmUploadProject');
+    form.action = '/tickets/' + ticketId + '/confirmation';
+    label.textContent = '项目：' + project;
+    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('confirmUploadModal'));
+    modal.show();
+}
+</script>
 <script>
 (function () {
     const form = document.getElementById('ticketFilterForm');

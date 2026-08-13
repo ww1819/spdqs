@@ -6,11 +6,14 @@ import com.qs.enums.OrderType;
 import com.qs.enums.TicketStatus;
 import com.qs.service.AnalysisService;
 import com.qs.service.ArchiveService;
+import com.qs.service.ConfirmationReportWordExporter;
 import com.qs.service.PermissionService;
 import com.qs.service.ReminderService;
 import com.qs.service.TicketAttachmentService;
+import com.qs.service.TicketProcessService;
 import com.qs.service.TicketService;
 import com.qs.service.UserService;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
@@ -25,9 +28,12 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/tickets")
@@ -39,19 +45,24 @@ public class TicketController {
     private final UserService userService;
     private final ReminderService reminderService;
     private final TicketAttachmentService attachmentService;
+    private final TicketProcessService processService;
     private final PermissionService permissionService;
+    private final ConfirmationReportWordExporter confirmationReportWordExporter;
 
     public TicketController(TicketService ticketService, ArchiveService archiveService,
                             AnalysisService analysisService, UserService userService,
                             ReminderService reminderService, TicketAttachmentService attachmentService,
-                            PermissionService permissionService) {
+                            TicketProcessService processService, PermissionService permissionService,
+                            ConfirmationReportWordExporter confirmationReportWordExporter) {
         this.ticketService = ticketService;
         this.archiveService = archiveService;
         this.analysisService = analysisService;
         this.userService = userService;
         this.reminderService = reminderService;
         this.attachmentService = attachmentService;
+        this.processService = processService;
         this.permissionService = permissionService;
+        this.confirmationReportWordExporter = confirmationReportWordExporter;
     }
 
     @GetMapping
@@ -90,9 +101,13 @@ public class TicketController {
             menuAliases = List.of();
         }
 
+        List<Ticket> tickets = ticketService.search(
+                statusFilters, handler, submitter, keyword, menuAliases, archiveFilters);
+        Set<String> confirmTicketIds = attachmentService.findTicketIdsWithConfirmation(
+                tickets.stream().map(Ticket::getId).collect(Collectors.toList()));
         model.addAttribute("returnUrl", "/tickets");
-        model.addAttribute("tickets", ticketService.search(
-                statusFilters, handler, submitter, keyword, menuAliases, archiveFilters));
+        model.addAttribute("tickets", tickets);
+        model.addAttribute("confirmTicketIds", confirmTicketIds);
         model.addAttribute("statusFilters", statusFilters);
         model.addAttribute("archiveIdFilters", cleanList(archiveId));
         model.addAttribute("systemIdFilters", systemFilters);
@@ -144,9 +159,11 @@ public class TicketController {
         model.addAttribute("ticket", ticket);
         addAttachmentModel(model, id);
         model.addAttribute("followUps", ticketService.listFollowUps(id));
+        model.addAttribute("processes", processService.listTreeByTicketId(id));
         model.addAttribute("ticketStatuses", Arrays.asList(TicketStatus.values()));
         model.addAttribute("activeTab", "tickets");
         model.addAttribute("attachmentEditable", true);
+        model.addAttribute("hasConfirmation", attachmentService.hasConfirmation(id));
         return "ticket/detail";
     }
 
@@ -210,6 +227,7 @@ public class TicketController {
                                     @AuthenticationPrincipal UserDetails userDetails,
                                     RedirectAttributes redirectAttributes) {
         Ticket ticket = ticketService.getById(id);
+        ensureTicketAccess(userDetails, ticket);
         String createBy = resolveDisplayName(userDetails);
         try {
             attachmentService.uploadBatch(ticket, images, AttachmentType.IMAGE, createBy);
@@ -218,27 +236,45 @@ public class TicketController {
         } catch (IllegalArgumentException | IOException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
-        if ("detail".equals(returnTo)) {
-            return "redirect:/tickets/" + id;
+        return resolveTicketReturn(id, returnTo);
+    }
+
+    @PostMapping("/{id}/confirmation")
+    public String uploadConfirmation(@PathVariable String id,
+                                     @RequestParam("file") MultipartFile file,
+                                     @RequestParam(defaultValue = "detail") String returnTo,
+                                     @AuthenticationPrincipal UserDetails userDetails,
+                                     RedirectAttributes redirectAttributes) {
+        Ticket ticket = ticketService.getById(id);
+        ensureTicketAccess(userDetails, ticket);
+        if (file == null || file.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "请选择确认报告文件");
+            return resolveTicketReturn(id, returnTo);
         }
-        return "redirect:/tickets/" + id + "/edit";
+        try {
+            attachmentService.upload(ticket, file, AttachmentType.CONFIRM, resolveDisplayName(userDetails));
+            redirectAttributes.addFlashAttribute("success", "确认报告已上传，可作为客户签字凭证");
+        } catch (IllegalArgumentException | IOException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+        }
+        return resolveTicketReturn(id, returnTo);
     }
 
     @PostMapping("/attachments/{attachmentId}/delete")
     public String deleteAttachment(@PathVariable String attachmentId,
                                    @RequestParam String ticketId,
                                    @RequestParam(defaultValue = "edit") String returnTo,
+                                   @AuthenticationPrincipal UserDetails userDetails,
                                    RedirectAttributes redirectAttributes) {
+        Ticket ticket = ticketService.getById(ticketId);
+        ensureTicketAccess(userDetails, ticket);
         try {
             attachmentService.delete(attachmentId);
             redirectAttributes.addFlashAttribute("success", "已删除");
         } catch (IllegalArgumentException | IOException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
         }
-        if ("detail".equals(returnTo)) {
-            return "redirect:/tickets/" + ticketId;
-        }
-        return "redirect:/tickets/" + ticketId + "/edit";
+        return resolveTicketReturn(ticketId, returnTo);
     }
 
     @PostMapping("/{id}/delete")
@@ -246,6 +282,107 @@ public class TicketController {
         ticketService.delete(id);
         redirectAttributes.addFlashAttribute("success", "工单已删除");
         return "redirect:/tickets";
+    }
+
+    @PostMapping("/{id}/complete")
+    public String complete(@PathVariable String id,
+                           @RequestParam(defaultValue = "list") String returnTo,
+                           @RequestParam(required = false) String content,
+                           @AuthenticationPrincipal UserDetails userDetails,
+                           RedirectAttributes redirectAttributes) {
+        Ticket ticket = ticketService.getById(id);
+        ensureTicketAccess(userDetails, ticket);
+        try {
+            if (content != null && !content.isBlank()) {
+                processService.markCompletedWithProcess(id, content, resolveDisplayName(userDetails));
+            } else {
+                ticketService.markCompleted(id, resolveDisplayName(userDetails));
+            }
+            redirectAttributes.addFlashAttribute("success", "工单已标记为已完成");
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+        }
+        return resolveTicketReturn(id, returnTo);
+    }
+
+    @PostMapping("/{id}/handled")
+    public String markHandled(@PathVariable String id,
+                              @RequestParam String handleMethod,
+                              @RequestParam String content,
+                              @RequestParam(defaultValue = "list") String returnTo,
+                              @AuthenticationPrincipal UserDetails userDetails,
+                              RedirectAttributes redirectAttributes) {
+        Ticket ticket = ticketService.getById(id);
+        ensureTicketAccess(userDetails, ticket);
+        try {
+            processService.markHandled(id, handleMethod, content, resolveDisplayName(userDetails));
+            redirectAttributes.addFlashAttribute("success", "已记录处理进程，状态更新为「已处理」");
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+        }
+        return resolveTicketReturn(id, returnTo);
+    }
+
+    @PostMapping("/{id}/process-reply")
+    public String processReply(@PathVariable String id,
+                               @RequestParam(required = false) String parentId,
+                               @RequestParam String content,
+                               @RequestParam(defaultValue = "detail") String returnTo,
+                               @AuthenticationPrincipal UserDetails userDetails,
+                               RedirectAttributes redirectAttributes) {
+        Ticket ticket = ticketService.getById(id);
+        ensureTicketAccess(userDetails, ticket);
+        try {
+            processService.reply(id, parentId, content, resolveDisplayName(userDetails));
+            redirectAttributes.addFlashAttribute("success", "核对回复已保存");
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+        }
+        return resolveTicketReturn(id, returnTo);
+    }
+
+    @PostMapping("/{id}/need-feedback")
+    public String needFeedback(@PathVariable String id,
+                               @RequestParam(required = false) String content,
+                               @RequestParam(defaultValue = "list") String returnTo,
+                               @AuthenticationPrincipal UserDetails userDetails,
+                               RedirectAttributes redirectAttributes) {
+        Ticket ticket = ticketService.getById(id);
+        ensureTicketAccess(userDetails, ticket);
+        try {
+            processService.markNeedFeedback(id, content, resolveDisplayName(userDetails));
+            redirectAttributes.addFlashAttribute("success", "已标记为「待反馈调整」，请开发按反馈继续处理");
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("error", ex.getMessage());
+        }
+        return resolveTicketReturn(id, returnTo);
+    }
+
+    @GetMapping("/{id}/confirmation-print")
+    public String confirmationPrint(@PathVariable String id, Model model,
+                                    @AuthenticationPrincipal UserDetails userDetails) {
+        Ticket ticket = ticketService.getById(id);
+        ensureTicketAccess(userDetails, ticket);
+        model.addAttribute("ticket", ticket);
+        model.addAttribute("followUps", ticketService.listFollowUps(id));
+        model.addAttribute("printDate", java.time.LocalDate.now());
+        return "ticket/confirmation-print";
+    }
+
+    @GetMapping("/{id}/confirmation-export")
+    public void confirmationExport(@PathVariable String id,
+                                   @AuthenticationPrincipal UserDetails userDetails,
+                                   HttpServletResponse response) throws IOException {
+        Ticket ticket = ticketService.getById(id);
+        ensureTicketAccess(userDetails, ticket);
+        byte[] bytes = confirmationReportWordExporter.export(ticket, ticketService.listFollowUps(id));
+        String fileName = confirmationReportWordExporter.buildFileName(ticket);
+        String encoded = URLEncoder.encode(fileName, StandardCharsets.UTF_8).replace("+", "%20");
+        response.setContentType("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+        response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + encoded);
+        response.setContentLength(bytes.length);
+        response.getOutputStream().write(bytes);
+        response.getOutputStream().flush();
     }
 
     @PostMapping("/{id}/pending-upgrade")
@@ -264,9 +401,20 @@ public class TicketController {
         return "redirect:/dashboard";
     }
 
+    private String resolveTicketReturn(String ticketId, String returnTo) {
+        if ("list".equals(returnTo)) {
+            return "redirect:/tickets";
+        }
+        if ("detail".equals(returnTo)) {
+            return "redirect:/tickets/" + ticketId;
+        }
+        return "redirect:/tickets/" + ticketId + "/edit";
+    }
+
     private void addAttachmentModel(Model model, String ticketId) {
         model.addAttribute("ticketImages", attachmentService.listImages(ticketId));
         model.addAttribute("ticketFiles", attachmentService.listFiles(ticketId));
+        model.addAttribute("ticketConfirmations", attachmentService.listConfirmations(ticketId));
     }
 
     private void addUserToModel(Model model, UserDetails userDetails) {

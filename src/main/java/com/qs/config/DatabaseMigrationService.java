@@ -26,7 +26,9 @@ public class DatabaseMigrationService {
         migrateArchiveTable();
         migrateTicketTable();
         migrateTicketFollowUpTable();
+        migrateTicketProcessTable();
         migrateTicketAttachmentTable();
+        migrateTicketAttachmentTypeColumn();
         migrateArchiveAttachmentTable();
         migrateReminderTable();
         migrateSysSeqTable();
@@ -141,6 +143,29 @@ public class DatabaseMigrationService {
                 """);
     }
 
+    private void migrateTicketProcessTable() {
+        if (tableExists("T_TICKET_PROCESS")) {
+            return;
+        }
+        log.info("创建表 T_TICKET_PROCESS");
+        jdbcTemplate.execute("""
+                CREATE TABLE T_TICKET_PROCESS (
+                   ID VARCHAR(36) NOT NULL,
+                   TICKET_ID VARCHAR(36) NOT NULL,
+                   PARENT_ID VARCHAR(36) DEFAULT NULL,
+                   ACTION_TYPE VARCHAR(20) NOT NULL,
+                   HANDLE_METHOD VARCHAR(100) DEFAULT NULL,
+                   CONTENT TEXT,
+                   CREATE_BY VARCHAR(50),
+                   CREATE_TIME DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                   PRIMARY KEY (ID),
+                   KEY IDX_T_PROCESS_TICKET (TICKET_ID),
+                   KEY IDX_T_PROCESS_PARENT (PARENT_ID),
+                   CONSTRAINT FK_T_PROCESS_TICKET FOREIGN KEY (TICKET_ID) REFERENCES T_TICKET (ID)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """);
+    }
+
     private void migrateTicketAttachmentTable() {
         if (tableExists("T_TICKET_ATTACHMENT")) {
             return;
@@ -150,7 +175,7 @@ public class DatabaseMigrationService {
                 CREATE TABLE T_TICKET_ATTACHMENT (
                    ID VARCHAR(36) NOT NULL,
                    TICKET_ID VARCHAR(36) NOT NULL,
-                   ATTACHMENT_TYPE VARCHAR(10) NOT NULL,
+                   ATTACHMENT_TYPE VARCHAR(20) NOT NULL,
                    ORIGINAL_NAME VARCHAR(255) NOT NULL,
                    STORED_NAME VARCHAR(255) NOT NULL,
                    RELATIVE_PATH VARCHAR(500) NOT NULL,
@@ -163,6 +188,25 @@ public class DatabaseMigrationService {
                    CONSTRAINT FK_T_ATTACH_TICKET FOREIGN KEY (TICKET_ID) REFERENCES T_TICKET (ID)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
                 """);
+    }
+
+    /** 确认报告类型 CONFIRM 等，扩展 ATTACHMENT_TYPE 长度 */
+    private void migrateTicketAttachmentTypeColumn() {
+        if (!tableExists("T_TICKET_ATTACHMENT") || !columnExists("T_TICKET_ATTACHMENT", "ATTACHMENT_TYPE")) {
+            return;
+        }
+        Integer len = jdbcTemplate.queryForObject(
+                "SELECT CHARACTER_MAXIMUM_LENGTH FROM INFORMATION_SCHEMA.COLUMNS "
+                        + "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?",
+                Integer.class,
+                "T_TICKET_ATTACHMENT",
+                "ATTACHMENT_TYPE");
+        if (len != null && len >= 20) {
+            return;
+        }
+        log.info("扩展列 T_TICKET_ATTACHMENT.ATTACHMENT_TYPE -> VARCHAR(20)");
+        jdbcTemplate.execute(
+                "ALTER TABLE T_TICKET_ATTACHMENT MODIFY COLUMN ATTACHMENT_TYPE VARCHAR(20) NOT NULL");
     }
 
     private void migrateArchiveAttachmentTable() {

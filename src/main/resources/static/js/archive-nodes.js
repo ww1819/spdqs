@@ -138,7 +138,8 @@
                 <td>
                     <span class="stage-sort-view">${escapeHtml(s.sortOrder)}</span>
                     <input type="number" class="form-control form-control-sm stage-sort-edit d-none"
-                           min="0" step="1" value="${escapeHtml(s.sortOrder)}" style="width: 80px;">
+                           min="0" step="any" value="${escapeHtml(s.sortOrder)}" style="width: 90px;"
+                           title="整数=直接设置；小数如 1.55=插入到 1 与 2 之间">
                 </td>
                 <td>
                     <span class="stage-name-view">${escapeHtml(s.name)}</span>
@@ -479,7 +480,7 @@
             return;
         }
         if (sortRaw !== '' && (!Number.isFinite(sortOrder) || sortOrder < 0)) {
-            alert('请输入有效序号（大于等于 0 的整数）');
+            alert('请输入有效序号（≥0；可用小数如 1.55 表示插入）');
             return;
         }
         try {
@@ -602,11 +603,11 @@
                 return;
             }
             if (!Number.isFinite(sortOrder) || sortOrder < 0) {
-                alert('请输入有效序号（大于等于 0 的整数）');
+                alert('请输入有效序号（≥0；可用小数如 1.55 表示插入）');
                 return;
             }
             try {
-                await saveStage(id, name, Math.trunc(sortOrder));
+                await saveStage(id, name, sortOrder);
             } catch (err) {
                 alert(err.message || '保存失败');
             }

@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="'确认报告 - ' + ${ticket.archive.projectName}">确认报告</title>
+    <style>
+        :root {
+            --ink: #1a1d21;
+            --muted: #5c6570;
+            --line: #cfd6dd;
+            --accent: #1f4e79;
+            --paper: #ffffff;
+            --wash: #f4f6f8;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: #e8ecf0;
+            color: var(--ink);
+            font-family: "Source Han Sans SC", "Noto Sans SC", "Microsoft YaHei", "PingFang SC", sans-serif;
+            font-size: 14px;
+            line-height: 1.55;
+        }
+        .toolbar {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.96);
+            border-bottom: 1px solid var(--line);
+            box-shadow: 0 1px 8px rgba(0, 0, 0, 0.04);
+        }
+        .toolbar .hint {
+            color: var(--muted);
+            font-size: 13px;
+            margin-right: 8px;
+        }
+        .btn {
+            appearance: none;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+        .btn-primary:hover { filter: brightness(1.05); }
+        .btn-ghost {
+            background: #fff;
+            border-color: var(--line);
+            color: var(--ink);
+        }
+        .sheet-wrap {
+            padding: 24px 16px 48px;
+            display: flex;
+            justify-content: center;
+        }
+        .sheet {
+            width: 210mm;
+            min-height: 297mm;
+            background: var(--paper);
+            padding: 18mm 16mm 16mm;
+            box-shadow: 0 8px 28px rgba(26, 40, 55, 0.12);
+        }
+        .brand-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 16px;
+            margin-bottom: 10px;
+        }
+        .brand {
+            font-size: 13px;
+            letter-spacing: 0.08em;
+            color: var(--accent);
+            font-weight: 600;
+        }
+        .doc-meta {
+            text-align: right;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.7;
+        }
+        .title {
+            margin: 0 0 4px;
+            text-align: center;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            color: var(--ink);
+        }
+        .subtitle {
+            text-align: center;
+            color: var(--muted);
+            font-size: 12px;
+            margin-bottom: 18px;
+        }
+        .rule {
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent), #7a9bb8 55%, transparent);
+            margin-bottom: 18px;
+        }
+        .info-grid {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+        }
+        .info-grid th,
+        .info-grid td {
+            border: 1px solid var(--line);
+            padding: 9px 12px;
+            vertical-align: top;
+        }
+        .info-grid th {
+            width: 18%;
+            background: var(--wash);
+            font-weight: 600;
+            color: #334155;
+            text-align: left;
+        }
+        .section {
+            margin-top: 16px;
+        }
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+        .section-title::before {
+            content: "";
+            width: 4px;
+            height: 14px;
+            background: var(--accent);
+            border-radius: 2px;
+        }
+        .box {
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            padding: 12px 14px;
+            min-height: 88px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            background: #fff;
+        }
+        .box.tall { min-height: 120px; }
+        .box.lines {
+            min-height: 96px;
+            background:
+                repeating-linear-gradient(
+                    transparent,
+                    transparent 27px,
+                    #e8edf2 27px,
+                    #e8edf2 28px
+                );
+        }
+        .checklist {
+            margin: 0;
+            padding-left: 1.2em;
+            color: var(--ink);
+        }
+        .checklist li { margin: 4px 0; }
+        .sign-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-top: 8px;
+        }
+        .sign-card {
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            padding: 12px 14px 16px;
+            min-height: 150px;
+        }
+        .sign-card h4 {
+            margin: 0 0 12px;
+            font-size: 13px;
+            color: var(--accent);
+        }
+        .sign-line {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            margin: 14px 0;
+            font-size: 13px;
+        }
+        .sign-line .label { color: var(--muted); white-space: nowrap; }
+        .sign-line .blank {
+            flex: 1;
+            border-bottom: 1px solid #9aa6b2;
+            min-height: 22px;
+        }
+        .footnote {
+            margin-top: 22px;
+            padding-top: 10px;
+            border-top: 1px dashed var(--line);
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.7;
+        }
+        @media print {
+            body { background: #fff; }
+            .toolbar { display: none !important; }
+            .sheet-wrap { padding: 0; }
+            .sheet {
+                width: auto;
+                min-height: auto;
+                box-shadow: none;
+                padding: 10mm 12mm;
+            }
+            @page {
+                size: A4;
+                margin: 10mm;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="toolbar no-print">
+    <span class="hint">可直接打印，或导出 Word 后按客户情况改样式再打印；签字后请上传扫描件</span>
+    <button type="button" class="btn btn-primary" onclick="window.print()">打印确认报告</button>
+    <a class="btn btn-ghost" th:href="@{/tickets/{id}/confirmation-export(id=${ticket.id})}">导出 Word</a>
+    <a class="btn btn-ghost" th:href="@{/tickets/{id}(id=${ticket.id})}">返回详情</a>
+    <a class="btn btn-ghost" href="/tickets">返回列表</a>
+</div>
+
+<div class="sheet-wrap">
+    <article class="sheet">
+        <div class="brand-row">
+            <div class="brand">管家工程系统 · SPDQS</div>
+            <div class="doc-meta">
+                <div th:text="${ticket.ticketNo != null} ? |工单编号：WO-${ticket.ticketNo}| : |工单编号：${ticket.id}|">工单编号：—</div>
+                <div th:text="'打印日期：' + ${#temporals.format(printDate, 'yyyy年MM月dd日')}">打印日期：—</div>
+            </div>
+        </div>
+        <h1 class="title">需求 / 变更确认报告</h1>
+        <p class="subtitle">Requirement &amp; Change Confirmation Report</p>
+        <div class="rule"></div>
+
+        <table class="info-grid">
+            <tr>
+                <th>项目名称</th>
+                <td th:text="${ticket.archive.projectName}">—</td>
+                <th>工单类型</th>
+                <td th:text="${ticket.orderType}">—</td>
+            </tr>
+            <tr>
+                <th>当前状态</th>
+                <td th:text="${ticket.status}">—</td>
+                <th>提交时间</th>
+                <td th:text="${#temporals.format(ticket.createTime, 'yyyy-MM-dd HH:mm')}">—</td>
+            </tr>
+            <tr>
+                <th>提交人</th>
+                <td th:text="${ticket.submitter ?: '—'}">—</td>
+                <th>处理人</th>
+                <td th:text="${ticket.handler ?: '—'}">—</td>
+            </tr>
+            <tr>
+                <th>目标完成</th>
+                <td th:text="${ticket.targetCompleteDate != null ? #temporals.format(ticket.targetCompleteDate, 'yyyy-MM-dd') : '—'}">—</td>
+                <th>预计完成</th>
+                <td th:text="${ticket.expectedCompleteDate != null ? #temporals.format(ticket.expectedCompleteDate, 'yyyy-MM-dd') : '—'}">—</td>
+            </tr>
+        </table>
+
+        <section class="section">
+            <div class="section-title">确认事项（工单内容）</div>
+            <div class="box tall" th:text="${ticket.content ?: '—'}">—</div>
+        </section>
+
+        <section class="section" th:if="${ticket.attentionNote != null and !ticket.attentionNote.isEmpty()}">
+            <div class="section-title">注意事项</div>
+            <div class="box" th:text="${ticket.attentionNote}">—</div>
+        </section>
+
+        <section class="section">
+            <div class="section-title">实施说明 / 完成情况</div>
+            <div class="box lines"
+                 th:if="${followUps == null or #lists.isEmpty(followUps)}"></div>
+            <div class="box" th:unless="${followUps == null or #lists.isEmpty(followUps)}">
+                <div th:each="fu, iter : ${followUps}" style="margin-bottom: 8px;">
+                    <div style="color:#5c6570;font-size:12px;margin-bottom:2px;">
+                        <span th:text="${iter.count} + '.'"></span>
+                        <span th:text="${fu.createBy ?: '—'}"></span>
+                        <span th:text="${#temporals.format(fu.createTime, 'yyyy-MM-dd HH:mm')}"></span>
+                    </div>
+                    <div th:text="${fu.content}"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-title">客户确认声明</div>
+            <div class="box" style="min-height:auto;">
+                <ol class="checklist">
+                    <li>已核对上述需求 / 变更内容与现场业务场景一致；</li>
+                    <li>已确认实施结果符合约定，可投入使用（或按约定进入下一阶段）；</li>
+                    <li>如有遗留问题，已在「注意事项」或下方签字区注明。</li>
+                </ol>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-title">签字栏</div>
+            <div class="sign-grid">
+                <div class="sign-card">
+                    <h4>客户方确认</h4>
+                    <div class="sign-line"><span class="label">单位名称</span><span class="blank"></span></div>
+                    <div class="sign-line"><span class="label">确认人签字</span><span class="blank"></span></div>
+                    <div class="sign-line"><span class="label">联系电话</span><span class="blank"></span></div>
+                    <div class="sign-line"><span class="label">确认日期</span><span class="blank"></span></div>
+                </div>
+                <div class="sign-card">
+                    <h4>实施方确认</h4>
+                    <div class="sign-line"><span class="label">实施单位</span><span class="blank"></span></div>
+                    <div class="sign-line"><span class="label">实施人签字</span><span class="blank"></span></div>
+                    <div class="sign-line"><span class="label">联系电话</span><span class="blank"></span></div>
+                    <div class="sign-line"><span class="label">确认日期</span><span class="blank"></span></div>
+                </div>
+            </div>
+        </section>
+
+        <p class="footnote">
+            说明：本报告用于重大需求与重要变更的现场确认。签字后请扫描或拍照，在系统工单中上传「确认报告」，作为验收与追溯凭证。
+            非正式法律文书，不替代合同与正式验收文件。
+        </p>
+    </article>
+</div>
+<script>
+    // 打开即提示打印，便于实施现场一键操作；取消打印仍可留在本页查看
+    window.addEventListener('load', function () {
+        setTimeout(function () { window.print(); }, 280);
+    });
+</script>
+</body>
+</html>

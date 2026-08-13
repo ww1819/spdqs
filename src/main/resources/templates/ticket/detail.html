@@ -12,10 +12,27 @@
                 <span class="tag tag-default" th:if="${ticket.status == '已提交'}" th:text="${ticket.status}">状态</span>
                 <span class="tag tag-info" th:if="${ticket.status == '沟通中'}" th:text="${ticket.status}">状态</span>
                 <span class="tag tag-warning" th:if="${ticket.status == '处理中'}" th:text="${ticket.status}">状态</span>
+                <span class="tag tag-primary" th:if="${ticket.status == '已处理'}" th:text="${ticket.status}">状态</span>
+                <span class="tag tag-warning" th:if="${ticket.status == '待反馈调整'}" th:text="${ticket.status}">状态</span>
                 <span class="tag tag-danger" th:if="${ticket.status == '待升级'}" th:text="${ticket.status}">状态</span>
                 <span class="tag tag-success" th:if="${ticket.status == '已完成'}" th:text="${ticket.status}">状态</span>
             </div>
-            <div class="d-flex gap-2">
+            <div class="d-flex gap-2 flex-wrap">
+                <button type="button" class="btn btn-primary btn-sm"
+                        th:if="${ticket.status != '已完成' and ticket.status != '已处理'}"
+                        data-bs-toggle="modal" data-bs-target="#handledModal">已处理</button>
+                <button type="button" class="btn btn-success btn-sm"
+                        th:if="${ticket.status == '已处理'}"
+                        data-bs-toggle="modal" data-bs-target="#completeModal">已完成</button>
+                <button type="button" class="btn btn-warning btn-sm"
+                        th:if="${ticket.status == '已处理'}"
+                        data-bs-toggle="modal" data-bs-target="#needFeedbackModal">待反馈调整</button>
+                <a th:href="@{/tickets/{id}/confirmation-print(id=${ticket.id})}" target="_blank" rel="noopener"
+                   class="btn btn-outline-secondary btn-sm">打印确认报告</a>
+                <a th:href="@{/tickets/{id}/confirmation-export(id=${ticket.id})}"
+                   class="btn btn-outline-secondary btn-sm">导出Word</a>
+                <button type="button" class="btn btn-outline-secondary btn-sm"
+                        data-bs-toggle="modal" data-bs-target="#confirmUploadModal">上传确认报告</button>
                 <a th:href="@{/archives/{id}(id=${ticket.archive.id})}" class="btn btn-outline-secondary btn-sm">查看档案</a>
                 <a th:href="@{/tickets/{id}/edit(id=${ticket.id})}" class="btn btn-primary btn-sm">编辑</a>
                 <a href="/tickets" class="btn btn-outline-secondary btn-sm">返回列表</a>
@@ -87,6 +104,79 @@
                 <h6>工单联系方式</h6>
                 <div class="content-block" th:text="${ticket.contactInfo ?: '—'}"></div>
             </div>
+
+            <div class="detail-section">
+                <h6 class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                    <span>处理进程</span>
+                    <button type="button" class="btn btn-outline-primary btn-sm"
+                            th:if="${ticket.status != '已完成' and ticket.status != '已处理'}"
+                            data-bs-toggle="modal" data-bs-target="#handledModal">+ 记录已处理</button>
+                </h6>
+                <p class="small text-muted mb-2">开发提交处理说明 → 实施核对回复 → 通过则「已完成」，需继续则「待反馈调整」。</p>
+                <div th:if="${processes == null or #lists.isEmpty(processes)}" class="text-muted small">暂无处理进程</div>
+                <div class="process-timeline" th:unless="${processes == null or #lists.isEmpty(processes)}">
+                    <div class="process-card" th:each="p : ${processes}">
+                        <div class="process-card-head">
+                            <span class="tag tag-primary" th:if="${p.actionType.name() == 'HANDLED'}">已处理</span>
+                            <span class="tag tag-info" th:if="${p.actionType.name() == 'REPLY'}">核对回复</span>
+                            <span class="tag tag-warning" th:if="${p.actionType.name() == 'NEED_FEEDBACK'}">待反馈调整</span>
+                            <span class="tag tag-success" th:if="${p.actionType.name() == 'COMPLETE'}">已完成</span>
+                            <span class="text-muted" th:text="${p.createBy ?: '—'}"></span>
+                            <span class="text-muted" th:text="${#temporals.format(p.createTime, 'yyyy-MM-dd HH:mm')}"></span>
+                            <span th:if="${p.handleMethod != null and !p.handleMethod.isEmpty()}"
+                                  class="tag tag-default" th:text="${p.handleMethod}">方式</span>
+                        </div>
+                        <div class="content-block mb-0" th:text="${p.content ?: '—'}"></div>
+                        <div class="process-replies" th:if="${p.replies != null and !#lists.isEmpty(p.replies)}">
+                            <div class="process-reply" th:each="r : ${p.replies}">
+                                <div class="process-card-head mb-1">
+                                    <span class="tag tag-info" th:if="${r.actionType.name() == 'REPLY'}">核对回复</span>
+                                    <span class="tag tag-warning" th:if="${r.actionType.name() == 'NEED_FEEDBACK'}">待反馈调整</span>
+                                    <span class="tag tag-success" th:if="${r.actionType.name() == 'COMPLETE'}">已完成</span>
+                                    <span class="text-muted" th:text="${r.createBy ?: '—'}"></span>
+                                    <span class="text-muted" th:text="${#temporals.format(r.createTime, 'yyyy-MM-dd HH:mm')}"></span>
+                                </div>
+                                <div th:text="${r.content ?: '—'}"></div>
+                            </div>
+                        </div>
+                        <form th:if="${ticket.status != '已完成' and p.actionType.name() == 'HANDLED'}"
+                              th:action="@{/tickets/{id}/process-reply(id=${ticket.id})}" method="post" class="mt-2">
+                            <input type="hidden" name="returnTo" value="detail">
+                            <input type="hidden" name="parentId" th:value="${p.id}">
+                            <div class="input-group input-group-sm">
+                                <input type="text" name="content" class="form-control" placeholder="实施核对回复…" required>
+                                <button type="submit" class="btn btn-outline-secondary">回复</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <h6 class="d-flex align-items-center gap-2">
+                    客户确认报告
+                    <span th:if="${hasConfirmation}" class="tag tag-success">已上传</span>
+                    <span th:unless="${hasConfirmation}" class="tag tag-warning">未上传</span>
+                </h6>
+                <p class="small text-muted mb-2">重大需求与重要变更请打印确认报告，由客户签字后上传扫描件作为凭证。</p>
+                <div th:if="${ticketConfirmations == null or #lists.isEmpty(ticketConfirmations)}" class="text-muted small mb-2">暂无确认报告</div>
+                <ul class="attachment-file-list" th:unless="${ticketConfirmations == null or #lists.isEmpty(ticketConfirmations)}">
+                    <li th:each="f : ${ticketConfirmations}" class="attachment-file-item">
+                        <a th:href="@{/tickets/attachments/{id}(id=${f.id})}" class="link-tech" th:text="${f.originalName}">file</a>
+                        <span class="text-muted small ms-2"
+                              th:text="${f.createBy != null ? f.createBy + ' · ' : ''}"></span>
+                        <span class="text-muted small"
+                              th:text="${#temporals.format(f.createTime, 'yyyy-MM-dd HH:mm')}"></span>
+                        <form th:action="@{/tickets/attachments/{id}/delete(id=${f.id})}" method="post" class="d-inline ms-2"
+                              onsubmit="return confirm('确定删除该确认报告？')">
+                            <input type="hidden" name="ticketId" th:value="${ticket.id}">
+                            <input type="hidden" name="returnTo" value="detail">
+                            <button type="submit" class="btn btn-link btn-sm text-danger p-0">删除</button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+
             <div th:replace="~{fragments/ticket-attachments :: attachmentSection(ticket=${ticket}, editable=true, returnTo='detail')}"></div>
             <div class="detail-section">
                 <h6>跟进记录</h6>
@@ -126,6 +216,96 @@
     </main>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<div class="modal fade" id="handledModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content" th:action="@{/tickets/{id}/handled(id=${ticket.id})}" method="post">
+            <div class="modal-header py-2">
+                <h5 class="modal-title fs-6">记录已处理</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" name="returnTo" value="detail">
+                <div class="mb-2">
+                    <label class="form-label small mb-1">处理方式</label>
+                    <select name="handleMethod" class="form-select form-select-sm" required>
+                        <option value="">请选择</option>
+                        <option value="代码修复">代码修复</option>
+                        <option value="配置调整">配置调整</option>
+                        <option value="数据修正">数据修正</option>
+                        <option value="说明答复">说明答复</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label small mb-1">处理说明</label>
+                    <textarea name="content" class="form-control form-control-sm" rows="4" required
+                              placeholder="说明改了什么、验证方式、影响范围等"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+                <button type="submit" class="btn btn-primary btn-sm">提交并标记已处理</button>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="modal fade" id="needFeedbackModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content" th:action="@{/tickets/{id}/need-feedback(id=${ticket.id})}" method="post">
+            <div class="modal-header py-2">
+                <h5 class="modal-title fs-6">待反馈调整</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small mb-2">说明现场偏差与期望，便于开发继续对齐（协作反馈，非否定工作）。</p>
+                <input type="hidden" name="returnTo" value="detail">
+                <textarea name="content" class="form-control form-control-sm" rows="4" required></textarea>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+                <button type="submit" class="btn btn-warning btn-sm">提交反馈</button>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="modal fade" id="completeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content" th:action="@{/tickets/{id}/complete(id=${ticket.id})}" method="post">
+            <div class="modal-header py-2">
+                <h5 class="modal-title fs-6">确认已完成</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" name="returnTo" value="detail">
+                <textarea name="content" class="form-control form-control-sm" rows="3"
+                          placeholder="可选：核对通过说明"></textarea>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+                <button type="submit" class="btn btn-success btn-sm">确认完成</button>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="modal fade" id="confirmUploadModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content" th:action="@{/tickets/{id}/confirmation(id=${ticket.id})}" method="post" enctype="multipart/form-data">
+            <div class="modal-header py-2">
+                <h5 class="modal-title fs-6">上传确认报告</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small mb-3">支持 PDF 或图片。签字扫描件上传后可作为验收证据。</p>
+                <input type="hidden" name="returnTo" value="detail">
+                <input type="file" name="file" class="form-control form-control-sm" accept=".pdf,image/*" required>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+                <button type="submit" class="btn btn-primary btn-sm">上传</button>
+            </div>
+        </form>
+    </div>
+</div>
 <div th:replace="~{fragments/image-preview :: imagePreviewModal}"></div>
 </body>
 </html>

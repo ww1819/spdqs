@@ -27,16 +27,19 @@ public class TicketService {
     private final ReminderRepository reminderRepository;
     private final TicketFollowUpService followUpService;
     private final TicketAttachmentService attachmentService;
+    private final TicketProcessService processService;
     private final JdbcTemplate jdbcTemplate;
 
     public TicketService(TicketRepository ticketRepository, ArchiveService archiveService,
                          ReminderRepository reminderRepository, TicketFollowUpService followUpService,
-                         TicketAttachmentService attachmentService, JdbcTemplate jdbcTemplate) {
+                         TicketAttachmentService attachmentService, TicketProcessService processService,
+                         JdbcTemplate jdbcTemplate) {
         this.ticketRepository = ticketRepository;
         this.archiveService = archiveService;
         this.reminderRepository = reminderRepository;
         this.followUpService = followUpService;
         this.attachmentService = attachmentService;
+        this.processService = processService;
         this.jdbcTemplate = jdbcTemplate;
     }
 
@@ -200,6 +203,12 @@ public class TicketService {
         ticketRepository.save(ticket);
     }
 
+    /** 列表/详情快捷标记已完成（不写升级人/升级时间；写入处理进程） */
+    @Transactional
+    public void markCompleted(String id, String createBy) {
+        processService.markCompletedWithProcess(id, null, createBy);
+    }
+
     @Transactional
     public void delete(String id) {
         try {
@@ -207,6 +216,7 @@ public class TicketService {
         } catch (IOException e) {
             throw new IllegalStateException("删除工单附件失败", e);
         }
+        processService.deleteByTicketId(id);
         followUpService.deleteByTicketId(id);
         reminderRepository.deleteByTicketId(id);
         ticketRepository.deleteById(id);

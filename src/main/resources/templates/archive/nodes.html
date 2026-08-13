@@ -147,8 +147,8 @@
             </div>
             <div class="modal-body">
                 <div class="d-flex gap-2 mb-3 align-items-center">
-                    <input type="number" id="newStageSort" class="form-control" style="width: 100px;"
-                           min="1" step="1" placeholder="序号">
+                    <input type="number" id="newStageSort" class="form-control" style="width: 110px;"
+                           min="0" step="any" placeholder="序号/小数插入">
                     <input type="text" id="newStageName" class="form-control" placeholder="新阶段名称，如：验收阶段">
                     <button type="button" class="btn btn-primary text-nowrap" id="btnAddStage">新增</button>
                 </div>
@@ -164,7 +164,7 @@
                     </thead>
                     <tbody id="stageManageBody"></tbody>
                 </table>
-                <div class="form-text mt-2">可拖拽左侧把手调整顺序；也可手动改序号。重命名会同步更新已有节点；删除前需确保没有节点在使用该阶段。</div>
+                <div class="form-text mt-2">可拖拽左侧把手调整顺序；也可手动改序号。输入小数（如 1.55）表示插入到整数位之间：小数进位为整数，其后阶段序号自动 +1。重命名会同步更新已有节点；删除前需确保没有节点在使用该阶段。</div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">关闭</button>
