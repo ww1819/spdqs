@@ -1,5 +1,6 @@
 package com.qs.entity;
 
+import com.qs.util.IdUtils;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -10,19 +11,18 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
-@Table(name = "T_ARCHIVE_ATTACHMENT")
-public class ArchiveAttachment {
+@Table(name = "T_DELIVERY_ATTACHMENT")
+public class DeliveryAttachment {
 
     @Id
     @Column(name = "ID", length = 36)
     private String id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ARCHIVE_ID", nullable = false)
-    private Archive archive;
+    @JoinColumn(name = "DELIVERY_ID", nullable = false)
+    private Delivery delivery;
 
     @Column(name = "ORIGINAL_NAME", nullable = false, length = 255)
     private String originalName;
@@ -48,7 +48,7 @@ public class ArchiveAttachment {
     @PrePersist
     public void prePersist() {
         if (id == null || id.isBlank()) {
-            id = UUID.randomUUID().toString();
+            id = IdUtils.dashedUuid7();
         }
         if (createTime == null) {
             createTime = LocalDateTime.now();
@@ -63,12 +63,12 @@ public class ArchiveAttachment {
         this.id = id;
     }
 
-    public Archive getArchive() {
-        return archive;
+    public Delivery getDelivery() {
+        return delivery;
     }
 
-    public void setArchive(Archive archive) {
-        this.archive = archive;
+    public void setDelivery(Delivery delivery) {
+        this.delivery = delivery;
     }
 
     public String getOriginalName() {

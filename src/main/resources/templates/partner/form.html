@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/app-head :: head('服务商 - 档案工单系统')}"></head>
+<body class="app-page">
+<div class="app-shell">
+    <div th:replace="~{fragments/app-nav :: sidebar}"></div>
+    <main class="app-main">
+        <header class="app-header">
+            <h1 th:text="${partner.id != null ? '编辑服务商' : '新建服务商'}">服务商</h1>
+        </header>
+        <div class="app-content">
+            <div th:replace="~{fragments/page-header :: alerts}"></div>
+            <div class="form-page-card">
+                <form th:action="@{/partners/save}" method="post" th:object="${partner}">
+                    <input type="hidden" th:field="*{id}" th:if="${partner.id != null and !partner.id.isEmpty()}">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">名称 <span class="text-danger">*</span></label>
+                            <input type="text" th:field="*{name}" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">编码</label>
+                            <input type="text" th:field="*{code}" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">状态</label>
+                            <select th:field="*{status}" class="form-select">
+                                <option value="启用">启用</option>
+                                <option value="停用">停用</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">联系方式</label>
+                            <textarea th:field="*{contact}" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">备注</label>
+                            <textarea th:field="*{remark}" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2 mt-4 flex-wrap">
+                        <button type="submit" class="btn btn-primary">保存</button>
+                        <a th:if="${partner.id != null and !#strings.isEmpty(partner.id)}"
+                           th:href="@{/partners/{id}/deliveries(id=${partner.id})}"
+                           class="btn btn-outline-primary">交付授权</a>
+                        <a href="/partners" class="btn btn-outline-secondary">返回列表</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+</div>
+<script src="/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

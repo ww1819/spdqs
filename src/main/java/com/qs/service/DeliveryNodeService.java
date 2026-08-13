@@ -1,10 +1,10 @@
 package com.qs.service;
 
-import com.qs.dto.ArchiveNodeDto;
-import com.qs.dto.ArchiveNodeRequest;
-import com.qs.entity.ArchiveNode;
-import com.qs.enums.ArchiveNodeType;
-import com.qs.repository.ArchiveNodeRepository;
+import com.qs.dto.DeliveryNodeDto;
+import com.qs.dto.DeliveryNodeRequest;
+import com.qs.entity.DeliveryNode;
+import com.qs.enums.DeliveryNodeType;
+import com.qs.repository.DeliveryNodeRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,69 +12,69 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Service
-public class ArchiveNodeService {
+public class DeliveryNodeService {
 
-    private final ArchiveNodeRepository archiveNodeRepository;
-    private final ArchiveService archiveService;
+    private final DeliveryNodeRepository deliveryNodeRepository;
+    private final DeliveryService deliveryService;
     private final ArchiveNodeStageService stageService;
 
-    public ArchiveNodeService(ArchiveNodeRepository archiveNodeRepository, ArchiveService archiveService,
-                              ArchiveNodeStageService stageService) {
-        this.archiveNodeRepository = archiveNodeRepository;
-        this.archiveService = archiveService;
+    public DeliveryNodeService(DeliveryNodeRepository deliveryNodeRepository, DeliveryService deliveryService,
+                               ArchiveNodeStageService stageService) {
+        this.deliveryNodeRepository = deliveryNodeRepository;
+        this.deliveryService = deliveryService;
         this.stageService = stageService;
     }
 
-    public List<ArchiveNodeDto> listByArchiveId(String archiveId) {
-        archiveService.getById(archiveId);
-        return archiveNodeRepository.findByArchiveIdOrderByStartDateAscSortOrderAsc(archiveId).stream()
+    public List<DeliveryNodeDto> listByDeliveryId(String deliveryId) {
+        deliveryService.getById(deliveryId);
+        return deliveryNodeRepository.findByDeliveryIdOrderByStartDateAscSortOrderAsc(deliveryId).stream()
                 .map(this::toDto)
                 .toList();
     }
 
     @Transactional
-    public List<ArchiveNodeDto> create(String archiveId, ArchiveNodeRequest request, String createBy) {
-        archiveService.getById(archiveId);
-        ArchiveNode node = new ArchiveNode();
-        node.setArchiveId(archiveId);
+    public List<DeliveryNodeDto> create(String deliveryId, DeliveryNodeRequest request, String createBy) {
+        deliveryService.getById(deliveryId);
+        DeliveryNode node = new DeliveryNode();
+        node.setDeliveryId(deliveryId);
         applyRequest(node, request);
-        node.setSortOrder((int) archiveNodeRepository.countByArchiveId(archiveId));
+        node.setSortOrder((int) deliveryNodeRepository.countByDeliveryId(deliveryId));
         node.setCreateBy(createBy);
-        archiveNodeRepository.save(node);
-        return listByArchiveId(archiveId);
+        deliveryNodeRepository.save(node);
+        return listByDeliveryId(deliveryId);
     }
 
     @Transactional
-    public List<ArchiveNodeDto> update(String archiveId, String nodeId, ArchiveNodeRequest request) {
-        ArchiveNode node = getOwnedNode(archiveId, nodeId);
+    public List<DeliveryNodeDto> update(String deliveryId, String nodeId, DeliveryNodeRequest request) {
+        DeliveryNode node = getOwnedNode(deliveryId, nodeId);
         applyRequest(node, request);
-        archiveNodeRepository.save(node);
-        return listByArchiveId(archiveId);
+        deliveryNodeRepository.save(node);
+        return listByDeliveryId(deliveryId);
     }
 
     @Transactional
-    public List<ArchiveNodeDto> delete(String archiveId, String nodeId) {
-        ArchiveNode node = getOwnedNode(archiveId, nodeId);
-        archiveNodeRepository.delete(node);
-        return listByArchiveId(archiveId);
+    public List<DeliveryNodeDto> delete(String deliveryId, String nodeId) {
+        DeliveryNode node = getOwnedNode(deliveryId, nodeId);
+        deliveryNodeRepository.delete(node);
+        return listByDeliveryId(deliveryId);
     }
 
     @Transactional
-    public void deleteByArchiveId(String archiveId) {
-        archiveNodeRepository.deleteByArchiveId(archiveId);
+    public void deleteByDeliveryId(String deliveryId) {
+        deliveryNodeRepository.deleteByDeliveryId(deliveryId);
     }
 
-    private ArchiveNode getOwnedNode(String archiveId, String nodeId) {
-        archiveService.getById(archiveId);
-        ArchiveNode node = archiveNodeRepository.findById(nodeId)
+    private DeliveryNode getOwnedNode(String deliveryId, String nodeId) {
+        deliveryService.getById(deliveryId);
+        DeliveryNode node = deliveryNodeRepository.findById(nodeId)
                 .orElseThrow(() -> new IllegalArgumentException("节点不存在"));
-        if (!archiveId.equals(node.getArchiveId())) {
-            throw new IllegalArgumentException("节点不属于该档案");
+        if (!deliveryId.equals(node.getDeliveryId())) {
+            throw new IllegalArgumentException("节点不属于该产品交付");
         }
         return node;
     }
 
-    private void applyRequest(ArchiveNode node, ArchiveNodeRequest request) {
+    private void applyRequest(DeliveryNode node, DeliveryNodeRequest request) {
         if (request == null) {
             throw new IllegalArgumentException("请求不能为空");
         }
@@ -87,7 +87,7 @@ public class ArchiveNodeService {
         if (!stageExists) {
             throw new IllegalArgumentException("阶段不存在，请先在阶段维护中添加：" + stageName);
         }
-        ArchiveNodeType type = ArchiveNodeType.fromLabel(request.getNodeType());
+        DeliveryNodeType type = DeliveryNodeType.fromLabel(request.getNodeType());
         if (request.getStartDate() == null) {
             throw new IllegalArgumentException("开始日期不能为空");
         }
@@ -99,7 +99,7 @@ public class ArchiveNodeService {
         node.setTitle(title.trim());
         node.setNodeType(type.getLabel());
         node.setStartDate(request.getStartDate());
-        if (type == ArchiveNodeType.RANGE) {
+        if (type == DeliveryNodeType.RANGE) {
             if (request.getEndDate() == null) {
                 throw new IllegalArgumentException("时间段节点须填写结束日期");
             }
@@ -113,10 +113,10 @@ public class ArchiveNodeService {
         node.setRemark(request.getRemark() != null ? request.getRemark().trim() : null);
     }
 
-    private ArchiveNodeDto toDto(ArchiveNode node) {
-        ArchiveNodeDto dto = new ArchiveNodeDto();
+    private DeliveryNodeDto toDto(DeliveryNode node) {
+        DeliveryNodeDto dto = new DeliveryNodeDto();
         dto.setId(node.getId());
-        dto.setArchiveId(node.getArchiveId());
+        dto.setDeliveryId(node.getDeliveryId());
         dto.setStage(node.getStage());
         dto.setTitle(node.getTitle());
         dto.setNodeType(node.getNodeType());
@@ -130,14 +130,14 @@ public class ArchiveNodeService {
         return dto;
     }
 
-    private String formatDateLabel(ArchiveNode node) {
+    private String formatDateLabel(DeliveryNode node) {
         if (node.isRange() && node.getEndDate() != null) {
             return node.getStartDate() + " ~ " + node.getEndDate();
         }
         return String.valueOf(node.getStartDate());
     }
 
-    private String resolveStatus(ArchiveNode node) {
+    private String resolveStatus(DeliveryNode node) {
         LocalDate today = LocalDate.now();
         if (node.isRange() && node.getEndDate() != null) {
             if (today.isBefore(node.getStartDate())) {

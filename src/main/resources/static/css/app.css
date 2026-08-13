@@ -803,14 +803,16 @@ body.auth-page {
 }
 
 /* ===== 侧栏档案信息 ===== */
-.archive-side-panel {
+.archive-side-panel,
+.delivery-side-panel {
     background: #f9fafb;
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 18px;
 }
 
-.archive-side-panel h6 {
+.archive-side-panel h6,
+.delivery-side-panel h6 {
     color: var(--text-secondary);
     font-size: 0.8rem;
     margin-bottom: 4px;
@@ -818,8 +820,50 @@ body.auth-page {
 }
 
 .archive-side-panel h6:first-child,
-.archive-side-panel h5 {
+.archive-side-panel h5,
+.delivery-side-panel h6:first-child,
+.delivery-side-panel h5 {
     margin-top: 0;
+}
+
+/* ===== 产品交付按医院折叠 ===== */
+.delivery-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.delivery-group {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: #fff;
+    padding: 0 12px 10px;
+}
+
+.delivery-group-summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 12px 4px 8px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.delivery-group-summary::-webkit-details-marker {
+    display: none;
+}
+
+.delivery-group-summary::before {
+    content: "▸";
+    display: inline-block;
+    width: 1rem;
+    color: var(--text-secondary);
+    transition: transform 0.15s ease;
+}
+
+.delivery-group[open] > .delivery-group-summary::before {
+    transform: rotate(90deg);
 }
 
 /* ===== 跟进 ===== */

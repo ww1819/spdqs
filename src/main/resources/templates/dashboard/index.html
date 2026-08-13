@@ -29,7 +29,7 @@
                            class="issue-item">
                             <span class="issue-num" th:text="${stat.count}">1</span>
                             <div class="issue-body">
-                                <div class="issue-title" th:text="${t.archive.projectName} + ' · ' + ${t.orderType}">项目</div>
+                                <div class="issue-title" th:text="${t.delivery.deliveryName} + ' · ' + ${t.orderType}">项目</div>
                                 <div class="issue-meta"
                                      th:text="'预计 ' + (${t.expectedCompleteDate != null ? #temporals.format(t.expectedCompleteDate, 'yyyy-MM-dd') : '未设置'}) + ' · 处理人 ' + (${t.handler ?: '—'})">meta</div>
                             </div>
@@ -55,8 +55,8 @@
             <div class="stat-row">
                 <a href="/archives" class="stat-card stat-card-link">
                     <div>
-                        <div class="stat-label">档案总数</div>
-                        <div class="stat-value" th:text="${dashboard.totalArchives}">0</div>
+                        <div class="stat-label">产品交付总数</div>
+                        <div class="stat-value" th:text="${dashboard.totalDeliveries}">0</div>
                     </div>
                     <div class="stat-icon">☰</div>
                 </a>
@@ -113,7 +113,7 @@
                                 <tr th:each="t : ${dashboard.recentTickets}"
                                     th:classappend="${t.isTargetDueOrOverdue()} ? 'row-target-today' : ''">
                                     <td class="text-muted" th:text="${t.ticketNo ?: '—'}">1</td>
-                                    <td th:text="${t.archive.projectName}">项目</td>
+                                    <td th:text="${t.delivery.deliveryName}">项目</td>
                                     <td th:text="${t.orderType}">类型</td>
                                     <td class="cell-clamp" th:text="${t.content ?: '—'}">内容</td>
                                     <td>
@@ -171,7 +171,7 @@
                                 </thead>
                                 <tbody>
                                 <tr th:each="item : ${dashboard.maintAlerts}">
-                                    <td th:text="${item.projectName}">项目</td>
+                                    <td th:text="${item.displayName}">项目</td>
                                     <td th:text="${item.maintExpireDate != null ? #temporals.format(item.maintExpireDate, 'yyyy-MM-dd') : '—'}">—</td>
                                     <td>
                                         <span class="tag tag-warning" th:if="${item.statusLabel == '维保到期在三个月内'}" th:text="${item.statusLabel}">状态</span>
@@ -194,11 +194,11 @@
                             <h2>档案状态分布</h2>
                         </div>
                         <div class="panel-body-padded">
-                            <div th:each="entry : ${dashboard.archiveStatusCounts}" class="status-bar-row">
+                            <div th:each="entry : ${dashboard.deliveryStatusCounts}" class="status-bar-row">
                                 <span class="status-bar-label" th:text="${entry.key}">状态</span>
                                 <div class="status-bar-track">
                                     <div class="status-bar-fill"
-                                         th:style="'width:' + (${dashboard.totalArchives > 0 ? (entry.value * 100 / dashboard.totalArchives) : 0}) + '%'"></div>
+                                         th:style="'width:' + (${dashboard.totalDeliveries > 0 ? (entry.value * 100 / dashboard.totalDeliveries) : 0}) + '%'"></div>
                                 </div>
                                 <span class="status-bar-count" th:text="${entry.value}">0</span>
                             </div>

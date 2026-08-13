@@ -1,30 +1,27 @@
 package com.qs.entity;
 
+import com.qs.util.IdUtils;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
-@Table(name = "T_USER_ARCHIVE_PERM", uniqueConstraints = {
-        @UniqueConstraint(name = "UK_USER_ARCHIVE", columnNames = {"USER_ID", "ARCHIVE_ID"})
-})
-public class UserArchivePerm {
+@Table(name = "T_PARTNER_DELIVERY_PERM")
+public class PartnerDeliveryPerm {
 
     @Id
     @Column(name = "ID", length = 36)
     private String id;
 
-    @Column(name = "USER_ID", nullable = false, length = 36)
-    private String userId;
+    @Column(name = "PARTNER_ID", nullable = false, length = 36)
+    private String partnerId;
 
-    @Column(name = "ARCHIVE_ID", nullable = false, length = 36)
-    private String archiveId;
+    @Column(name = "DELIVERY_ID", nullable = false, length = 36)
+    private String deliveryId;
 
     @Column(name = "CREATE_TIME", nullable = false)
     private LocalDateTime createTime;
@@ -32,7 +29,7 @@ public class UserArchivePerm {
     @PrePersist
     public void prePersist() {
         if (id == null || id.isBlank()) {
-            id = UUID.randomUUID().toString();
+            id = IdUtils.dashedUuid7();
         }
         if (createTime == null) {
             createTime = LocalDateTime.now();
@@ -47,20 +44,20 @@ public class UserArchivePerm {
         this.id = id;
     }
 
-    public String getUserId() {
-        return userId;
+    public String getPartnerId() {
+        return partnerId;
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
+    public void setPartnerId(String partnerId) {
+        this.partnerId = partnerId;
     }
 
-    public String getArchiveId() {
-        return archiveId;
+    public String getDeliveryId() {
+        return deliveryId;
     }
 
-    public void setArchiveId(String archiveId) {
-        this.archiveId = archiveId;
+    public void setDeliveryId(String deliveryId) {
+        this.deliveryId = deliveryId;
     }
 
     public LocalDateTime getCreateTime() {

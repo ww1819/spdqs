@@ -29,6 +29,10 @@ public class User {
     @Column(name = "ENABLED", nullable = false)
     private boolean enabled = false;
 
+    /** 归属服务商；非空时权限可叠加该服务商已授权的产品交付 */
+    @Column(name = "PARTNER_ID", length = 36)
+    private String partnerId;
+
     @Column(name = "CREATE_TIME", nullable = false)
     private LocalDateTime createTime;
 
@@ -80,6 +84,14 @@ public class User {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public String getPartnerId() {
+        return partnerId;
+    }
+
+    public void setPartnerId(String partnerId) {
+        this.partnerId = partnerId;
     }
 
     public LocalDateTime getCreateTime() {

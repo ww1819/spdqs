@@ -23,12 +23,12 @@
             <div class="row g-3">
                 <div class="col-md-6">
                     <label class="form-label">项目名称 <span class="text-danger">*</span></label>
-                    <select name="archiveId" id="archiveSelect" class="form-select" required>
+                    <select name="deliveryId" id="archiveSelect" class="form-select" required>
                         <option value="">请选择项目</option>
-                        <option th:each="opt : ${archiveOptions}"
+                        <option th:each="opt : ${deliveryOptions}"
                                 th:value="${opt.id}"
-                                th:text="${opt.projectName}"
-                                th:selected="${ticket.archive != null and ticket.archive.id == opt.id}">
+                                th:text="${opt.displayName}"
+                                th:selected="${ticket.delivery != null and ticket.delivery.id == opt.id}">
                         </option>
                     </select>
                 </div>
@@ -80,7 +80,7 @@
                     <div class="form-text">选择项目后可自动带出档案中的联系方式，也可手动修改</div>
                 </div>
                 <div class="col-12" id="archiveBriefPanel" style="display:none;">
-                    <div class="archive-side-panel">
+                    <div class="delivery-side-panel">
                         <h6 class="fw-bold mb-2">档案参考信息</h6>
                         <div id="briefRemote"></div>
                         <div id="briefSpecial" class="mt-2"></div>
@@ -155,7 +155,7 @@
 
 <script src="/js/bootstrap.bundle.min.js"></script>
 <script th:inline="javascript">
-    const archiveOptions = /*[[${archiveOptions}]]*/ [];
+    const deliveryOptions = /*[[${deliveryOptions}]]*/ [];
     const archiveSelect = document.getElementById('archiveSelect');
     const contactInfoInput = document.getElementById('contactInfoInput');
     const handlerInput = document.getElementById('handlerInput');
@@ -214,7 +214,7 @@
             return;
         }
 
-        const opt = archiveOptions.find(o => o.id === selectedId);
+        const opt = deliveryOptions.find(o => o.id === selectedId);
         if (opt) {
             const warnStatuses = ['维保到期在三个月内', '维保到期'];
             if (warnStatuses.includes(opt.status)) {
@@ -228,7 +228,7 @@
                 }
                 const expireDate = opt.maintExpireDate || '未知';
                 document.getElementById('maintWarnText').textContent =
-                    '该项目「' + opt.projectName + '」维保将于 ' + expireDate + ' 到期，' + daysText + '，请注意！';
+                    '该项目「' + opt.displayName + '」维保将于 ' + expireDate + ' 到期，' + daysText + '，请注意！';
                 maintWarnModal.show();
             }
         }

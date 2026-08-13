@@ -1,106 +1,50 @@
 <!DOCTYPE html>
-
 <html xmlns:th="http://www.thymeleaf.org">
-
 <body>
-
-<div th:fragment="attachmentSection(archive, editable, returnTo)">
-
+<div th:fragment="attachmentSection(delivery, editable, returnTo)">
     <div class="detail-section mt-4">
-
         <h6 class="fw-bold mb-3">附件</h6>
-
-
-
-        <div th:if="${archive.id == null or archive.id.isEmpty()}" class="text-muted small mb-3">
-
-            请先保存档案，保存后可上传附件。
-
+        <div th:if="${delivery.id == null or delivery.id.isEmpty()}" class="text-muted small mb-3">
+            请先保存产品交付，保存后可上传附件。
         </div>
-
-
-
-        <div th:if="${archive.id != null and !archive.id.isEmpty()}">
-
+        <div th:if="${delivery.id != null and !delivery.id.isEmpty()}">
             <div class="mb-3">
-
                 <div class="small text-muted mb-2">附件列表（点击下载）</div>
-
-                <div th:if="${#lists.isEmpty(archiveAttachments)}" class="text-muted small">暂无附件</div>
-
-                <ul class="attachment-file-list" th:unless="${#lists.isEmpty(archiveAttachments)}">
-
-                    <li th:each="f : ${archiveAttachments}" class="attachment-file-item">
-
+                <div th:if="${#lists.isEmpty(deliveryAttachments)}" class="text-muted small">暂无附件</div>
+                <ul class="attachment-file-list" th:unless="${#lists.isEmpty(deliveryAttachments)}">
+                    <li th:each="f : ${deliveryAttachments}" class="attachment-file-item">
                         <a th:href="@{/archives/attachments/{id}(id=${f.id})}" class="link-tech" th:text="${f.originalName}">file</a>
-
                         <span class="text-muted small ms-2"
-
                               th:text="${f.fileSize != null ? (#numbers.formatDecimal(f.fileSize / 1024.0, 1, 1) + ' KB') : ''}"></span>
-
                         <span class="text-muted small ms-2"
-
                               th:if="${f.createTime != null}"
-
                               th:text="${#temporals.format(f.createTime, 'yyyy-MM-dd HH:mm')}"></span>
-
                         <form th:if="${editable}" th:action="@{/archives/attachments/{id}/delete(id=${f.id})}" method="post" class="d-inline ms-2"
-
                               onsubmit="return confirm('确定删除该附件？')">
-
-                            <input type="hidden" name="archiveId" th:value="${archive.id}">
-
+                            <input type="hidden" name="deliveryId" th:value="${delivery.id}">
                             <input type="hidden" name="returnTo" th:value="${returnTo}">
-
                             <button type="submit" class="btn btn-link btn-sm text-danger p-0">删除</button>
-
                         </form>
-
                     </li>
-
                 </ul>
-
             </div>
-
-
-
             <div th:if="${editable}" class="attachment-upload-box">
-
-                <form th:action="@{/archives/{id}/attachments(id=${archive.id})}" method="post" enctype="multipart/form-data">
-
+                <form th:action="@{/archives/{id}/attachments(id=${delivery.id})}" method="post" enctype="multipart/form-data">
                     <input type="hidden" name="returnTo" th:value="${returnTo}">
-
                     <div class="row g-2 align-items-end">
-
                         <div class="col-md-10">
-
                             <label class="form-label small mb-1">上传附件</label>
-
                             <input type="file" name="files" class="form-control form-control-sm" multiple>
-
                         </div>
-
                         <div class="col-md-2">
-
                             <button type="submit" class="btn btn-outline-primary btn-sm w-100">上传</button>
-
                         </div>
-
                     </div>
-
                     <div class="form-text mt-1">单个附件最大 50MB，支持多选</div>
-
                 </form>
-
             </div>
-
         </div>
-
     </div>
-
 </div>
-
 </body>
-
 </html>
-

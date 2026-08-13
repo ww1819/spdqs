@@ -1,6 +1,6 @@
 package com.qs.service;
 
-import com.qs.entity.Archive;
+import com.qs.entity.Delivery;
 import com.qs.entity.Ticket;
 import com.qs.entity.TicketChangeLog;
 import com.qs.entity.TicketFollowUp;
@@ -24,7 +24,7 @@ import java.util.Set;
 public class TicketService {
 
     private final TicketRepository ticketRepository;
-    private final ArchiveService archiveService;
+    private final DeliveryService deliveryService;
     private final ReminderRepository reminderRepository;
     private final TicketFollowUpService followUpService;
     private final TicketAttachmentService attachmentService;
@@ -32,12 +32,12 @@ public class TicketService {
     private final TicketChangeLogService changeLogService;
     private final JdbcTemplate jdbcTemplate;
 
-    public TicketService(TicketRepository ticketRepository, ArchiveService archiveService,
+    public TicketService(TicketRepository ticketRepository, DeliveryService deliveryService,
                          ReminderRepository reminderRepository, TicketFollowUpService followUpService,
                          TicketAttachmentService attachmentService, TicketProcessService processService,
                          TicketChangeLogService changeLogService, JdbcTemplate jdbcTemplate) {
         this.ticketRepository = ticketRepository;
-        this.archiveService = archiveService;
+        this.deliveryService = deliveryService;
         this.reminderRepository = reminderRepository;
         this.followUpService = followUpService;
         this.attachmentService = attachmentService;
@@ -47,12 +47,12 @@ public class TicketService {
     }
 
     public List<Ticket> listAll() {
-        return attachFollowUpFlags(ticketRepository.findAllWithArchive());
+        return attachFollowUpFlags(ticketRepository.findAllWithDelivery());
     }
 
     /** 工作台展示：有目标完成时间的靠前，再按目标日期升序 */
     public List<Ticket> listForDashboard() {
-        return attachFollowUpFlags(ticketRepository.findAllWithArchive().stream()
+        return attachFollowUpFlags(ticketRepository.findAllWithDelivery().stream()
                 .filter(t -> TicketStatus.isActive(t.getStatus()))
                 .sorted(dashboardTicketOrder())
                 .toList());
@@ -71,7 +71,7 @@ public class TicketService {
     }
 
     public List<Ticket> search(List<String> statuses, String handler, String submitter, String keyword,
-                               List<String> menuAliases, List<String> archiveIds) {
+                               List<String> menuAliases, List<String> deliveryIds) {
         String kw = normalize(keyword);
         List<String> finalAliases = menuAliases == null ? List.of() : menuAliases.stream()
                 .filter(s -> s != null && !s.isBlank())
@@ -79,11 +79,11 @@ public class TicketService {
                 .distinct()
                 .toList();
         List<String> statusList = normalizeStatusList(statuses);
-        List<String> projectIds = normalizeIdList(archiveIds);
-        return attachFollowUpFlags(ticketRepository.findAllWithArchive().stream()
+        List<String> projectIds = normalizeIdList(deliveryIds);
+        return attachFollowUpFlags(ticketRepository.findAllWithDelivery().stream()
                 .filter(t -> statusList.isEmpty() || matchesAnyStatus(t, statusList))
                 .filter(t -> projectIds.isEmpty()
-                        || (t.getArchive() != null && projectIds.contains(t.getArchive().getId())))
+                        || (t.getDelivery() != null && projectIds.contains(t.getDelivery().getId())))
                 .filter(t -> handler == null || handler.isBlank()
                         || (t.getHandler() != null && t.getHandler().contains(handler)))
                 .filter(t -> submitter == null || submitter.isBlank()
@@ -124,15 +124,15 @@ public class TicketService {
         return false;
     }
 
-    public List<Ticket> listByArchiveId(String archiveId) {
-        return ticketRepository.findByArchiveId(archiveId);
+    public List<Ticket> listByDeliveryId(String deliveryId) {
+        return ticketRepository.findByDeliveryId(deliveryId);
     }
 
     public List<Ticket> findMyTodos(String currentUser) {
         if (currentUser == null || currentUser.isBlank()) {
             return List.of();
         }
-        return ticketRepository.findAllWithArchive().stream()
+        return ticketRepository.findAllWithDelivery().stream()
                 .filter(t -> TicketStatus.COMMUNICATING.getLabel().equals(t.getStatus())
                         || TicketStatus.PROCESSING.getLabel().equals(t.getStatus()))
                 .filter(t -> currentUser.equals(t.getHandler()) || currentUser.equals(t.getSubmitter()))
@@ -141,14 +141,14 @@ public class TicketService {
 
     public List<Ticket> findTodayFollowUps() {
         LocalDate today = LocalDate.now();
-        return ticketRepository.findAllWithArchive().stream()
+        return ticketRepository.findAllWithDelivery().stream()
                 .filter(t -> TicketStatus.isActive(t.getStatus()))
                 .filter(t -> today.equals(t.getExpectedCompleteDate()))
                 .toList();
     }
 
     public Ticket getById(String id) {
-        return ticketRepository.findByIdWithArchive(id)
+        return ticketRepository.findByIdWithDelivery(id)
                 .orElseThrow(() -> new IllegalArgumentException("工单不存在"));
     }
 
@@ -157,7 +157,7 @@ public class TicketService {
     }
 
     @Transactional
-    public Ticket save(Ticket ticket, String archiveId, String newFollowUp, String createBy) {
+    public Ticket save(Ticket ticket, String deliveryId, String newFollowUp, String createBy) {
         Ticket existing = null;
         if (ticket.getId() != null && !ticket.getId().isBlank()) {
             existing = getById(ticket.getId());
@@ -171,8 +171,8 @@ public class TicketService {
             ticket.setUpgradeTime(existing.getUpgradeTime());
             ticket.setCreateTime(existing.getCreateTime());
         }
-        Archive archive = archiveService.getById(archiveId);
-        ticket.setArchive(archive);
+        Delivery delivery = deliveryService.getById(deliveryId);
+        ticket.setDelivery(delivery);
         if (ticket.getStatus() == null || ticket.getStatus().isBlank()) {
             ticket.setStatus(TicketStatus.SUBMITTED.getLabel());
         }
@@ -273,7 +273,7 @@ public class TicketService {
         if (containsIgnoreCase(t.getContactInfo(), kw)) {
             return true;
         }
-        if (t.getArchive() != null && containsIgnoreCase(t.getArchive().getProjectName(), kw)) {
+        if (t.getDelivery() != null && containsIgnoreCase(deliveryService.buildDisplayName(t.getDelivery()), kw)) {
             return true;
         }
         return false;

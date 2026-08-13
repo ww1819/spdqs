@@ -1,8 +1,8 @@
 package com.qs.controller;
 
-import com.qs.dto.ArchiveNodeDto;
-import com.qs.dto.ArchiveNodeRequest;
-import com.qs.service.ArchiveNodeService;
+import com.qs.dto.DeliveryNodeDto;
+import com.qs.dto.DeliveryNodeRequest;
+import com.qs.service.DeliveryNodeService;
 import com.qs.service.UserService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,39 +19,39 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/archives")
-public class ArchiveNodeApiController {
+public class DeliveryNodeApiController {
 
-    private final ArchiveNodeService archiveNodeService;
+    private final DeliveryNodeService deliveryNodeService;
     private final UserService userService;
 
-    public ArchiveNodeApiController(ArchiveNodeService archiveNodeService, UserService userService) {
-        this.archiveNodeService = archiveNodeService;
+    public DeliveryNodeApiController(DeliveryNodeService deliveryNodeService, UserService userService) {
+        this.deliveryNodeService = deliveryNodeService;
         this.userService = userService;
     }
 
-    @GetMapping("/{archiveId}/nodes")
-    public List<ArchiveNodeDto> list(@PathVariable String archiveId) {
-        return archiveNodeService.listByArchiveId(archiveId);
+    @GetMapping("/{deliveryId}/nodes")
+    public List<DeliveryNodeDto> list(@PathVariable String deliveryId) {
+        return deliveryNodeService.listByDeliveryId(deliveryId);
     }
 
-    @PostMapping("/{archiveId}/nodes")
-    public List<ArchiveNodeDto> create(@PathVariable String archiveId,
-                                       @RequestBody ArchiveNodeRequest request,
+    @PostMapping("/{deliveryId}/nodes")
+    public List<DeliveryNodeDto> create(@PathVariable String deliveryId,
+                                       @RequestBody DeliveryNodeRequest request,
                                        @AuthenticationPrincipal UserDetails userDetails) {
-        return archiveNodeService.create(archiveId, request, resolveDisplayName(userDetails));
+        return deliveryNodeService.create(deliveryId, request, resolveDisplayName(userDetails));
     }
 
-    @PutMapping("/{archiveId}/nodes/{nodeId}")
-    public List<ArchiveNodeDto> update(@PathVariable String archiveId,
+    @PutMapping("/{deliveryId}/nodes/{nodeId}")
+    public List<DeliveryNodeDto> update(@PathVariable String deliveryId,
                                        @PathVariable String nodeId,
-                                       @RequestBody ArchiveNodeRequest request) {
-        return archiveNodeService.update(archiveId, nodeId, request);
+                                       @RequestBody DeliveryNodeRequest request) {
+        return deliveryNodeService.update(deliveryId, nodeId, request);
     }
 
-    @DeleteMapping("/{archiveId}/nodes/{nodeId}")
-    public List<ArchiveNodeDto> delete(@PathVariable String archiveId,
+    @DeleteMapping("/{deliveryId}/nodes/{nodeId}")
+    public List<DeliveryNodeDto> delete(@PathVariable String deliveryId,
                                        @PathVariable String nodeId) {
-        return archiveNodeService.delete(archiveId, nodeId);
+        return deliveryNodeService.delete(deliveryId, nodeId);
     }
 
     private String resolveDisplayName(UserDetails userDetails) {

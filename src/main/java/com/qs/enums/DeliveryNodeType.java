@@ -1,12 +1,12 @@
 package com.qs.enums;
 
-public enum ArchiveNodeType {
+public enum DeliveryNodeType {
     POINT("时间点"),
     RANGE("时间段");
 
     private final String label;
 
-    ArchiveNodeType(String label) {
+    DeliveryNodeType(String label) {
         this.label = label;
     }
 
@@ -14,11 +14,11 @@ public enum ArchiveNodeType {
         return label;
     }
 
-    public static ArchiveNodeType fromLabel(String label) {
+    public static DeliveryNodeType fromLabel(String label) {
         if (label == null || label.isBlank()) {
             return POINT;
         }
-        for (ArchiveNodeType type : values()) {
+        for (DeliveryNodeType type : values()) {
             if (type.label.equals(label.trim()) || type.name().equalsIgnoreCase(label.trim())) {
                 return type;
             }

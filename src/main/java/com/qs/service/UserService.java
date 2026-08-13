@@ -74,13 +74,13 @@ public class UserService implements UserDetailsService {
             user.setEnabled(true);
             userRepository.save(user);
             permissionService.grantAllMenus(user.getId());
-            permissionService.grantAllArchives(user.getId());
+            permissionService.grantAllDeliveries(user.getId());
         }
     }
 
     @Transactional
     public void updateUser(String id, String displayName, boolean enabled, String newPassword,
-                           String operatorUsername) {
+                           String partnerId, String operatorUsername) {
         User user = getById(id);
         if (operatorUsername != null && operatorUsername.equals(user.getUsername()) && !enabled) {
             throw new IllegalArgumentException("不能停用自己的账号");
@@ -90,6 +90,7 @@ public class UserService implements UserDetailsService {
         }
         user.setDisplayName(displayName.trim());
         user.setEnabled(enabled);
+        user.setPartnerId(partnerId == null || partnerId.isBlank() ? null : partnerId.trim());
         if (newPassword != null && !newPassword.isBlank()) {
             if (newPassword.length() < 4) {
                 throw new IllegalArgumentException("密码至少4位");
@@ -101,7 +102,8 @@ public class UserService implements UserDetailsService {
 
     @Transactional
     public void setEnabled(String id, boolean enabled, String operatorUsername) {
-        updateUser(id, getById(id).getDisplayName(), enabled, null, operatorUsername);
+        User user = getById(id);
+        updateUser(id, user.getDisplayName(), enabled, null, user.getPartnerId(), operatorUsername);
     }
 
     @Transactional

@@ -1,38 +1,62 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/app-head :: head('档案 - 档案工单系统')}"></head>
+<head th:replace="~{fragments/app-head :: head('产品交付 - 档案工单系统')}"></head>
 <body class="app-page">
 <div class="app-shell">
     <div th:replace="~{fragments/app-nav :: sidebar}"></div>
     <main class="app-main">
         <header class="app-header">
-            <h1 th:text="${archive.id != null ? '编辑档案' : '新建档案'}">档案</h1>
+            <h1 th:text="${delivery.id != null ? '编辑产品交付' : '新建产品交付'}">产品交付</h1>
         </header>
         <div class="app-content">
             <div th:replace="~{fragments/page-header :: alerts}"></div>
             <div class="form-page-card">
-        <form th:action="@{/archives/save}" method="post" th:object="${archive}">
-            <input type="hidden" th:field="*{id}" th:if="${archive.id != null and !archive.id.isEmpty()}">
-            <input type="hidden" th:field="*{createBy}" th:if="${archive.createBy != null}">
+        <form th:action="@{/archives/save}" method="post" th:object="${delivery}">
+            <input type="hidden" th:field="*{id}" th:if="${delivery.id != null and !delivery.id.isEmpty()}">
+            <input type="hidden" th:field="*{createBy}" th:if="${delivery.createBy != null}">
 
             <div class="row g-3">
                 <div class="col-md-6">
-                    <label class="form-label">项目名称 <span class="text-danger">*</span></label>
-                    <input type="text" th:field="*{projectName}" class="form-control" required>
+                    <label class="form-label">使用单位 <span class="text-danger">*</span></label>
+                    <select th:field="*{customerId}" class="form-select" id="customerSelect">
+                        <option value="">请选择或下方新建</option>
+                        <option th:each="c : ${customers}" th:value="${c.id}" th:text="${c.name}">医院</option>
+                    </select>
+                    <input type="text" name="newCustomerName" class="form-control form-control-sm mt-2"
+                           placeholder="或输入新使用单位名称（保存时自动创建）">
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label">项目类型</label>
-                    <input type="text" th:field="*{projectType}" class="form-control">
+                    <label class="form-label">产品 <span class="text-danger">*</span></label>
+                    <select th:field="*{productId}" class="form-select" required>
+                        <option value="">请选择产品</option>
+                        <option th:each="p : ${products}" th:value="${p.id}" th:text="${p.name}">产品</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">模块/批次名称 <span class="text-danger">*</span></label>
+                    <input type="text" th:field="*{deliveryName}" class="form-control" required
+                           placeholder="如：质控模块、台账模块">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">院内编码（可选）</label>
+                    <input type="text" th:field="*{deliveryCode}" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">服务商（可选）</label>
+                    <select th:field="*{partnerId}" class="form-select">
+                        <option value="">无</option>
+                        <option th:each="p : ${partners}" th:value="${p.id}" th:text="${p.name}">服务商</option>
+                    </select>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">上线时间</label>
                     <input type="date" name="launchDate" class="form-control"
-                           th:value="${archive.launchDate != null ? #temporals.format(archive.launchDate, 'yyyy-MM-dd') : ''}">
+                           th:value="${delivery.launchDate != null ? #temporals.format(delivery.launchDate, 'yyyy-MM-dd') : ''}">
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">维保到期时间</label>
                     <input type="date" name="maintExpireDate" class="form-control"
-                           th:value="${archive.maintExpireDate != null ? #temporals.format(archive.maintExpireDate, 'yyyy-MM-dd') : ''}">
+                           th:value="${delivery.maintExpireDate != null ? #temporals.format(delivery.maintExpireDate, 'yyyy-MM-dd') : ''}">
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">现场负责人</label>
@@ -66,7 +90,7 @@
             </div>
         </form>
 
-            <div th:replace="~{fragments/archive-attachments :: attachmentSection(archive=${archive}, editable=${archive.id != null and !#strings.isEmpty(archive.id)}, returnTo='edit')}"></div>
+            <div th:replace="~{fragments/archive-attachments :: attachmentSection(delivery=${delivery}, editable=${delivery.id != null and !#strings.isEmpty(delivery.id)}, returnTo='edit')}"></div>
             </div>
         </div>
     </main>

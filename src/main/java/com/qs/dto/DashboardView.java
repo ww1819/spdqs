@@ -9,32 +9,32 @@ import java.util.Map;
 
 public class DashboardView {
 
-    private final List<ArchiveView> maintAlerts;
+    private final List<DeliveryView> maintAlerts;
     private final List<Ticket> myTodos;
     private final List<Ticket> todayFollowUps;
     private final List<Reminder> unreadReminders;
-    private final int totalArchives;
+    private final int totalDeliveries;
     private final long activeTickets;
     private final long completedTickets;
     private final List<Ticket> recentTickets;
-    private final Map<String, Long> archiveStatusCounts;
+    private final Map<String, Long> deliveryStatusCounts;
 
-    public DashboardView(List<ArchiveView> maintAlerts, List<Ticket> myTodos,
+    public DashboardView(List<DeliveryView> maintAlerts, List<Ticket> myTodos,
                          List<Ticket> todayFollowUps, List<Reminder> unreadReminders,
-                         int totalArchives, long activeTickets, long completedTickets,
-                         List<Ticket> recentTickets, Map<String, Long> archiveStatusCounts) {
+                         int totalDeliveries, long activeTickets, long completedTickets,
+                         List<Ticket> recentTickets, Map<String, Long> deliveryStatusCounts) {
         this.maintAlerts = maintAlerts;
         this.myTodos = myTodos;
         this.todayFollowUps = todayFollowUps;
         this.unreadReminders = unreadReminders;
-        this.totalArchives = totalArchives;
+        this.totalDeliveries = totalDeliveries;
         this.activeTickets = activeTickets;
         this.completedTickets = completedTickets;
         this.recentTickets = recentTickets;
-        this.archiveStatusCounts = archiveStatusCounts;
+        this.deliveryStatusCounts = deliveryStatusCounts;
     }
 
-    public List<ArchiveView> getMaintAlerts() {
+    public List<DeliveryView> getMaintAlerts() {
         return maintAlerts;
     }
 
@@ -54,8 +54,8 @@ public class DashboardView {
         return unreadReminders.size();
     }
 
-    public int getTotalArchives() {
-        return totalArchives;
+    public int getTotalDeliveries() {
+        return totalDeliveries;
     }
 
     public long getActiveTickets() {
@@ -70,8 +70,8 @@ public class DashboardView {
         return recentTickets;
     }
 
-    public Map<String, Long> getArchiveStatusCounts() {
-        return archiveStatusCounts;
+    public Map<String, Long> getDeliveryStatusCounts() {
+        return deliveryStatusCounts;
     }
 
     public int getPendingCount() {

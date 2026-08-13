@@ -5,7 +5,9 @@ import java.util.List;
 
 public enum MenuCode {
     DASHBOARD("dashboard", "工作台", "/dashboard"),
-    ARCHIVES("archives", "档案列表", "/archives"),
+    ARCHIVES("archives", "产品交付", "/archives"),
+    CUSTOMERS("customers", "使用单位", "/customers"),
+    PARTNERS("partners", "服务商", "/partners"),
     TICKETS("tickets", "工单列表", "/tickets"),
     ANALYSIS("analysis", "项目分析", "/analysis"),
     USERS("users", "账号管理", "/users");
@@ -46,7 +48,7 @@ public enum MenuCode {
 
     /** 新注册用户默认菜单（不含账号管理、项目分析） */
     public static List<MenuCode> defaultMenusForNewUser() {
-        return List.of(DASHBOARD, ARCHIVES, TICKETS);
+        return List.of(DASHBOARD, ARCHIVES, CUSTOMERS, TICKETS);
     }
 
     public static List<MenuCode> allMenus() {

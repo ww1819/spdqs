@@ -1,43 +1,43 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/app-head :: head('工单详情 - 档案工单系统')}"></head>
+<head th:replace="~{fragments/app-head :: head('宸ュ崟璇︽儏 - 妗ｆ宸ュ崟绯荤粺')}"></head>
 <body class="app-page">
 <div class="app-shell">
     <div th:replace="~{fragments/app-nav :: sidebar}"></div>
     <main class="app-main">
         <header class="app-header d-flex justify-content-between align-items-center flex-wrap gap-2">
             <div>
-                <h1 class="mb-1" th:text="${ticket.archive.projectName}">项目名称</h1>
-                <span class="tag tag-default me-1" th:text="${ticket.orderType}">类型</span>
-                <span class="tag tag-default" th:if="${ticket.status == '已提交'}" th:text="${ticket.status}">状态</span>
-                <span class="tag tag-info" th:if="${ticket.status == '沟通中'}" th:text="${ticket.status}">状态</span>
-                <span class="tag tag-warning" th:if="${ticket.status == '处理中'}" th:text="${ticket.status}">状态</span>
-                <span class="tag tag-primary" th:if="${ticket.status == '已处理'}" th:text="${ticket.status}">状态</span>
-                <span class="tag tag-warning" th:if="${ticket.status == '待反馈调整'}" th:text="${ticket.status}">状态</span>
-                <span class="tag tag-danger" th:if="${ticket.status == '待升级'}" th:text="${ticket.status}">状态</span>
-                <span class="tag tag-success" th:if="${ticket.status == '已完成'}" th:text="${ticket.status}">状态</span>
+                <h1 class="mb-1" th:text="${deliveryDisplayName}">椤圭洰鍚嶇О</h1>
+                <span class="tag tag-default me-1" th:text="${ticket.orderType}">绫诲瀷</span>
+                <span class="tag tag-default" th:if="${ticket.status == '宸叉彁浜?}" th:text="${ticket.status}">鐘舵€?/span>
+                <span class="tag tag-info" th:if="${ticket.status == '娌熼€氫腑'}" th:text="${ticket.status}">鐘舵€?/span>
+                <span class="tag tag-warning" th:if="${ticket.status == '澶勭悊涓?}" th:text="${ticket.status}">鐘舵€?/span>
+                <span class="tag tag-primary" th:if="${ticket.status == '宸插鐞?}" th:text="${ticket.status}">鐘舵€?/span>
+                <span class="tag tag-warning" th:if="${ticket.status == '寰呭弽棣堣皟鏁?}" th:text="${ticket.status}">鐘舵€?/span>
+                <span class="tag tag-danger" th:if="${ticket.status == '寰呭崌绾?}" th:text="${ticket.status}">鐘舵€?/span>
+                <span class="tag tag-success" th:if="${ticket.status == '宸插畬鎴?}" th:text="${ticket.status}">鐘舵€?/span>
             </div>
             <div class="d-flex gap-2 flex-wrap">
                 <button type="button" class="btn btn-primary btn-sm"
-                        th:if="${ticket.status != '已完成' and ticket.status != '已处理'}"
-                        data-bs-toggle="modal" data-bs-target="#handledModal">已处理</button>
+                        th:if="${ticket.status != '宸插畬鎴? and ticket.status != '宸插鐞?}"
+                        data-bs-toggle="modal" data-bs-target="#handledModal">宸插鐞?/button>
                 <button type="button" class="btn btn-success btn-sm"
-                        th:if="${ticket.status == '已处理'}"
-                        data-bs-toggle="modal" data-bs-target="#completeModal">已完成</button>
+                        th:if="${ticket.status == '宸插鐞?}"
+                        data-bs-toggle="modal" data-bs-target="#completeModal">宸插畬鎴?/button>
                 <button type="button" class="btn btn-warning btn-sm"
-                        th:if="${ticket.status == '已处理'}"
-                        data-bs-toggle="modal" data-bs-target="#needFeedbackModal">待反馈调整</button>
+                        th:if="${ticket.status == '宸插鐞?}"
+                        data-bs-toggle="modal" data-bs-target="#needFeedbackModal">寰呭弽棣堣皟鏁?/button>
                 <a th:href="@{/tickets/{id}/confirmation-print(id=${ticket.id})}" target="_blank" rel="noopener"
-                   class="btn btn-outline-secondary btn-sm">打印确认报告</a>
+                   class="btn btn-outline-secondary btn-sm">鎵撳嵃纭鎶ュ憡</a>
                 <a th:href="@{/tickets/{id}/confirmation-export(id=${ticket.id})}"
-                   class="btn btn-outline-secondary btn-sm">导出Word</a>
+                   class="btn btn-outline-secondary btn-sm">瀵煎嚭Word</a>
                 <button type="button" class="btn btn-outline-secondary btn-sm"
-                        data-bs-toggle="modal" data-bs-target="#planConfirmUploadModal">上传方案确认</button>
+                        data-bs-toggle="modal" data-bs-target="#planConfirmUploadModal">涓婁紶鏂规纭</button>
                 <button type="button" class="btn btn-outline-secondary btn-sm"
-                        data-bs-toggle="modal" data-bs-target="#confirmUploadModal">上传确认报告</button>
-                <a th:href="@{/archives/{id}(id=${ticket.archive.id})}" class="btn btn-outline-secondary btn-sm">查看档案</a>
-                <a th:href="@{/tickets/{id}/edit(id=${ticket.id})}" class="btn btn-primary btn-sm">编辑</a>
-                <a href="/tickets" class="btn btn-outline-secondary btn-sm">返回列表</a>
+                        data-bs-toggle="modal" data-bs-target="#confirmUploadModal">涓婁紶纭鎶ュ憡</button>
+                <a th:href="@{/archives/{id}(id=${ticket.delivery.id})}" class="btn btn-outline-secondary btn-sm">鏌ョ湅妗ｆ</a>
+                <a th:href="@{/tickets/{id}/edit(id=${ticket.id})}" class="btn btn-primary btn-sm">缂栬緫</a>
+                <a href="/tickets" class="btn btn-outline-secondary btn-sm">杩斿洖鍒楄〃</a>
             </div>
         </header>
         <div class="app-content">
@@ -51,103 +51,103 @@
             <div class="row g-3 mb-3">
                 <div class="col-md-6">
                     <div class="detail-section h-100">
-                        <h6>处理人</h6>
-                        <div th:text="${ticket.handler ?: '—'}">—</div>
+                        <h6>澶勭悊浜?/h6>
+                        <div th:text="${ticket.handler ?: '鈥?}">鈥?/div>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="detail-section h-100">
-                        <h6>提交人</h6>
-                        <div th:text="${ticket.submitter ?: '—'}">—</div>
+                        <h6>鎻愪氦浜?/h6>
+                        <div th:text="${ticket.submitter ?: '鈥?}">鈥?/div>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="detail-section h-100">
-                        <h6>预计完成时间</h6>
-                        <div th:text="${ticket.expectedCompleteDate != null ? #temporals.format(ticket.expectedCompleteDate, 'yyyy-MM-dd') : '—'}">—</div>
+                        <h6>棰勮瀹屾垚鏃堕棿</h6>
+                        <div th:text="${ticket.expectedCompleteDate != null ? #temporals.format(ticket.expectedCompleteDate, 'yyyy-MM-dd') : '鈥?}">鈥?/div>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="detail-section h-100">
-                        <h6>目标完成时间</h6>
-                        <div th:text="${ticket.targetCompleteDate != null ? #temporals.format(ticket.targetCompleteDate, 'yyyy-MM-dd') : '—'}">—</div>
+                        <h6>鐩爣瀹屾垚鏃堕棿</h6>
+                        <div th:text="${ticket.targetCompleteDate != null ? #temporals.format(ticket.targetCompleteDate, 'yyyy-MM-dd') : '鈥?}">鈥?/div>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="detail-section h-100">
-                        <h6>提交时间</h6>
-                        <div th:text="${#temporals.format(ticket.createTime, 'yyyy-MM-dd HH:mm')}">—</div>
+                        <h6>鎻愪氦鏃堕棿</h6>
+                        <div th:text="${#temporals.format(ticket.createTime, 'yyyy-MM-dd HH:mm')}">鈥?/div>
                     </div>
                 </div>
                 <div class="col-md-6" th:if="${ticket.upgradeBy != null}">
                     <div class="detail-section h-100">
-                        <h6>升级人</h6>
-                        <div th:text="${ticket.upgradeBy}">—</div>
+                        <h6>鍗囩骇浜?/h6>
+                        <div th:text="${ticket.upgradeBy}">鈥?/div>
                     </div>
                 </div>
                 <div class="col-md-6" th:if="${ticket.upgradeTime != null}">
                     <div class="detail-section h-100">
-                        <h6>升级时间</h6>
-                        <div th:text="${#temporals.format(ticket.upgradeTime, 'yyyy-MM-dd HH:mm')}">—</div>
+                        <h6>鍗囩骇鏃堕棿</h6>
+                        <div th:text="${#temporals.format(ticket.upgradeTime, 'yyyy-MM-dd HH:mm')}">鈥?/div>
                     </div>
                 </div>
             </div>
 
             <div class="detail-section" th:if="${ticket.attentionNote != null and !ticket.attentionNote.isEmpty()}">
-                <h6>注意事项</h6>
+                <h6>娉ㄦ剰浜嬮」</h6>
                 <div class="content-block text-danger" th:text="${ticket.attentionNote}"></div>
             </div>
 
             <div class="detail-section">
-                <h6>工单内容</h6>
-                <div class="content-block" th:text="${ticket.content ?: '—'}"></div>
+                <h6>宸ュ崟鍐呭</h6>
+                <div class="content-block" th:text="${ticket.content ?: '鈥?}"></div>
             </div>
             <div class="detail-section">
-                <h6>工单联系方式</h6>
-                <div class="content-block" th:text="${ticket.contactInfo ?: '—'}"></div>
+                <h6>宸ュ崟鑱旂郴鏂瑰紡</h6>
+                <div class="content-block" th:text="${ticket.contactInfo ?: '鈥?}"></div>
             </div>
 
             <div class="detail-section">
                 <h6 class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
-                    <span>处理进程</span>
+                    <span>澶勭悊杩涚▼</span>
                     <button type="button" class="btn btn-outline-primary btn-sm"
-                            th:if="${ticket.status != '已完成' and ticket.status != '已处理'}"
-                            data-bs-toggle="modal" data-bs-target="#handledModal">+ 记录已处理</button>
+                            th:if="${ticket.status != '宸插畬鎴? and ticket.status != '宸插鐞?}"
+                            data-bs-toggle="modal" data-bs-target="#handledModal">+ 璁板綍宸插鐞?/button>
                 </h6>
-                <p class="small text-muted mb-2">开发提交处理说明 → 实施核对回复 → 通过则「已完成」，需继续则「待反馈调整」。</p>
-                <div th:if="${processes == null or #lists.isEmpty(processes)}" class="text-muted small">暂无处理进程</div>
+                <p class="small text-muted mb-2">寮€鍙戞彁浜ゅ鐞嗚鏄?鈫?瀹炴柦鏍稿鍥炲 鈫?閫氳繃鍒欍€屽凡瀹屾垚銆嶏紝闇€缁х画鍒欍€屽緟鍙嶉璋冩暣銆嶃€?/p>
+                <div th:if="${processes == null or #lists.isEmpty(processes)}" class="text-muted small">鏆傛棤澶勭悊杩涚▼</div>
                 <div class="process-timeline" th:unless="${processes == null or #lists.isEmpty(processes)}">
                     <div class="process-card" th:each="p : ${processes}">
                         <div class="process-card-head">
-                            <span class="tag tag-primary" th:if="${p.actionType.name() == 'HANDLED'}">已处理</span>
-                            <span class="tag tag-info" th:if="${p.actionType.name() == 'REPLY'}">核对回复</span>
-                            <span class="tag tag-warning" th:if="${p.actionType.name() == 'NEED_FEEDBACK'}">待反馈调整</span>
-                            <span class="tag tag-success" th:if="${p.actionType.name() == 'COMPLETE'}">已完成</span>
-                            <span class="text-muted" th:text="${p.createBy ?: '—'}"></span>
+                            <span class="tag tag-primary" th:if="${p.actionType.name() == 'HANDLED'}">宸插鐞?/span>
+                            <span class="tag tag-info" th:if="${p.actionType.name() == 'REPLY'}">鏍稿鍥炲</span>
+                            <span class="tag tag-warning" th:if="${p.actionType.name() == 'NEED_FEEDBACK'}">寰呭弽棣堣皟鏁?/span>
+                            <span class="tag tag-success" th:if="${p.actionType.name() == 'COMPLETE'}">宸插畬鎴?/span>
+                            <span class="text-muted" th:text="${p.createBy ?: '鈥?}"></span>
                             <span class="text-muted" th:text="${#temporals.format(p.createTime, 'yyyy-MM-dd HH:mm')}"></span>
                             <span th:if="${p.handleMethod != null and !p.handleMethod.isEmpty()}"
-                                  class="tag tag-default" th:text="${p.handleMethod}">方式</span>
+                                  class="tag tag-default" th:text="${p.handleMethod}">鏂瑰紡</span>
                         </div>
-                        <div class="content-block mb-0" th:text="${p.content ?: '—'}"></div>
+                        <div class="content-block mb-0" th:text="${p.content ?: '鈥?}"></div>
                         <div class="process-replies" th:if="${p.replies != null and !#lists.isEmpty(p.replies)}">
                             <div class="process-reply" th:each="r : ${p.replies}">
                                 <div class="process-card-head mb-1">
-                                    <span class="tag tag-info" th:if="${r.actionType.name() == 'REPLY'}">核对回复</span>
-                                    <span class="tag tag-warning" th:if="${r.actionType.name() == 'NEED_FEEDBACK'}">待反馈调整</span>
-                                    <span class="tag tag-success" th:if="${r.actionType.name() == 'COMPLETE'}">已完成</span>
-                                    <span class="text-muted" th:text="${r.createBy ?: '—'}"></span>
+                                    <span class="tag tag-info" th:if="${r.actionType.name() == 'REPLY'}">鏍稿鍥炲</span>
+                                    <span class="tag tag-warning" th:if="${r.actionType.name() == 'NEED_FEEDBACK'}">寰呭弽棣堣皟鏁?/span>
+                                    <span class="tag tag-success" th:if="${r.actionType.name() == 'COMPLETE'}">宸插畬鎴?/span>
+                                    <span class="text-muted" th:text="${r.createBy ?: '鈥?}"></span>
                                     <span class="text-muted" th:text="${#temporals.format(r.createTime, 'yyyy-MM-dd HH:mm')}"></span>
                                 </div>
-                                <div th:text="${r.content ?: '—'}"></div>
+                                <div th:text="${r.content ?: '鈥?}"></div>
                             </div>
                         </div>
-                        <form th:if="${ticket.status != '已完成' and p.actionType.name() == 'HANDLED'}"
+                        <form th:if="${ticket.status != '宸插畬鎴? and p.actionType.name() == 'HANDLED'}"
                               th:action="@{/tickets/{id}/process-reply(id=${ticket.id})}" method="post" class="mt-2">
                             <input type="hidden" name="returnTo" value="detail">
                             <input type="hidden" name="parentId" th:value="${p.id}">
                             <div class="input-group input-group-sm">
-                                <input type="text" name="content" class="form-control" placeholder="实施核对回复…" required>
-                                <button type="submit" class="btn btn-outline-secondary">回复</button>
+                                <input type="text" name="content" class="form-control" placeholder="瀹炴柦鏍稿鍥炲鈥? required>
+                                <button type="submit" class="btn btn-outline-secondary">鍥炲</button>
                             </div>
                         </form>
                     </div>
@@ -156,33 +156,33 @@
 
             <div class="detail-section">
                 <h6 class="d-flex align-items-center gap-2 flex-wrap">
-                    方案确认报告
-                    <span th:if="${hasPlanConfirmation}" class="tag tag-info">已上传</span>
-                    <span th:unless="${hasPlanConfirmation}" class="tag tag-warning">未上传</span>
+                    鏂规纭鎶ュ憡
+                    <span th:if="${hasPlanConfirmation}" class="tag tag-info">宸蹭笂浼?/span>
+                    <span th:unless="${hasPlanConfirmation}" class="tag tag-warning">鏈笂浼?/span>
                     <button type="button" class="btn btn-outline-secondary btn-sm ms-auto"
-                            data-bs-toggle="modal" data-bs-target="#planConfirmUploadModal">上传方案确认</button>
+                            data-bs-toggle="modal" data-bs-target="#planConfirmUploadModal">涓婁紶鏂规纭</button>
                 </h6>
-                <p class="small text-muted mb-2">请上传双方确认后的方案文件。确认存档后将保留存档版本，便于后续查阅。</p>
-                <div th:if="${ticketPlanConfirmations == null or #lists.isEmpty(ticketPlanConfirmations)}" class="text-muted small mb-2">暂无方案确认报告</div>
+                <p class="small text-muted mb-2">璇蜂笂浼犲弻鏂圭‘璁ゅ悗鐨勬柟妗堟枃浠躲€傜‘璁ゅ瓨妗ｅ悗灏嗕繚鐣欏瓨妗ｇ増鏈紝渚夸簬鍚庣画鏌ラ槄銆?/p>
+                <div th:if="${ticketPlanConfirmations == null or #lists.isEmpty(ticketPlanConfirmations)}" class="text-muted small mb-2">鏆傛棤鏂规纭鎶ュ憡</div>
                 <ul class="attachment-file-list" th:unless="${ticketPlanConfirmations == null or #lists.isEmpty(ticketPlanConfirmations)}">
                     <li th:each="f : ${ticketPlanConfirmations}" class="attachment-file-item">
                         <a th:href="@{/tickets/attachments/{id}(id=${f.id})}" class="link-tech" th:text="${f.originalName}">file</a>
                         <span class="text-muted small ms-2"
-                              th:text="${f.createBy != null ? f.createBy + ' · ' : ''}"></span>
+                              th:text="${f.createBy != null ? f.createBy + ' 路 ' : ''}"></span>
                         <span class="text-muted small"
                               th:text="${#temporals.format(f.createTime, 'yyyy-MM-dd HH:mm')}"></span>
-                        <span th:if="${f.confirmed}" class="tag tag-primary ms-1">已存档</span>
+                        <span th:if="${f.confirmed}" class="tag tag-primary ms-1">宸插瓨妗?/span>
                         <form th:if="${!f.confirmed}" th:action="@{/tickets/attachments/{id}/confirm(id=${f.id})}" method="post" class="d-inline ms-2"
-                              onsubmit="return confirm('确认后将存档该方案确认报告。确定？')">
+                              onsubmit="return confirm('纭鍚庡皢瀛樻。璇ユ柟妗堢‘璁ゆ姤鍛娿€傜‘瀹氾紵')">
                             <input type="hidden" name="ticketId" th:value="${ticket.id}">
                             <input type="hidden" name="returnTo" value="detail">
-                            <button type="submit" class="btn btn-link btn-sm p-0">确认存档</button>
+                            <button type="submit" class="btn btn-link btn-sm p-0">纭瀛樻。</button>
                         </form>
                         <form th:if="${!f.confirmed}" th:action="@{/tickets/attachments/{id}/delete(id=${f.id})}" method="post" class="d-inline ms-2"
-                              onsubmit="return confirm('确定删除该方案确认报告？可重新上传。')">
+                              onsubmit="return confirm('纭畾鍒犻櫎璇ユ柟妗堢‘璁ゆ姤鍛婏紵鍙噸鏂颁笂浼犮€?)">
                             <input type="hidden" name="ticketId" th:value="${ticket.id}">
                             <input type="hidden" name="returnTo" value="detail">
-                            <button type="submit" class="btn btn-link btn-sm text-danger p-0">删除</button>
+                            <button type="submit" class="btn btn-link btn-sm text-danger p-0">鍒犻櫎</button>
                         </form>
                     </li>
                 </ul>
@@ -190,31 +190,31 @@
 
             <div class="detail-section">
                 <h6 class="d-flex align-items-center gap-2">
-                    完成确认报告
-                    <span th:if="${hasConfirmation}" class="tag tag-success">已上传</span>
-                    <span th:unless="${hasConfirmation}" class="tag tag-warning">未上传</span>
+                    瀹屾垚纭鎶ュ憡
+                    <span th:if="${hasConfirmation}" class="tag tag-success">宸蹭笂浼?/span>
+                    <span th:unless="${hasConfirmation}" class="tag tag-warning">鏈笂浼?/span>
                 </h6>
-                <p class="small text-muted mb-2">请上传完成后的确认文件。确认存档后将保留存档版本，便于后续查阅。</p>
-                <div th:if="${ticketConfirmations == null or #lists.isEmpty(ticketConfirmations)}" class="text-muted small mb-2">暂无确认报告</div>
+                <p class="small text-muted mb-2">璇蜂笂浼犲畬鎴愬悗鐨勭‘璁ゆ枃浠躲€傜‘璁ゅ瓨妗ｅ悗灏嗕繚鐣欏瓨妗ｇ増鏈紝渚夸簬鍚庣画鏌ラ槄銆?/p>
+                <div th:if="${ticketConfirmations == null or #lists.isEmpty(ticketConfirmations)}" class="text-muted small mb-2">鏆傛棤纭鎶ュ憡</div>
                 <ul class="attachment-file-list" th:unless="${ticketConfirmations == null or #lists.isEmpty(ticketConfirmations)}">
                     <li th:each="f : ${ticketConfirmations}" class="attachment-file-item">
                         <a th:href="@{/tickets/attachments/{id}(id=${f.id})}" class="link-tech" th:text="${f.originalName}">file</a>
                         <span class="text-muted small ms-2"
-                              th:text="${f.createBy != null ? f.createBy + ' · ' : ''}"></span>
+                              th:text="${f.createBy != null ? f.createBy + ' 路 ' : ''}"></span>
                         <span class="text-muted small"
                               th:text="${#temporals.format(f.createTime, 'yyyy-MM-dd HH:mm')}"></span>
-                        <span th:if="${f.confirmed}" class="tag tag-success ms-1">已存档</span>
+                        <span th:if="${f.confirmed}" class="tag tag-success ms-1">宸插瓨妗?/span>
                         <form th:if="${!f.confirmed}" th:action="@{/tickets/attachments/{id}/confirm(id=${f.id})}" method="post" class="d-inline ms-2"
-                              onsubmit="return confirm('确认后将存档该完成确认报告。确定？')">
+                              onsubmit="return confirm('纭鍚庡皢瀛樻。璇ュ畬鎴愮‘璁ゆ姤鍛娿€傜‘瀹氾紵')">
                             <input type="hidden" name="ticketId" th:value="${ticket.id}">
                             <input type="hidden" name="returnTo" value="detail">
-                            <button type="submit" class="btn btn-link btn-sm p-0">确认存档</button>
+                            <button type="submit" class="btn btn-link btn-sm p-0">纭瀛樻。</button>
                         </form>
                         <form th:if="${!f.confirmed}" th:action="@{/tickets/attachments/{id}/delete(id=${f.id})}" method="post" class="d-inline ms-2"
-                              onsubmit="return confirm('确定删除该完成确认报告？可重新上传。')">
+                              onsubmit="return confirm('纭畾鍒犻櫎璇ュ畬鎴愮‘璁ゆ姤鍛婏紵鍙噸鏂颁笂浼犮€?)">
                             <input type="hidden" name="ticketId" th:value="${ticket.id}">
                             <input type="hidden" name="returnTo" value="detail">
-                            <button type="submit" class="btn btn-link btn-sm text-danger p-0">删除</button>
+                            <button type="submit" class="btn btn-link btn-sm text-danger p-0">鍒犻櫎</button>
                         </form>
                     </li>
                 </ul>
@@ -222,58 +222,58 @@
 
             <div th:replace="~{fragments/ticket-attachments :: attachmentSection(ticket=${ticket}, editable=true, returnTo='detail')}"></div>
             <div class="detail-section">
-                <h6>修改记录</h6>
-                <div th:if="${changeLogs == null or #lists.isEmpty(changeLogs)}" class="text-muted small">暂无修改记录</div>
+                <h6>淇敼璁板綍</h6>
+                <div th:if="${changeLogs == null or #lists.isEmpty(changeLogs)}" class="text-muted small">鏆傛棤淇敼璁板綍</div>
                 <div class="followup-timeline" th:unless="${changeLogs == null or #lists.isEmpty(changeLogs)}">
                     <div class="followup-item" th:each="c : ${changeLogs}">
                         <div class="followup-meta">
-                            <span class="tag tag-default" th:text="${c.fieldLabel ?: c.fieldName}">字段</span>
-                            <span th:text="${c.changeBy ?: '—'}"></span>
+                            <span class="tag tag-default" th:text="${c.fieldLabel ?: c.fieldName}">瀛楁</span>
+                            <span th:text="${c.changeBy ?: '鈥?}"></span>
                             <span class="text-muted ms-2"
                                   th:text="${#temporals.format(c.changeTime, 'yyyy-MM-dd HH:mm')}"></span>
                         </div>
                         <div class="followup-content small">
-                            <span class="text-muted">原：</span>
-                            <span th:text="${c.oldValue != null and !c.oldValue.isEmpty() ? c.oldValue : '（空）'}">—</span>
-                            <span class="text-muted mx-1">→</span>
-                            <span class="text-muted">新：</span>
-                            <span th:text="${c.newValue != null and !c.newValue.isEmpty() ? c.newValue : '（空）'}">—</span>
+                            <span class="text-muted">鍘燂細</span>
+                            <span th:text="${c.oldValue != null and !c.oldValue.isEmpty() ? c.oldValue : '锛堢┖锛?}">鈥?/span>
+                            <span class="text-muted mx-1">鈫?/span>
+                            <span class="text-muted">鏂帮細</span>
+                            <span th:text="${c.newValue != null and !c.newValue.isEmpty() ? c.newValue : '锛堢┖锛?}">鈥?/span>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="detail-section">
-                <h6>跟进记录</h6>
+                <h6>璺熻繘璁板綍</h6>
                 <div th:if="${followUps != null and !#lists.isEmpty(followUps)}" class="followup-timeline">
                     <div class="followup-item" th:each="fu : ${followUps}">
                         <div class="followup-meta">
-                            <span th:text="${fu.createBy ?: '—'}">记录人</span>
+                            <span th:text="${fu.createBy ?: '鈥?}">璁板綍浜?/span>
                             <span class="text-muted ms-2"
-                                  th:text="${#temporals.format(fu.createTime, 'yyyy-MM-dd HH:mm')}">时间</span>
+                                  th:text="${#temporals.format(fu.createTime, 'yyyy-MM-dd HH:mm')}">鏃堕棿</span>
                         </div>
-                        <div class="followup-content" th:text="${fu.content}">内容</div>
+                        <div class="followup-content" th:text="${fu.content}">鍐呭</div>
                     </div>
                 </div>
-                <div th:if="${followUps == null or #lists.isEmpty(followUps)}" class="text-muted">暂无跟进记录</div>
+                <div th:if="${followUps == null or #lists.isEmpty(followUps)}" class="text-muted">鏆傛棤璺熻繘璁板綍</div>
             </div>
         </div>
 
         <div class="col-lg-4">
-            <div class="archive-side-panel sticky-top" style="top: 16px;">
-                <h5 class="fw-bold mb-3">档案信息</h5>
-                <h6>项目类型</h6>
-                <div th:text="${ticket.archive.projectType ?: '—'}">—</div>
-                <h6>现场负责人</h6>
-                <div th:text="${ticket.archive.onsiteManager ?: '—'}">—</div>
-                <h6>实施负责人</h6>
-                <div th:text="${ticket.archive.implManager ?: '—'}">—</div>
-                <h6>联系方式</h6>
-                <div class="content-block small" th:text="${ticket.archive.contactInfo ?: '—'}">—</div>
-                <h6>远程方式</h6>
-                <div class="content-block small" th:text="${ticket.archive.remoteMethod ?: '—'}">—</div>
-                <h6>特殊流程</h6>
-                <div class="content-block small" th:text="${ticket.archive.specialProcess ?: '—'}">—</div>
+            <div class="delivery-side-panel sticky-top" style="top: 16px;">
+                <h5 class="fw-bold mb-3">妗ｆ淇℃伅</h5>
+                <h6>椤圭洰绫诲瀷</h6>
+                <div th:text="${ticket.delivery.deliveryName ?: '鈥?}">鈥?/div>
+                <h6>鐜板満璐熻矗浜?/h6>
+                <div th:text="${ticket.delivery.onsiteManager ?: '鈥?}">鈥?/div>
+                <h6>瀹炴柦璐熻矗浜?/h6>
+                <div th:text="${ticket.delivery.implManager ?: '鈥?}">鈥?/div>
+                <h6>鑱旂郴鏂瑰紡</h6>
+                <div class="content-block small" th:text="${ticket.delivery.contactInfo ?: '鈥?}">鈥?/div>
+                <h6>杩滅▼鏂瑰紡</h6>
+                <div class="content-block small" th:text="${ticket.delivery.remoteMethod ?: '鈥?}">鈥?/div>
+                <h6>鐗规畩娴佺▼</h6>
+                <div class="content-block small" th:text="${ticket.delivery.specialProcess ?: '鈥?}">鈥?/div>
             </div>
         </div>
     </div>
@@ -285,31 +285,31 @@
     <div class="modal-dialog">
         <form class="modal-content" th:action="@{/tickets/{id}/handled(id=${ticket.id})}" method="post">
             <div class="modal-header py-2">
-                <h5 class="modal-title fs-6">记录已处理</h5>
+                <h5 class="modal-title fs-6">璁板綍宸插鐞?/h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" name="returnTo" value="detail">
                 <div class="mb-2">
-                    <label class="form-label small mb-1">处理方式</label>
+                    <label class="form-label small mb-1">澶勭悊鏂瑰紡</label>
                     <select name="handleMethod" class="form-select form-select-sm" required>
-                        <option value="">请选择</option>
-                        <option value="代码修复">代码修复</option>
-                        <option value="配置调整">配置调整</option>
-                        <option value="数据修正">数据修正</option>
-                        <option value="说明答复">说明答复</option>
-                        <option value="其他">其他</option>
+                        <option value="">璇烽€夋嫨</option>
+                        <option value="浠ｇ爜淇">浠ｇ爜淇</option>
+                        <option value="閰嶇疆璋冩暣">閰嶇疆璋冩暣</option>
+                        <option value="鏁版嵁淇">鏁版嵁淇</option>
+                        <option value="璇存槑绛斿">璇存槑绛斿</option>
+                        <option value="鍏朵粬">鍏朵粬</option>
                     </select>
                 </div>
                 <div>
-                    <label class="form-label small mb-1">处理说明</label>
+                    <label class="form-label small mb-1">澶勭悊璇存槑</label>
                     <textarea name="content" class="form-control form-control-sm" rows="4" required
-                              placeholder="说明改了什么、验证方式、影响范围等"></textarea>
+                              placeholder="璇存槑鏀逛簡浠€涔堛€侀獙璇佹柟寮忋€佸奖鍝嶈寖鍥寸瓑"></textarea>
                 </div>
             </div>
             <div class="modal-footer py-2">
-                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">取消</button>
-                <button type="submit" class="btn btn-primary btn-sm">提交并标记已处理</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">鍙栨秷</button>
+                <button type="submit" class="btn btn-primary btn-sm">鎻愪氦骞舵爣璁板凡澶勭悊</button>
             </div>
         </form>
     </div>
@@ -318,17 +318,17 @@
     <div class="modal-dialog">
         <form class="modal-content" th:action="@{/tickets/{id}/need-feedback(id=${ticket.id})}" method="post">
             <div class="modal-header py-2">
-                <h5 class="modal-title fs-6">待反馈调整</h5>
+                <h5 class="modal-title fs-6">寰呭弽棣堣皟鏁?/h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p class="small mb-2">说明现场偏差与期望，便于开发继续对齐（协作反馈，非否定工作）。</p>
+                <p class="small mb-2">璇存槑鐜板満鍋忓樊涓庢湡鏈涳紝渚夸簬寮€鍙戠户缁榻愶紙鍗忎綔鍙嶉锛岄潪鍚﹀畾宸ヤ綔锛夈€?/p>
                 <input type="hidden" name="returnTo" value="detail">
                 <textarea name="content" class="form-control form-control-sm" rows="4" required></textarea>
             </div>
             <div class="modal-footer py-2">
-                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">取消</button>
-                <button type="submit" class="btn btn-warning btn-sm">提交反馈</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">鍙栨秷</button>
+                <button type="submit" class="btn btn-warning btn-sm">鎻愪氦鍙嶉</button>
             </div>
         </form>
     </div>
@@ -337,17 +337,17 @@
     <div class="modal-dialog">
         <form class="modal-content" th:action="@{/tickets/{id}/complete(id=${ticket.id})}" method="post">
             <div class="modal-header py-2">
-                <h5 class="modal-title fs-6">确认已完成</h5>
+                <h5 class="modal-title fs-6">纭宸插畬鎴?/h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" name="returnTo" value="detail">
                 <textarea name="content" class="form-control form-control-sm" rows="3"
-                          placeholder="可选：核对通过说明"></textarea>
+                          placeholder="鍙€夛細鏍稿閫氳繃璇存槑"></textarea>
             </div>
             <div class="modal-footer py-2">
-                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">取消</button>
-                <button type="submit" class="btn btn-success btn-sm">确认完成</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">鍙栨秷</button>
+                <button type="submit" class="btn btn-success btn-sm">纭瀹屾垚</button>
             </div>
         </form>
     </div>
@@ -356,17 +356,17 @@
     <div class="modal-dialog">
         <form class="modal-content" th:action="@{/tickets/{id}/plan-confirmation(id=${ticket.id})}" method="post" enctype="multipart/form-data">
             <div class="modal-header py-2">
-                <h5 class="modal-title fs-6">上传方案确认报告</h5>
+                <h5 class="modal-title fs-6">涓婁紶鏂规纭鎶ュ憡</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p class="small mb-3">请上传双方确认后的方案文件（PDF / 图片），便于留存与后续查阅。</p>
+                <p class="small mb-3">璇蜂笂浼犲弻鏂圭‘璁ゅ悗鐨勬柟妗堟枃浠讹紙PDF / 鍥剧墖锛夛紝渚夸簬鐣欏瓨涓庡悗缁煡闃呫€?/p>
                 <input type="hidden" name="returnTo" value="detail">
                 <input type="file" name="file" class="form-control form-control-sm" accept=".pdf,image/*" required>
             </div>
             <div class="modal-footer py-2">
-                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">取消</button>
-                <button type="submit" class="btn btn-primary btn-sm">上传</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">鍙栨秷</button>
+                <button type="submit" class="btn btn-primary btn-sm">涓婁紶</button>
             </div>
         </form>
     </div>
@@ -375,17 +375,17 @@
     <div class="modal-dialog">
         <form class="modal-content" th:action="@{/tickets/{id}/confirmation(id=${ticket.id})}" method="post" enctype="multipart/form-data">
             <div class="modal-header py-2">
-                <h5 class="modal-title fs-6">上传确认报告</h5>
+                <h5 class="modal-title fs-6">涓婁紶纭鎶ュ憡</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p class="small mb-3">请上传完成后的确认文件（PDF / 图片），便于留存与后续查阅。</p>
+                <p class="small mb-3">璇蜂笂浼犲畬鎴愬悗鐨勭‘璁ゆ枃浠讹紙PDF / 鍥剧墖锛夛紝渚夸簬鐣欏瓨涓庡悗缁煡闃呫€?/p>
                 <input type="hidden" name="returnTo" value="detail">
                 <input type="file" name="file" class="form-control form-control-sm" accept=".pdf,image/*" required>
             </div>
             <div class="modal-footer py-2">
-                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">取消</button>
-                <button type="submit" class="btn btn-primary btn-sm">上传</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">鍙栨秷</button>
+                <button type="submit" class="btn btn-primary btn-sm">涓婁紶</button>
             </div>
         </form>
     </div>
@@ -393,3 +393,4 @@
 <div th:replace="~{fragments/image-preview :: imagePreviewModal}"></div>
 </body>
 </html>
+

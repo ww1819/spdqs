@@ -1,5 +1,6 @@
 package com.qs.entity;
 
+import com.qs.util.IdUtils;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -10,18 +11,17 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
-@Table(name = "T_ARCHIVE_NODE")
-public class ArchiveNode {
+@Table(name = "T_DELIVERY_NODE")
+public class DeliveryNode {
 
     @Id
     @Column(name = "ID", length = 36)
     private String id;
 
-    @Column(name = "ARCHIVE_ID", nullable = false, length = 36)
-    private String archiveId;
+    @Column(name = "DELIVERY_ID", nullable = false, length = 36)
+    private String deliveryId;
 
     @Column(name = "STAGE", nullable = false, length = 30)
     private String stage;
@@ -56,7 +56,7 @@ public class ArchiveNode {
     @PrePersist
     public void prePersist() {
         if (id == null || id.isBlank()) {
-            id = UUID.randomUUID().toString();
+            id = IdUtils.dashedUuid7();
         }
         if (createTime == null) {
             createTime = LocalDateTime.now();
@@ -74,12 +74,12 @@ public class ArchiveNode {
         this.id = id;
     }
 
-    public String getArchiveId() {
-        return archiveId;
+    public String getDeliveryId() {
+        return deliveryId;
     }
 
-    public void setArchiveId(String archiveId) {
-        this.archiveId = archiveId;
+    public void setDeliveryId(String deliveryId) {
+        this.deliveryId = deliveryId;
     }
 
     public String getStage() {

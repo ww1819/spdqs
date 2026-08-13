@@ -1,7 +1,7 @@
 package com.qs.controller;
 
-import com.qs.entity.ArchiveAttachment;
-import com.qs.service.ArchiveAttachmentService;
+import com.qs.entity.DeliveryAttachment;
+import com.qs.service.DeliveryAttachmentService;
 import com.qs.service.FileStorageService;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
@@ -20,12 +20,12 @@ import java.nio.file.Path;
 
 @Controller
 @RequestMapping("/archives/attachments")
-public class ArchiveAttachmentController {
+public class DeliveryAttachmentController {
 
-    private final ArchiveAttachmentService attachmentService;
+    private final DeliveryAttachmentService attachmentService;
     private final FileStorageService fileStorageService;
 
-    public ArchiveAttachmentController(ArchiveAttachmentService attachmentService,
+    public DeliveryAttachmentController(DeliveryAttachmentService attachmentService,
                                        FileStorageService fileStorageService) {
         this.attachmentService = attachmentService;
         this.fileStorageService = fileStorageService;
@@ -33,7 +33,7 @@ public class ArchiveAttachmentController {
 
     @GetMapping("/{id}")
     public ResponseEntity<InputStreamResource> download(@PathVariable String id) throws IOException {
-        ArchiveAttachment attachment;
+        DeliveryAttachment attachment;
         try {
             attachment = attachmentService.getById(id);
         } catch (IllegalArgumentException ex) {

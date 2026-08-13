@@ -11,9 +11,17 @@
            th:classappend="${activeTab == 'dashboard'} ? 'active'" href="/dashboard">
             <span class="sidebar-icon">▣</span> 工作台
         </a>
+        <a class="sidebar-link" th:if="${allowedMenus != null and allowedMenus.contains('customers')}"
+           th:classappend="${activeTab == 'customers'} ? 'active'" href="/customers">
+            <span class="sidebar-icon">⌂</span> 使用单位
+        </a>
         <a class="sidebar-link" th:if="${allowedMenus != null and allowedMenus.contains('archives')}"
            th:classappend="${activeTab == 'archives'} ? 'active'" href="/archives">
-            <span class="sidebar-icon">☰</span> 档案列表
+            <span class="sidebar-icon">☰</span> 产品交付
+        </a>
+        <a class="sidebar-link" th:if="${allowedMenus != null and allowedMenus.contains('partners')}"
+           th:classappend="${activeTab == 'partners'} ? 'active'" href="/partners">
+            <span class="sidebar-icon">◎</span> 服务商
         </a>
         <a class="sidebar-link" th:if="${allowedMenus != null and allowedMenus.contains('tickets')}"
            th:classappend="${activeTab == 'tickets'} ? 'active'" href="/tickets">
@@ -28,10 +36,18 @@
             <span class="sidebar-icon">👤</span> 账号管理
         </a>
         <div class="sidebar-divider"
-             th:if="${allowedMenus != null and (allowedMenus.contains('archives') or allowedMenus.contains('tickets'))}"></div>
+             th:if="${allowedMenus != null and (allowedMenus.contains('archives') or allowedMenus.contains('tickets') or allowedMenus.contains('customers') or allowedMenus.contains('partners'))}"></div>
+        <a class="sidebar-link sidebar-link-sub" th:if="${allowedMenus != null and allowedMenus.contains('customers')}"
+           href="/customers/new">
+            <span class="sidebar-icon">+</span> 新建使用单位
+        </a>
         <a class="sidebar-link sidebar-link-sub" th:if="${allowedMenus != null and allowedMenus.contains('archives')}"
            href="/archives/new">
-            <span class="sidebar-icon">+</span> 新建档案
+            <span class="sidebar-icon">+</span> 新建交付
+        </a>
+        <a class="sidebar-link sidebar-link-sub" th:if="${allowedMenus != null and allowedMenus.contains('partners')}"
+           href="/partners/new">
+            <span class="sidebar-icon">+</span> 新建服务商
         </a>
         <a class="sidebar-link sidebar-link-sub" th:if="${allowedMenus != null and allowedMenus.contains('tickets')}"
            href="/tickets/new">

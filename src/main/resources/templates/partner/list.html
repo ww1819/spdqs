@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/app-head :: head('服务商 - 档案工单系统')}"></head>
+<body class="app-page">
+<div class="app-shell">
+    <div th:replace="~{fragments/app-nav :: sidebar}"></div>
+    <main class="app-main">
+        <header class="app-header">
+            <h1>服务商</h1>
+            <p class="header-desc">代理商 / SPD 服务商主数据；可授权其可见的产品交付</p>
+        </header>
+        <div class="app-content">
+            <div th:replace="~{fragments/page-header :: alerts}"></div>
+            <div class="panel">
+                <div class="toolbar">
+                    <form method="get" action="/partners" class="toolbar-filters m-0">
+                        <input type="text" name="keyword" class="form-control form-control-sm" style="width: 220px;"
+                               placeholder="搜索名称/编码/拼音" th:value="${keyword}">
+                        <button type="submit" class="btn btn-outline-secondary btn-sm">筛选</button>
+                        <a href="/partners" class="btn btn-link btn-sm">重置</a>
+                    </form>
+                    <a href="/partners/new" class="btn btn-primary btn-sm">+ 新建服务商</a>
+                </div>
+                <div class="panel-body">
+                    <div th:if="${#lists.isEmpty(partners)}" class="table-empty">
+                        <p class="mb-2">暂无服务商</p>
+                        <a href="/partners/new" class="btn btn-outline-primary btn-sm">创建第一条</a>
+                    </div>
+                    <table class="data-table" th:unless="${#lists.isEmpty(partners)}">
+                        <thead>
+                        <tr>
+                            <th>名称</th>
+                            <th>编码</th>
+                            <th>拼音简码</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="p : ${partners}">
+                            <td>
+                                <a th:href="@{/partners/{id}/edit(id=${p.id})}" class="link-tech fw-semibold"
+                                   th:text="${p.name}">名称</a>
+                            </td>
+                            <td th:text="${p.code ?: '—'}">—</td>
+                            <td th:text="${p.namePy ?: '—'}">—</td>
+                            <td th:text="${p.status ?: '—'}">—</td>
+                            <td class="cell-actions">
+                                <a th:href="@{/partners/{id}/edit(id=${p.id})}">编辑</a>
+                                <a th:href="@{/partners/{id}/deliveries(id=${p.id})}">交付授权</a>
+                                <form th:action="@{/partners/{id}/delete(id=${p.id})}" method="post" class="d-inline"
+                                      onsubmit="return confirm('确定删除该服务商？关联的交付授权将一并清除。')">
+                                    <button type="submit" class="btn btn-link btn-sm text-danger p-0 border-0">删除</button>
+                                </form>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+<script src="/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

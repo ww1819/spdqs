@@ -31,7 +31,7 @@ public class DashboardController {
     public String index(Model model, @AuthenticationPrincipal UserDetails userDetails) {
         String currentUser = resolveDisplayName(userDetails);
         String username = userDetails != null ? userDetails.getUsername() : "";
-        Set<String> allowedArchives = permissionService.getAllowedArchiveIds(username);
+        Set<String> allowedArchives = permissionService.getAllowedDeliveryIds(username);
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("returnUrl", "/dashboard");
         model.addAttribute("dashboard", dashboardService.build(currentUser, allowedArchives));

@@ -28,8 +28,8 @@ public class FileStorageService {
         return storeUnder("tickets", ticketId, file);
     }
 
-    public String storeArchive(String archiveId, MultipartFile file) throws IOException {
-        return storeUnder("archives", archiveId, file);
+    public String storeDelivery(String deliveryId, MultipartFile file) throws IOException {
+        return storeUnder("archives", deliveryId, file);
     }
 
     private String storeUnder(String category, String ownerId, MultipartFile file) throws IOException {
@@ -60,8 +60,8 @@ public class FileStorageService {
         deleteOwnerDir("tickets", ticketId);
     }
 
-    public void deleteArchiveDir(String archiveId) throws IOException {
-        deleteOwnerDir("archives", archiveId);
+    public void deleteDeliveryDir(String deliveryId) throws IOException {
+        deleteOwnerDir("archives", deliveryId);
     }
 
     private void deleteOwnerDir(String category, String ownerId) throws IOException {

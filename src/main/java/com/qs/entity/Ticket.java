@@ -25,8 +25,8 @@ public class Ticket {
     private String id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ARCHIVE_ID", nullable = false)
-    private Archive archive;
+    @JoinColumn(name = "DELIVERY_ID", nullable = false)
+    private Delivery delivery;
 
     @Column(name = "ORDER_TYPE", nullable = false, length = 30)
     private String orderType;
@@ -100,12 +100,12 @@ public class Ticket {
         this.id = id;
     }
 
-    public Archive getArchive() {
-        return archive;
+    public Delivery getDelivery() {
+        return delivery;
     }
 
-    public void setArchive(Archive archive) {
-        this.archive = archive;
+    public void setDelivery(Delivery delivery) {
+        this.delivery = delivery;
     }
 
     public String getOrderType() {

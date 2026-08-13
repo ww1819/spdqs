@@ -20,10 +20,13 @@ public class ReminderService {
 
     private final ReminderRepository reminderRepository;
     private final TicketRepository ticketRepository;
+    private final DeliveryService deliveryService;
 
-    public ReminderService(ReminderRepository reminderRepository, TicketRepository ticketRepository) {
+    public ReminderService(ReminderRepository reminderRepository, TicketRepository ticketRepository,
+                           DeliveryService deliveryService) {
         this.reminderRepository = reminderRepository;
         this.ticketRepository = ticketRepository;
+        this.deliveryService = deliveryService;
     }
 
     public List<Reminder> listUnread(String displayName) {
@@ -72,7 +75,7 @@ public class ReminderService {
     }
 
     private String buildMessage(Ticket ticket, int daysBefore) {
-        String projectName = ticket.getArchive().getProjectName();
+        String projectName = deliveryService.buildDisplayName(ticket.getDelivery());
         String dueDate = ticket.getExpectedCompleteDate().toString();
         String status = ticket.getStatus();
         return switch (daysBefore) {

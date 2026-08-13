@@ -69,6 +69,12 @@ public class PermissionInterceptor implements HandlerInterceptor {
         if (path.startsWith("/archives") || path.startsWith("/api/archives")) {
             return MenuCode.ARCHIVES;
         }
+        if (path.startsWith("/customers")) {
+            return MenuCode.CUSTOMERS;
+        }
+        if (path.startsWith("/partners")) {
+            return MenuCode.PARTNERS;
+        }
         if (path.startsWith("/tickets") || path.startsWith("/api/tickets")) {
             return MenuCode.TICKETS;
         }

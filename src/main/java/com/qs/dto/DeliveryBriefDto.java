@@ -1,21 +1,20 @@
 package com.qs.dto;
 
-public class ArchiveBriefDto {
+public class DeliveryBriefDto {
 
-    private String id;
-    private String projectName;
-    private String contactInfo;
-    private String remoteMethod;
-    private String specialProcess;
-    private String launchPlan;
-    private String onsiteManager;
-    private String implManager;
+    private final String id;
+    private final String displayName;
+    private final String contactInfo;
+    private final String remoteMethod;
+    private final String specialProcess;
+    private final String launchPlan;
+    private final String onsiteManager;
+    private final String implManager;
 
-    public ArchiveBriefDto(String id, String projectName, String contactInfo, String remoteMethod,
-                           String specialProcess, String launchPlan, String onsiteManager,
-                           String implManager) {
+    public DeliveryBriefDto(String id, String displayName, String contactInfo, String remoteMethod,
+                            String specialProcess, String launchPlan, String onsiteManager, String implManager) {
         this.id = id;
-        this.projectName = projectName;
+        this.displayName = displayName;
         this.contactInfo = contactInfo;
         this.remoteMethod = remoteMethod;
         this.specialProcess = specialProcess;
@@ -28,8 +27,8 @@ public class ArchiveBriefDto {
         return id;
     }
 
-    public String getProjectName() {
-        return projectName;
+    public String getDisplayName() {
+        return displayName;
     }
 
     public String getContactInfo() {

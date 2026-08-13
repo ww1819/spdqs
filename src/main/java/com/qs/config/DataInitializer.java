@@ -20,7 +20,7 @@ public class DataInitializer {
             var admin = userService.findByUsername("王威");
             if (admin != null) {
                 permissionService.grantAllMenus(admin.getId());
-                permissionService.grantAllArchives(admin.getId());
+                permissionService.grantAllDeliveries(admin.getId());
             }
         };
     }

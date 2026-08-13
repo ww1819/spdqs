@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/app-head :: head('服务商交付授权 - 档案工单系统')}"></head>
+<body class="app-page">
+<div class="app-shell">
+    <div th:replace="~{fragments/app-nav :: sidebar}"></div>
+    <main class="app-main">
+        <header class="app-header">
+            <h1>服务商交付授权</h1>
+            <p class="header-desc"
+               th:text="'为服务商「' + ${partner.name} + '」勾选可访问的产品交付'">授权</p>
+        </header>
+        <div class="app-content">
+            <div th:replace="~{fragments/page-header :: alerts}"></div>
+            <div class="form-page-card">
+                <form th:action="@{/partners/{id}/deliveries(id=${partner.id})}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <p class="text-secondary small mb-3">
+                        归属该服务商的账号（账号编辑中指定服务商）将自动获得此处勾选的交付可见范围，并可与用户单独授权叠加。
+                    </p>
+                    <div th:if="${#lists.isEmpty(deliveries)}" class="text-secondary small">暂无产品交付，请先创建。</div>
+                    <div class="row g-2" th:unless="${#lists.isEmpty(deliveries)}">
+                        <div class="col-md-6" th:each="d : ${deliveries}">
+                            <div class="form-check border rounded px-3 py-2">
+                                <input class="form-check-input" type="checkbox" name="deliveries"
+                                       th:id="'pd_' + ${d.id}" th:value="${d.id}"
+                                       th:checked="${selectedDeliveries.contains(d.id)}">
+                                <label class="form-check-label" th:for="'pd_' + ${d.id}" th:text="${d.displayName}">交付</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">保存授权</button>
+                        <a th:href="@{/partners/{id}/edit(id=${partner.id})}" class="btn btn-outline-secondary">返回编辑</a>
+                        <a href="/partners" class="btn btn-outline-secondary">返回列表</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+</div>
+<script src="/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

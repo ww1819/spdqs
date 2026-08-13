@@ -15,9 +15,12 @@ import java.util.Objects;
 public class TicketChangeLogService {
 
     private final TicketChangeLogRepository changeLogRepository;
+    private final DeliveryService deliveryService;
 
-    public TicketChangeLogService(TicketChangeLogRepository changeLogRepository) {
+    public TicketChangeLogService(TicketChangeLogRepository changeLogRepository,
+                                  DeliveryService deliveryService) {
         this.changeLogRepository = changeLogRepository;
+        this.deliveryService = deliveryService;
     }
 
     public List<TicketChangeLog> listByTicketId(String ticketId) {
@@ -41,12 +44,12 @@ public class TicketChangeLogService {
                 formatDate(before.getExpectedCompleteDate()), formatDate(after.getExpectedCompleteDate()), changeBy);
         addIfChanged(logs, before.getId(), "targetCompleteDate", "目标完成",
                 formatDate(before.getTargetCompleteDate()), formatDate(after.getTargetCompleteDate()), changeBy);
-        String oldProject = before.getArchive() != null ? before.getArchive().getProjectName() : null;
-        String newProject = after.getArchive() != null ? after.getArchive().getProjectName() : null;
-        String oldArchiveId = before.getArchive() != null ? before.getArchive().getId() : null;
-        String newArchiveId = after.getArchive() != null ? after.getArchive().getId() : null;
-        if (!Objects.equals(oldArchiveId, newArchiveId)) {
-            addIfChanged(logs, before.getId(), "archive", "项目", oldProject, newProject, changeBy);
+        String oldProject = before.getDelivery() != null ? deliveryService.buildDisplayName(before.getDelivery()) : null;
+        String newProject = after.getDelivery() != null ? deliveryService.buildDisplayName(after.getDelivery()) : null;
+        String oldDeliveryId = before.getDelivery() != null ? before.getDelivery().getId() : null;
+        String newDeliveryId = after.getDelivery() != null ? after.getDelivery().getId() : null;
+        if (!Objects.equals(oldDeliveryId, newDeliveryId)) {
+            addIfChanged(logs, before.getId(), "delivery", "产品交付", oldProject, newProject, changeBy);
         }
         if (!logs.isEmpty()) {
             changeLogRepository.saveAll(logs);

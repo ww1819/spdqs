@@ -2,7 +2,7 @@ package com.qs.dto;
 
 import java.time.LocalDate;
 
-public class ArchiveNodeRequest {
+public class DeliveryNodeRequest {
 
     private String stage;
     private String title;

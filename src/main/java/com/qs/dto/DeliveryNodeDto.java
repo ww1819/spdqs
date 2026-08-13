@@ -2,10 +2,10 @@ package com.qs.dto;
 
 import java.time.LocalDate;
 
-public class ArchiveNodeDto {
+public class DeliveryNodeDto {
 
     private String id;
-    private String archiveId;
+    private String deliveryId;
     private String stage;
     private String title;
     private String nodeType;
@@ -25,12 +25,12 @@ public class ArchiveNodeDto {
         this.id = id;
     }
 
-    public String getArchiveId() {
-        return archiveId;
+    public String getDeliveryId() {
+        return deliveryId;
     }
 
-    public void setArchiveId(String archiveId) {
-        this.archiveId = archiveId;
+    public void setDeliveryId(String deliveryId) {
+        this.deliveryId = deliveryId;
     }
 
     public String getStage() {

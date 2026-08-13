@@ -45,6 +45,15 @@
                             <label class="form-label">重置密码</label>
                             <input type="password" name="newPassword" class="form-control" placeholder="留空则不修改，至少4位">
                         </div>
+                        <div class="col-md-6">
+                            <label class="form-label">归属服务商</label>
+                            <select name="partnerId" class="form-select">
+                                <option value="">无（内部账号）</option>
+                                <option th:each="p : ${partners}" th:value="${p.id}" th:text="${p.name}"
+                                        th:selected="${user.partnerId != null and user.partnerId == p.id}">服务商</option>
+                            </select>
+                            <div class="form-text">指定后自动获得该服务商已授权的产品交付可见范围</div>
+                        </div>
                     </div>
 
                     <div class="d-flex gap-2 mt-4">

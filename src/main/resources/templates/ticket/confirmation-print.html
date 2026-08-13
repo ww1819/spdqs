@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title th:text="'确认报告 - ' + ${ticket.archive.projectName}">确认报告</title>
+    <title th:text="'纭鎶ュ憡 - ' + ${deliveryDisplayName}">纭鎶ュ憡</title>
     <style>
         :root {
             --ink: #1a1d21;
@@ -232,72 +232,72 @@
 </head>
 <body>
 <div class="toolbar no-print">
-    <span class="hint">可直接打印，或导出 Word 后按客户情况改样式再打印；签字后请上传扫描件</span>
-    <button type="button" class="btn btn-primary" onclick="window.print()">打印确认报告</button>
-    <a class="btn btn-ghost" th:href="@{/tickets/{id}/confirmation-export(id=${ticket.id})}">导出 Word</a>
-    <a class="btn btn-ghost" th:href="@{/tickets/{id}(id=${ticket.id})}">返回详情</a>
-    <a class="btn btn-ghost" href="/tickets">返回列表</a>
+    <span class="hint">鍙洿鎺ユ墦鍗帮紝鎴栧鍑?Word 鍚庢寜瀹㈡埛鎯呭喌鏀规牱寮忓啀鎵撳嵃锛涚瀛楀悗璇蜂笂浼犳壂鎻忎欢</span>
+    <button type="button" class="btn btn-primary" onclick="window.print()">鎵撳嵃纭鎶ュ憡</button>
+    <a class="btn btn-ghost" th:href="@{/tickets/{id}/confirmation-export(id=${ticket.id})}">瀵煎嚭 Word</a>
+    <a class="btn btn-ghost" th:href="@{/tickets/{id}(id=${ticket.id})}">杩斿洖璇︽儏</a>
+    <a class="btn btn-ghost" href="/tickets">杩斿洖鍒楄〃</a>
 </div>
 
 <div class="sheet-wrap">
     <article class="sheet">
         <div class="brand-row">
-            <div class="brand">管家工程系统 · SPDQS</div>
+            <div class="brand">绠″宸ョ▼绯荤粺 路 SPDQS</div>
             <div class="doc-meta">
-                <div th:text="${ticket.ticketNo != null} ? |工单编号：WO-${ticket.ticketNo}| : |工单编号：${ticket.id}|">工单编号：—</div>
-                <div th:text="'打印日期：' + ${#temporals.format(printDate, 'yyyy年MM月dd日')}">打印日期：—</div>
+                <div th:text="${ticket.ticketNo != null} ? |宸ュ崟缂栧彿锛歐O-${ticket.ticketNo}| : |宸ュ崟缂栧彿锛?{ticket.id}|">宸ュ崟缂栧彿锛氣€?/div>
+                <div th:text="'鎵撳嵃鏃ユ湡锛? + ${#temporals.format(printDate, 'yyyy骞碝M鏈坉d鏃?)}">鎵撳嵃鏃ユ湡锛氣€?/div>
             </div>
         </div>
-        <h1 class="title">需求 / 变更确认报告</h1>
+        <h1 class="title">闇€姹?/ 鍙樻洿纭鎶ュ憡</h1>
         <p class="subtitle">Requirement &amp; Change Confirmation Report</p>
         <div class="rule"></div>
 
         <table class="info-grid">
             <tr>
-                <th>项目名称</th>
-                <td th:text="${ticket.archive.projectName}">—</td>
-                <th>工单类型</th>
-                <td th:text="${ticket.orderType}">—</td>
+                <th>椤圭洰鍚嶇О</th>
+                <td th:text="${deliveryDisplayName}">鈥?/td>
+                <th>宸ュ崟绫诲瀷</th>
+                <td th:text="${ticket.orderType}">鈥?/td>
             </tr>
             <tr>
-                <th>当前状态</th>
-                <td th:text="${ticket.status}">—</td>
-                <th>提交时间</th>
-                <td th:text="${#temporals.format(ticket.createTime, 'yyyy-MM-dd HH:mm')}">—</td>
+                <th>褰撳墠鐘舵€?/th>
+                <td th:text="${ticket.status}">鈥?/td>
+                <th>鎻愪氦鏃堕棿</th>
+                <td th:text="${#temporals.format(ticket.createTime, 'yyyy-MM-dd HH:mm')}">鈥?/td>
             </tr>
             <tr>
-                <th>提交人</th>
-                <td th:text="${ticket.submitter ?: '—'}">—</td>
-                <th>处理人</th>
-                <td th:text="${ticket.handler ?: '—'}">—</td>
+                <th>鎻愪氦浜?/th>
+                <td th:text="${ticket.submitter ?: '鈥?}">鈥?/td>
+                <th>澶勭悊浜?/th>
+                <td th:text="${ticket.handler ?: '鈥?}">鈥?/td>
             </tr>
             <tr>
-                <th>目标完成</th>
-                <td th:text="${ticket.targetCompleteDate != null ? #temporals.format(ticket.targetCompleteDate, 'yyyy-MM-dd') : '—'}">—</td>
-                <th>预计完成</th>
-                <td th:text="${ticket.expectedCompleteDate != null ? #temporals.format(ticket.expectedCompleteDate, 'yyyy-MM-dd') : '—'}">—</td>
+                <th>鐩爣瀹屾垚</th>
+                <td th:text="${ticket.targetCompleteDate != null ? #temporals.format(ticket.targetCompleteDate, 'yyyy-MM-dd') : '鈥?}">鈥?/td>
+                <th>棰勮瀹屾垚</th>
+                <td th:text="${ticket.expectedCompleteDate != null ? #temporals.format(ticket.expectedCompleteDate, 'yyyy-MM-dd') : '鈥?}">鈥?/td>
             </tr>
         </table>
 
         <section class="section">
-            <div class="section-title">确认事项（工单内容）</div>
-            <div class="box tall" th:text="${ticket.content ?: '—'}">—</div>
+            <div class="section-title">纭浜嬮」锛堝伐鍗曞唴瀹癸級</div>
+            <div class="box tall" th:text="${ticket.content ?: '鈥?}">鈥?/div>
         </section>
 
         <section class="section" th:if="${ticket.attentionNote != null and !ticket.attentionNote.isEmpty()}">
-            <div class="section-title">注意事项</div>
-            <div class="box" th:text="${ticket.attentionNote}">—</div>
+            <div class="section-title">娉ㄦ剰浜嬮」</div>
+            <div class="box" th:text="${ticket.attentionNote}">鈥?/div>
         </section>
 
         <section class="section">
-            <div class="section-title">实施说明 / 完成情况</div>
+            <div class="section-title">瀹炴柦璇存槑 / 瀹屾垚鎯呭喌</div>
             <div class="box lines"
                  th:if="${followUps == null or #lists.isEmpty(followUps)}"></div>
             <div class="box" th:unless="${followUps == null or #lists.isEmpty(followUps)}">
                 <div th:each="fu, iter : ${followUps}" style="margin-bottom: 8px;">
                     <div style="color:#5c6570;font-size:12px;margin-bottom:2px;">
                         <span th:text="${iter.count} + '.'"></span>
-                        <span th:text="${fu.createBy ?: '—'}"></span>
+                        <span th:text="${fu.createBy ?: '鈥?}"></span>
                         <span th:text="${#temporals.format(fu.createTime, 'yyyy-MM-dd HH:mm')}"></span>
                     </div>
                     <div th:text="${fu.content}"></div>
@@ -306,47 +306,48 @@
         </section>
 
         <section class="section">
-            <div class="section-title">客户确认声明</div>
+            <div class="section-title">瀹㈡埛纭澹版槑</div>
             <div class="box" style="min-height:auto;">
                 <ol class="checklist">
-                    <li>已核对上述需求 / 变更内容与现场业务场景一致；</li>
-                    <li>已确认实施结果符合约定，可投入使用（或按约定进入下一阶段）；</li>
-                    <li>如有遗留问题，已在「注意事项」或下方签字区注明。</li>
+                    <li>宸叉牳瀵逛笂杩伴渶姹?/ 鍙樻洿鍐呭涓庣幇鍦轰笟鍔″満鏅竴鑷达紱</li>
+                    <li>宸茬‘璁ゅ疄鏂界粨鏋滅鍚堢害瀹氾紝鍙姇鍏ヤ娇鐢紙鎴栨寜绾﹀畾杩涘叆涓嬩竴闃舵锛夛紱</li>
+                    <li>濡傛湁閬楃暀闂锛屽凡鍦ㄣ€屾敞鎰忎簨椤广€嶆垨涓嬫柟绛惧瓧鍖烘敞鏄庛€?/li>
                 </ol>
             </div>
         </section>
 
         <section class="section">
-            <div class="section-title">签字栏</div>
+            <div class="section-title">绛惧瓧鏍?/div>
             <div class="sign-grid">
                 <div class="sign-card">
-                    <h4>客户方确认</h4>
-                    <div class="sign-line"><span class="label">单位名称</span><span class="blank"></span></div>
-                    <div class="sign-line"><span class="label">确认人签字</span><span class="blank"></span></div>
-                    <div class="sign-line"><span class="label">联系电话</span><span class="blank"></span></div>
-                    <div class="sign-line"><span class="label">确认日期</span><span class="blank"></span></div>
+                    <h4>瀹㈡埛鏂圭‘璁?/h4>
+                    <div class="sign-line"><span class="label">鍗曚綅鍚嶇О</span><span class="blank"></span></div>
+                    <div class="sign-line"><span class="label">纭浜虹瀛?/span><span class="blank"></span></div>
+                    <div class="sign-line"><span class="label">鑱旂郴鐢佃瘽</span><span class="blank"></span></div>
+                    <div class="sign-line"><span class="label">纭鏃ユ湡</span><span class="blank"></span></div>
                 </div>
                 <div class="sign-card">
-                    <h4>实施方确认</h4>
-                    <div class="sign-line"><span class="label">实施单位</span><span class="blank"></span></div>
-                    <div class="sign-line"><span class="label">实施人签字</span><span class="blank"></span></div>
-                    <div class="sign-line"><span class="label">联系电话</span><span class="blank"></span></div>
-                    <div class="sign-line"><span class="label">确认日期</span><span class="blank"></span></div>
+                    <h4>瀹炴柦鏂圭‘璁?/h4>
+                    <div class="sign-line"><span class="label">瀹炴柦鍗曚綅</span><span class="blank"></span></div>
+                    <div class="sign-line"><span class="label">瀹炴柦浜虹瀛?/span><span class="blank"></span></div>
+                    <div class="sign-line"><span class="label">鑱旂郴鐢佃瘽</span><span class="blank"></span></div>
+                    <div class="sign-line"><span class="label">纭鏃ユ湡</span><span class="blank"></span></div>
                 </div>
             </div>
         </section>
 
         <p class="footnote">
-            说明：本报告用于重大需求与重要变更的现场确认。签字后请扫描或拍照，在系统工单中上传「确认报告」，作为验收与追溯凭证。
-            非正式法律文书，不替代合同与正式验收文件。
+            璇存槑锛氭湰鎶ュ憡鐢ㄤ簬閲嶅ぇ闇€姹備笌閲嶈鍙樻洿鐨勭幇鍦虹‘璁ゃ€傜瀛楀悗璇锋壂鎻忔垨鎷嶇収锛屽湪绯荤粺宸ュ崟涓笂浼犮€岀‘璁ゆ姤鍛娿€嶏紝浣滀负楠屾敹涓庤拷婧嚟璇併€?
+            闈炴寮忔硶寰嬫枃涔︼紝涓嶆浛浠ｅ悎鍚屼笌姝ｅ紡楠屾敹鏂囦欢銆?
         </p>
     </article>
 </div>
 <script>
-    // 打开即提示打印，便于实施现场一键操作；取消打印仍可留在本页查看
+    // 鎵撳紑鍗虫彁绀烘墦鍗帮紝渚夸簬瀹炴柦鐜板満涓€閿搷浣滐紱鍙栨秷鎵撳嵃浠嶅彲鐣欏湪鏈〉鏌ョ湅
     window.addEventListener('load', function () {
         setTimeout(function () { window.print(); }, 280);
     });
 </script>
 </body>
 </html>
+

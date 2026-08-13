@@ -1,5 +1,6 @@
 package com.qs.entity;
 
+import com.qs.util.IdUtils;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -10,21 +11,29 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
-@Table(name = "T_ARCHIVE")
-public class Archive {
+@Table(name = "T_DELIVERY")
+public class Delivery {
 
     @Id
     @Column(name = "ID", length = 36)
     private String id;
 
-    @Column(name = "PROJECT_NAME", nullable = false, length = 200)
-    private String projectName;
+    @Column(name = "CUSTOMER_ID", nullable = false, length = 36)
+    private String customerId;
 
-    @Column(name = "PROJECT_TYPE", length = 100)
-    private String projectType;
+    @Column(name = "PRODUCT_ID", nullable = false, length = 36)
+    private String productId;
+
+    @Column(name = "DELIVERY_NAME", length = 200)
+    private String deliveryName;
+
+    @Column(name = "DELIVERY_CODE", length = 50)
+    private String deliveryCode;
+
+    @Column(name = "PARTNER_ID", length = 36)
+    private String partnerId;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     @Column(name = "LAUNCH_DATE")
@@ -65,7 +74,7 @@ public class Archive {
     @PrePersist
     public void prePersist() {
         if (id == null || id.isBlank()) {
-            id = UUID.randomUUID().toString();
+            id = IdUtils.dashedUuid7();
         }
         if (createTime == null) {
             createTime = LocalDateTime.now();
@@ -80,20 +89,44 @@ public class Archive {
         this.id = id;
     }
 
-    public String getProjectName() {
-        return projectName;
+    public String getCustomerId() {
+        return customerId;
     }
 
-    public void setProjectName(String projectName) {
-        this.projectName = projectName;
+    public void setCustomerId(String customerId) {
+        this.customerId = customerId;
     }
 
-    public String getProjectType() {
-        return projectType;
+    public String getProductId() {
+        return productId;
     }
 
-    public void setProjectType(String projectType) {
-        this.projectType = projectType;
+    public void setProductId(String productId) {
+        this.productId = productId;
+    }
+
+    public String getDeliveryName() {
+        return deliveryName;
+    }
+
+    public void setDeliveryName(String deliveryName) {
+        this.deliveryName = deliveryName;
+    }
+
+    public String getDeliveryCode() {
+        return deliveryCode;
+    }
+
+    public void setDeliveryCode(String deliveryCode) {
+        this.deliveryCode = deliveryCode;
+    }
+
+    public String getPartnerId() {
+        return partnerId;
+    }
+
+    public void setPartnerId(String partnerId) {
+        this.partnerId = partnerId;
     }
 
     public LocalDate getLaunchDate() {

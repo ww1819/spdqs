@@ -35,6 +35,12 @@ public class ConfirmationReportWordExporter {
     private static final String FONT = "宋体";
     private static final String FONT_TITLE = "黑体";
 
+    private final DeliveryService deliveryService;
+
+    public ConfirmationReportWordExporter(DeliveryService deliveryService) {
+        this.deliveryService = deliveryService;
+    }
+
     public byte[] export(Ticket ticket, List<TicketFollowUp> followUps) {
         try (XWPFDocument doc = new XWPFDocument(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             addBrandLine(doc, ticket);
@@ -81,7 +87,7 @@ public class ConfirmationReportWordExporter {
     }
 
     public String buildFileName(Ticket ticket) {
-        String project = ticket.getArchive() != null ? ticket.getArchive().getProjectName() : "工单";
+        String project = ticket.getDelivery() != null ? deliveryService.buildDisplayName(ticket.getDelivery()) : "工单";
         String safe = project.replaceAll("[\\\\/:*?\"<>|]", "_").trim();
         if (safe.length() > 40) {
             safe = safe.substring(0, 40);
@@ -187,7 +193,8 @@ public class ConfirmationReportWordExporter {
         table.setWidthType(TableWidthType.PCT);
 
         setInfoCell(table, 0, 0, "项目名称", true);
-        setInfoCell(table, 0, 1, ticket.getArchive() != null ? blankToDash(ticket.getArchive().getProjectName()) : "—", false);
+        setInfoCell(table, 0, 1, ticket.getDelivery() != null
+                ? blankToDash(deliveryService.buildDisplayName(ticket.getDelivery())) : "—", false);
         setInfoCell(table, 0, 2, "工单类型", true);
         setInfoCell(table, 0, 3, blankToDash(ticket.getOrderType()), false);
 

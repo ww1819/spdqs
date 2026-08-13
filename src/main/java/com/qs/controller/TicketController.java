@@ -5,7 +5,7 @@ import com.qs.enums.AttachmentType;
 import com.qs.enums.OrderType;
 import com.qs.enums.TicketStatus;
 import com.qs.service.AnalysisService;
-import com.qs.service.ArchiveService;
+import com.qs.service.DeliveryService;
 import com.qs.service.ConfirmationReportWordExporter;
 import com.qs.service.PermissionService;
 import com.qs.service.ReminderService;
@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
 public class TicketController {
 
     private final TicketService ticketService;
-    private final ArchiveService archiveService;
+    private final DeliveryService deliveryService;
     private final AnalysisService analysisService;
     private final UserService userService;
     private final ReminderService reminderService;
@@ -54,13 +54,13 @@ public class TicketController {
     private final PermissionService permissionService;
     private final ConfirmationReportWordExporter confirmationReportWordExporter;
 
-    public TicketController(TicketService ticketService, ArchiveService archiveService,
+    public TicketController(TicketService ticketService, DeliveryService deliveryService,
                             AnalysisService analysisService, UserService userService,
                             ReminderService reminderService, TicketAttachmentService attachmentService,
                             TicketProcessService processService, PermissionService permissionService,
                             ConfirmationReportWordExporter confirmationReportWordExporter) {
         this.ticketService = ticketService;
-        this.archiveService = archiveService;
+        this.deliveryService = deliveryService;
         this.analysisService = analysisService;
         this.userService = userService;
         this.reminderService = reminderService;
@@ -72,7 +72,7 @@ public class TicketController {
 
     @GetMapping
     public String list(@RequestParam(required = false) List<String> status,
-                       @RequestParam(required = false) List<String> archiveId,
+                       @RequestParam(required = false) List<String> deliveryId,
                        @RequestParam(required = false) List<String> systemId,
                        @RequestParam(required = false) List<String> menu,
                        @RequestParam(required = false) String handler,
@@ -82,9 +82,9 @@ public class TicketController {
                        @AuthenticationPrincipal UserDetails userDetails) {
         addUserToModel(model, userDetails);
         reminderService.checkAndCreateNow();
-        Set<String> allowedArchives = permissionService.getAllowedArchiveIds(userDetails.getUsername());
+        Set<String> allowedArchives = permissionService.getAllowedDeliveryIds(userDetails.getUsername());
         List<String> statusFilters = cleanList(status);
-        List<String> archiveFilters = cleanList(archiveId).stream()
+        List<String> archiveFilters = cleanList(deliveryId).stream()
                 .filter(allowedArchives::contains)
                 .toList();
         if (archiveFilters.isEmpty()) {
@@ -127,14 +127,14 @@ public class TicketController {
                 .collect(Collectors.toSet());
         model.addAttribute("deletableTicketIds", deletableTicketIds);
         model.addAttribute("statusFilters", statusFilters);
-        model.addAttribute("archiveIdFilters", cleanList(archiveId));
+        model.addAttribute("deliveryIdFilters", cleanList(deliveryId));
         model.addAttribute("systemIdFilters", systemFilters);
         model.addAttribute("menuFilters", menuFilters);
         model.addAttribute("handlerFilter", handler);
         model.addAttribute("submitterFilter", submitter);
         model.addAttribute("keyword", keyword);
         model.addAttribute("menuOptions", menuOptions);
-        model.addAttribute("archiveOptions", archiveService.listOptions(allowedArchives));
+        model.addAttribute("archiveOptions", deliveryService.listOptions(allowedArchives));
         model.addAttribute("systemOptions", analysisService.listProjects());
         model.addAttribute("ticketStatuses", Arrays.asList(TicketStatus.values()));
         model.addAttribute("activeTab", "tickets");
@@ -155,13 +155,13 @@ public class TicketController {
     @GetMapping("/new")
     public String createForm(Model model, @AuthenticationPrincipal UserDetails userDetails) {
         addUserToModel(model, userDetails);
-        Set<String> allowedArchives = permissionService.getAllowedArchiveIds(userDetails.getUsername());
+        Set<String> allowedArchives = permissionService.getAllowedDeliveryIds(userDetails.getUsername());
         Ticket ticket = new Ticket();
         var user = userService.findByUsername(userDetails.getUsername());
         ticket.setSubmitter(user != null ? user.getDisplayName() : userDetails.getUsername());
         ticket.setStatus(TicketStatus.SUBMITTED.getLabel());
         model.addAttribute("ticket", ticket);
-        model.addAttribute("archiveOptions", archiveService.listOptions(allowedArchives));
+        model.addAttribute("archiveOptions", deliveryService.listOptions(allowedArchives));
         model.addAttribute("orderTypes", Arrays.asList(OrderType.values()));
         model.addAttribute("ticketStatuses", Arrays.asList(TicketStatus.values()));
         model.addAttribute("activeTab", "tickets");
@@ -175,6 +175,9 @@ public class TicketController {
         ensureTicketAccess(userDetails, ticket);
         addUserToModel(model, userDetails);
         model.addAttribute("ticket", ticket);
+        if (ticket.getDelivery() != null) {
+            model.addAttribute("deliveryDisplayName", deliveryService.buildDisplayName(ticket.getDelivery()));
+        }
         addAttachmentModel(model, id);
         model.addAttribute("followUps", ticketService.listFollowUps(id));
         model.addAttribute("processes", processService.listTreeByTicketId(id));
@@ -234,11 +237,11 @@ public class TicketController {
         Ticket ticket = ticketService.getById(id);
         ensureTicketAccess(userDetails, ticket);
         addUserToModel(model, userDetails);
-        Set<String> allowedArchives = permissionService.getAllowedArchiveIds(userDetails.getUsername());
+        Set<String> allowedArchives = permissionService.getAllowedDeliveryIds(userDetails.getUsername());
         model.addAttribute("ticket", ticket);
         addAttachmentModel(model, id);
         model.addAttribute("followUps", ticketService.listFollowUps(id));
-        model.addAttribute("archiveOptions", archiveService.listOptions(allowedArchives));
+        model.addAttribute("archiveOptions", deliveryService.listOptions(allowedArchives));
         model.addAttribute("orderTypes", Arrays.asList(OrderType.values()));
         model.addAttribute("ticketStatuses", Arrays.asList(TicketStatus.values()));
         model.addAttribute("activeTab", "tickets");
@@ -248,11 +251,11 @@ public class TicketController {
 
     @PostMapping("/save")
     public String save(@ModelAttribute Ticket ticket,
-                       @RequestParam String archiveId,
+                       @RequestParam String deliveryId,
                        @RequestParam(required = false) String newFollowUp,
                        @AuthenticationPrincipal UserDetails userDetails,
                        RedirectAttributes redirectAttributes) {
-        if (!permissionService.canAccessArchive(userDetails.getUsername(), archiveId)) {
+        if (!permissionService.canAccessDelivery(userDetails.getUsername(), deliveryId)) {
             redirectAttributes.addFlashAttribute("error", "无权操作该医院/项目的工单");
             return "redirect:/tickets";
         }
@@ -267,7 +270,7 @@ public class TicketController {
         }
         String createBy = resolveDisplayName(userDetails);
         try {
-            Ticket saved = ticketService.save(ticket, archiveId, newFollowUp, createBy);
+            Ticket saved = ticketService.save(ticket, deliveryId, newFollowUp, createBy);
             redirectAttributes.addFlashAttribute("success", "工单保存成功，可继续上传图片和附件");
             return "redirect:/tickets/" + saved.getId() + "/edit";
         } catch (IllegalArgumentException ex) {
@@ -471,6 +474,9 @@ public class TicketController {
         Ticket ticket = ticketService.getById(id);
         ensureTicketAccess(userDetails, ticket);
         model.addAttribute("ticket", ticket);
+        if (ticket.getDelivery() != null) {
+            model.addAttribute("deliveryDisplayName", deliveryService.buildDisplayName(ticket.getDelivery()));
+        }
         model.addAttribute("followUps", ticketService.listFollowUps(id));
         model.addAttribute("printDate", java.time.LocalDate.now());
         return "ticket/confirmation-print";
@@ -533,8 +539,8 @@ public class TicketController {
     }
 
     private void ensureTicketAccess(UserDetails userDetails, Ticket ticket) {
-        if (ticket.getArchive() == null
-                || !permissionService.canAccessArchive(userDetails.getUsername(), ticket.getArchive().getId())) {
+        if (ticket.getDelivery() == null
+                || !permissionService.canAccessDelivery(userDetails.getUsername(), ticket.getDelivery().getId())) {
             throw new IllegalArgumentException("无权访问该工单所属医院/项目");
         }
     }

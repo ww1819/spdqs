@@ -2,7 +2,8 @@ package com.qs.controller;
 
 import com.qs.entity.User;
 import com.qs.enums.MenuCode;
-import com.qs.service.ArchiveService;
+import com.qs.service.DeliveryService;
+import com.qs.service.PartnerService;
 import com.qs.service.PermissionService;
 import com.qs.service.UserService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,13 +25,15 @@ public class UserController {
 
     private final UserService userService;
     private final PermissionService permissionService;
-    private final ArchiveService archiveService;
+    private final DeliveryService deliveryService;
+    private final PartnerService partnerService;
 
     public UserController(UserService userService, PermissionService permissionService,
-                          ArchiveService archiveService) {
+                          DeliveryService deliveryService, PartnerService partnerService) {
         this.userService = userService;
         this.permissionService = permissionService;
-        this.archiveService = archiveService;
+        this.deliveryService = deliveryService;
+        this.partnerService = partnerService;
     }
 
     @GetMapping
@@ -46,6 +49,7 @@ public class UserController {
                            @AuthenticationPrincipal UserDetails userDetails) {
         addUserToModel(model, userDetails);
         model.addAttribute("user", userService.getById(id));
+        model.addAttribute("partners", partnerService.listAll());
         model.addAttribute("activeTab", "users");
         return "user/form";
     }
@@ -58,8 +62,8 @@ public class UserController {
         model.addAttribute("user", user);
         model.addAttribute("allMenus", MenuCode.allMenus());
         model.addAttribute("selectedMenus", permissionService.getMenuCodes(user.getId()));
-        model.addAttribute("archives", archiveService.listOptions());
-        model.addAttribute("selectedArchives", permissionService.getAssignedArchiveIds(user.getId()));
+        model.addAttribute("deliveries", deliveryService.listOptions());
+        model.addAttribute("selectedDeliveries", permissionService.getAssignedDeliveryIds(user.getId()));
         model.addAttribute("activeTab", "users");
         return "user/permissions";
     }
@@ -67,10 +71,10 @@ public class UserController {
     @PostMapping("/{id}/permissions")
     public String savePermissions(@PathVariable String id,
                                   @RequestParam(required = false) List<String> menus,
-                                  @RequestParam(required = false) List<String> archives,
+                                  @RequestParam(required = false) List<String> deliveries,
                                   RedirectAttributes redirectAttributes) {
         try {
-            permissionService.savePermissions(id, menus, archives);
+            permissionService.savePermissions(id, menus, deliveries);
             redirectAttributes.addFlashAttribute("success", "权限已保存");
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());
@@ -84,10 +88,11 @@ public class UserController {
                        @RequestParam String displayName,
                        @RequestParam(defaultValue = "false") boolean enabled,
                        @RequestParam(required = false) String newPassword,
+                       @RequestParam(required = false) String partnerId,
                        @AuthenticationPrincipal UserDetails userDetails,
                        RedirectAttributes redirectAttributes) {
         try {
-            userService.updateUser(id, displayName, enabled, newPassword, userDetails.getUsername());
+            userService.updateUser(id, displayName, enabled, newPassword, partnerId, userDetails.getUsername());
             redirectAttributes.addFlashAttribute("success", "账号信息已保存");
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("error", ex.getMessage());

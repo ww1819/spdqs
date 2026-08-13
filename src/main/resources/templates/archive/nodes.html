@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/app-head :: head(${view.projectName + ' - 项目节点'})}"></head>
+<head th:replace="~{fragments/app-head :: head(${view.displayName + ' - 项目节点'})}"></head>
 <body class="app-page">
 <div class="app-shell">
     <div th:replace="~{fragments/app-nav :: sidebar}"></div>
@@ -10,7 +10,7 @@
                 <div>
                     <h1 class="mb-1">项目节点</h1>
                     <p class="header-desc mb-0">
-                        <span th:text="${view.projectName}">项目</span>
+                        <span th:text="${view.displayName}">项目</span>
                         · 管理项目阶段时间轴，阶段名称可自定义维护
                     </p>
                 </div>

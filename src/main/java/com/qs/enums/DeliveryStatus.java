@@ -1,6 +1,6 @@
 package com.qs.enums;
 
-public enum ArchiveStatus {
+public enum DeliveryStatus {
     LAUNCHING("上线中"),
     MAINTAINING("维保中"),
     EXPIRING_SOON("维保到期在三个月内"),
@@ -8,7 +8,7 @@ public enum ArchiveStatus {
 
     private final String label;
 
-    ArchiveStatus(String label) {
+    DeliveryStatus(String label) {
         this.label = label;
     }
 
@@ -16,8 +16,8 @@ public enum ArchiveStatus {
         return label;
     }
 
-    public static ArchiveStatus fromLabel(String label) {
-        for (ArchiveStatus status : values()) {
+    public static DeliveryStatus fromLabel(String label) {
+        for (DeliveryStatus status : values()) {
             if (status.label.equals(label)) {
                 return status;
             }

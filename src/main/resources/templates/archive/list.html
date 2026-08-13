@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/app-head :: head('档案管理 - 档案工单系统')}"></head>
+<head th:replace="~{fragments/app-head :: head('产品交付 - 档案工单系统')}"></head>
 <body class="app-page">
 <div class="app-shell">
     <div th:replace="~{fragments/app-nav :: sidebar}"></div>
     <main class="app-main">
         <header class="app-header">
-            <h1>档案列表</h1>
-            <p class="header-desc">管理项目档案与维保信息</p>
+            <h1>产品交付列表</h1>
+            <p class="header-desc">按使用单位折叠；行粒度为产品 × 模块</p>
         </header>
         <div class="app-content">
             <div th:replace="~{fragments/page-header :: alerts}"></div>
@@ -15,8 +15,8 @@
             <div class="panel">
                 <div class="toolbar">
                     <form method="get" action="/archives" class="toolbar-filters m-0">
-                        <input type="text" name="keyword" class="form-control form-control-sm" style="width: 180px;"
-                               placeholder="搜索项目/负责人" th:value="${keyword}">
+                        <input type="text" name="keyword" class="form-control form-control-sm" style="width: 220px;"
+                               placeholder="搜索医院/产品/模块/负责人" th:value="${keyword}">
                         <select name="status" class="form-select form-select-sm" style="width: auto;">
                             <option value="">全部状态</option>
                             <option th:each="s : ${statuses}" th:value="${s.label}" th:text="${s.label}"
@@ -25,60 +25,84 @@
                         <button type="submit" class="btn btn-outline-secondary btn-sm">筛选</button>
                         <a href="/archives" class="btn btn-link btn-sm">重置</a>
                     </form>
-                    <a href="/archives/new" class="btn btn-primary btn-sm">+ 新建档案</a>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnExpandAll">全部展开</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnCollapseAll">全部折叠</button>
+                        <a href="/archives/new" class="btn btn-primary btn-sm">+ 新建交付</a>
+                    </div>
                 </div>
                 <div class="panel-body">
-                    <div th:if="${#lists.isEmpty(archives)}" class="table-empty">
-                        <p class="mb-2">暂无档案数据</p>
-                        <a href="/archives/new" class="btn btn-outline-primary btn-sm">创建第一条档案</a>
+                    <div th:if="${#lists.isEmpty(deliveryGroups)}" class="table-empty">
+                        <p class="mb-2">暂无产品交付数据</p>
+                        <a href="/archives/new" class="btn btn-outline-primary btn-sm">创建第一条交付</a>
                     </div>
-                    <table class="data-table" th:unless="${#lists.isEmpty(archives)}">
-                        <thead>
-                        <tr>
-                            <th>项目名称</th>
-                            <th>项目类型</th>
-                            <th>上线时间</th>
-                            <th>维保到期</th>
-                            <th>状态</th>
-                            <th>现场负责人</th>
-                            <th>实施负责人</th>
-                            <th>操作</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr th:each="item : ${archives}">
-                            <td>
-                                <a th:href="@{/archives/{id}(id=${item.id})}" class="link-tech fw-semibold"
-                                   th:text="${item.projectName}">项目</a>
-                            </td>
-                            <td th:text="${item.projectType ?: '—'}">—</td>
-                            <td th:text="${item.launchDate != null ? #temporals.format(item.launchDate, 'yyyy-MM-dd') : '—'}">—</td>
-                            <td th:text="${item.maintExpireDate != null ? #temporals.format(item.maintExpireDate, 'yyyy-MM-dd') : '—'}">—</td>
-                            <td>
-                                <span class="tag tag-info" th:if="${item.statusLabel == '上线中'}" th:text="${item.statusLabel}">状态</span>
-                                <span class="tag tag-success" th:if="${item.statusLabel == '维保中'}" th:text="${item.statusLabel}">状态</span>
-                                <span class="tag tag-warning" th:if="${item.statusLabel == '维保到期在三个月内'}" th:text="${item.statusLabel}">状态</span>
-                                <span class="tag tag-danger" th:if="${item.statusLabel == '维保到期'}" th:text="${item.statusLabel}">状态</span>
-                            </td>
-                            <td th:text="${item.onsiteManager ?: '—'}">—</td>
-                            <td th:text="${item.implManager ?: '—'}">—</td>
-                            <td class="cell-actions">
-                                <a th:href="@{/archives/{id}(id=${item.id})}">详情</a>
-                                <a th:href="@{/archives/{id}/nodes(id=${item.id})}">节点</a>
-                                <a th:href="@{/archives/{id}/edit(id=${item.id})}">编辑</a>
-                                <form th:action="@{/archives/{id}/delete(id=${item.id})}" method="post" class="d-inline"
-                                      onsubmit="return confirm('确定删除该档案？')">
-                                    <button type="submit" class="btn btn-link btn-sm text-danger p-0 border-0">删除</button>
-                                </form>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
+
+                    <div th:unless="${#lists.isEmpty(deliveryGroups)}" class="delivery-groups">
+                        <details class="delivery-group" open th:each="group, gStat : ${deliveryGroups}">
+                            <summary class="delivery-group-summary">
+                                <span class="fw-semibold" th:text="${group.customerName}">医院</span>
+                                <span class="tag tag-default ms-2" th:text="${group.count} + ' 条交付'">0</span>
+                            </summary>
+                            <div class="table-responsive mt-2">
+                                <table class="data-table mb-0">
+                                    <thead>
+                                    <tr>
+                                        <th>产品</th>
+                                        <th>模块/批次</th>
+                                        <th>上线时间</th>
+                                        <th>维保到期</th>
+                                        <th>状态</th>
+                                        <th>现场负责人</th>
+                                        <th>操作</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr th:each="item : ${group.deliveries}">
+                                        <td th:text="${item.productName ?: '—'}">—</td>
+                                        <td>
+                                            <a th:href="@{/archives/{id}(id=${item.id})}" class="link-tech fw-semibold"
+                                               th:text="${item.deliveryName ?: '—'}">模块</a>
+                                        </td>
+                                        <td th:text="${item.launchDate != null ? #temporals.format(item.launchDate, 'yyyy-MM-dd') : '—'}">—</td>
+                                        <td th:text="${item.maintExpireDate != null ? #temporals.format(item.maintExpireDate, 'yyyy-MM-dd') : '—'}">—</td>
+                                        <td>
+                                            <span class="tag tag-info" th:if="${item.statusLabel == '上线中'}" th:text="${item.statusLabel}">状态</span>
+                                            <span class="tag tag-success" th:if="${item.statusLabel == '维保中'}" th:text="${item.statusLabel}">状态</span>
+                                            <span class="tag tag-warning" th:if="${item.statusLabel == '维保到期在三个月内'}" th:text="${item.statusLabel}">状态</span>
+                                            <span class="tag tag-danger" th:if="${item.statusLabel == '维保到期'}" th:text="${item.statusLabel}">状态</span>
+                                        </td>
+                                        <td th:text="${item.onsiteManager ?: '—'}">—</td>
+                                        <td class="cell-actions">
+                                            <a th:href="@{/archives/{id}(id=${item.id})}">详情</a>
+                                            <a th:href="@{/archives/{id}/nodes(id=${item.id})}">节点</a>
+                                            <a th:href="@{/archives/{id}/edit(id=${item.id})}">编辑</a>
+                                            <form th:action="@{/archives/{id}/delete(id=${item.id})}" method="post" class="d-inline"
+                                                  onsubmit="return confirm('确定删除该产品交付？')">
+                                                <button type="submit" class="btn btn-link btn-sm text-danger p-0 border-0">删除</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </details>
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 </div>
 <script src="/js/bootstrap.bundle.min.js"></script>
+<script>
+(function () {
+    const groups = () => document.querySelectorAll('.delivery-group');
+    document.getElementById('btnExpandAll')?.addEventListener('click', () => {
+        groups().forEach(el => { el.open = true; });
+    });
+    document.getElementById('btnCollapseAll')?.addEventListener('click', () => {
+        groups().forEach(el => { el.open = false; });
+    });
+})();
+</script>
 </body>
 </html>

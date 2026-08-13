@@ -1,13 +1,13 @@
 ﻿<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/app-head :: head('工单管理 - 档案工单系统')}"></head>
+<head th:replace="~{fragments/app-head :: head('宸ュ崟绠＄悊 - 妗ｆ宸ュ崟绯荤粺')}"></head>
 <body class="app-page">
 <div class="app-shell">
     <div th:replace="~{fragments/app-nav :: sidebar}"></div>
     <main class="app-main">
         <header class="app-header">
-            <h1>工单列表</h1>
-            <p class="header-desc">提交与跟踪项目工单</p>
+            <h1>宸ュ崟鍒楄〃</h1>
+            <p class="header-desc">鎻愪氦涓庤窡韪」鐩伐鍗?/p>
         </header>
         <div class="app-content">
             <div th:replace="~{fragments/page-header :: alerts}"></div>
@@ -19,18 +19,18 @@
                             <button class="btn btn-outline-secondary btn-sm dropdown-toggle status-filter-btn"
                                     type="button" id="statusFilterBtn" data-bs-toggle="dropdown"
                                     data-bs-auto-close="outside" aria-expanded="false">
-                                <span id="statusFilterLabel">全部状态</span>
+                                <span id="statusFilterLabel">鍏ㄩ儴鐘舵€?/span>
                             </button>
                             <div class="dropdown-menu status-filter-menu p-2" aria-labelledby="statusFilterBtn">
                                 <label class="status-filter-item">
-                                    <input type="checkbox" class="form-check-input status-option" value="进行中"
-                                           th:checked="${statusFilters != null and #lists.contains(statusFilters, '进行中')}">
-                                    <span>进行中</span>
+                                    <input type="checkbox" class="form-check-input status-option" value="杩涜涓?
+                                           th:checked="${statusFilters != null and #lists.contains(statusFilters, '杩涜涓?)}">
+                                    <span>杩涜涓?/span>
                                 </label>
                                 <label class="status-filter-item" th:each="s : ${ticketStatuses}">
                                     <input type="checkbox" class="form-check-input status-option" th:value="${s.label}"
                                            th:checked="${statusFilters != null and #lists.contains(statusFilters, s.label)}">
-                                    <span th:text="${s.label}">状态</span>
+                                    <span th:text="${s.label}">鐘舵€?/span>
                                 </label>
                             </div>
                         </div>
@@ -38,15 +38,15 @@
 
                         <div class="dropdown">
                             <button class="btn btn-outline-secondary btn-sm dropdown-toggle status-filter-btn"
-                                    type="button" id="archiveFilterBtn" data-bs-toggle="dropdown"
+                                    type="button" id="deliveryFilterBtn" data-bs-toggle="dropdown"
                                     data-bs-auto-close="outside" aria-expanded="false" style="min-width: 130px;">
-                                <span id="archiveFilterLabel">全部项目</span>
+                                <span id="deliveryFilterLabel">鍏ㄩ儴椤圭洰</span>
                             </button>
-                            <div class="dropdown-menu status-filter-menu p-2" aria-labelledby="archiveFilterBtn">
-                                <label class="status-filter-item" th:each="opt : ${archiveOptions}">
-                                    <input type="checkbox" class="form-check-input archive-option" th:value="${opt.id}"
-                                           th:checked="${archiveIdFilters != null and #lists.contains(archiveIdFilters, opt.id)}">
-                                    <span th:text="${opt.projectName}">项目</span>
+                            <div class="dropdown-menu status-filter-menu p-2" aria-labelledby="deliveryFilterBtn">
+                                <label class="status-filter-item" th:each="opt : ${deliveryOptions}">
+                                    <input type="checkbox" class="form-check-input delivery-option" th:value="${opt.id}"
+                                           th:checked="${deliveryIdFilters != null and #lists.contains(deliveryIdFilters, opt.id)}">
+                                    <span th:text="${opt.displayName}">椤圭洰</span>
                                 </label>
                             </div>
                         </div>
@@ -56,13 +56,13 @@
                             <button class="btn btn-outline-secondary btn-sm dropdown-toggle status-filter-btn"
                                     type="button" id="systemFilterBtn" data-bs-toggle="dropdown"
                                     data-bs-auto-close="outside" aria-expanded="false" style="min-width: 130px;">
-                                <span id="systemFilterLabel">全部系统</span>
+                                <span id="systemFilterLabel">鍏ㄩ儴绯荤粺</span>
                             </button>
                             <div class="dropdown-menu status-filter-menu p-2" aria-labelledby="systemFilterBtn">
                                 <label class="status-filter-item" th:each="sys : ${systemOptions}">
                                     <input type="checkbox" class="form-check-input system-option" th:value="${sys.id}"
                                            th:checked="${systemIdFilters != null and #lists.contains(systemIdFilters, sys.id)}">
-                                    <span th:text="${sys.name}">系统</span>
+                                    <span th:text="${sys.name}">绯荤粺</span>
                                 </label>
                             </div>
                         </div>
@@ -72,171 +72,171 @@
                             <button class="btn btn-outline-secondary btn-sm dropdown-toggle status-filter-btn"
                                     type="button" id="menuFilterBtn" data-bs-toggle="dropdown"
                                     data-bs-auto-close="outside" aria-expanded="false" style="min-width: 140px;">
-                                <span id="menuFilterLabel">全部功能菜单</span>
+                                <span id="menuFilterLabel">鍏ㄩ儴鍔熻兘鑿滃崟</span>
                             </button>
                             <div class="dropdown-menu status-filter-menu p-2" aria-labelledby="menuFilterBtn"
                                  id="menuFilterMenu">
                                 <div id="menuFilterEmpty" class="px-2 py-1 text-muted small"
-                                     th:if="${menuOptions == null or #lists.isEmpty(menuOptions)}">请先选择系统</div>
+                                     th:if="${menuOptions == null or #lists.isEmpty(menuOptions)}">璇峰厛閫夋嫨绯荤粺</div>
                                 <label class="status-filter-item menu-option-item" th:each="m : ${menuOptions}">
                                     <input type="checkbox" class="form-check-input menu-option" th:value="${m}"
                                            th:checked="${menuFilters != null and #lists.contains(menuFilters, m)}">
-                                    <span th:text="${m}">菜单</span>
+                                    <span th:text="${m}">鑿滃崟</span>
                                 </label>
                             </div>
                         </div>
                         <div id="menuHiddenInputs"></div>
 
                         <input type="text" name="handler" class="form-control form-control-sm" style="width: 100px;"
-                               placeholder="处理人" th:value="${handlerFilter}">
+                               placeholder="澶勭悊浜? th:value="${handlerFilter}">
                         <input type="text" name="submitter" class="form-control form-control-sm" style="width: 100px;"
-                               placeholder="提交人" th:value="${submitterFilter}">
+                               placeholder="鎻愪氦浜? th:value="${submitterFilter}">
                         <input type="text" name="keyword" class="form-control form-control-sm" style="width: 140px;"
-                               placeholder="关键词" th:value="${keyword}">
-                        <button type="submit" class="btn btn-outline-secondary btn-sm">筛选</button>
-                        <a href="/tickets" class="btn btn-link btn-sm">重置</a>
+                               placeholder="鍏抽敭璇? th:value="${keyword}">
+                        <button type="submit" class="btn btn-outline-secondary btn-sm">绛涢€?/button>
+                        <a href="/tickets" class="btn btn-link btn-sm">閲嶇疆</a>
                     </form>
-                    <a href="/tickets/new" class="btn btn-primary btn-sm">+ 新建工单</a>
+                    <a href="/tickets/new" class="btn btn-primary btn-sm">+ 鏂板缓宸ュ崟</a>
                 </div>
                 <div class="panel-body">
                     <div th:if="${#lists.isEmpty(tickets)}" class="table-empty">
-                        <p class="mb-2">暂无符合条件的工单</p>
-                        <a href="/tickets/new" class="btn btn-outline-primary btn-sm">创建工单</a>
+                        <p class="mb-2">鏆傛棤绗﹀悎鏉′欢鐨勫伐鍗?/p>
+                        <a href="/tickets/new" class="btn btn-outline-primary btn-sm">鍒涘缓宸ュ崟</a>
                     </div>
                     <div class="data-table-scroll" th:unless="${#lists.isEmpty(tickets)}">
                     <table class="data-table data-table-wide">
                         <thead>
                         <tr>
-                            <th>项目</th>
-                            <th>工单类型</th>
-                            <th>状态</th>
-                            <th>工单内容</th>
-                            <th>处理人</th>
-                            <th>提交人</th>
-                            <th>目标完成</th>
-                            <th>预计完成</th>
-                            <th>注意事项</th>
-                            <th>提交时间</th>
-                            <th>详情</th>
-                            <th>编辑</th>
-                            <th>已处理</th>
-                            <th>已完成</th>
-                            <th>待反馈</th>
-                            <th>打印</th>
-                            <th>导出Word</th>
-                            <th>方案确认报告</th>
-                            <th>完成确认报告</th>
-                            <th>删除</th>
+                            <th>椤圭洰</th>
+                            <th>宸ュ崟绫诲瀷</th>
+                            <th>鐘舵€?/th>
+                            <th>宸ュ崟鍐呭</th>
+                            <th>澶勭悊浜?/th>
+                            <th>鎻愪氦浜?/th>
+                            <th>鐩爣瀹屾垚</th>
+                            <th>棰勮瀹屾垚</th>
+                            <th>娉ㄦ剰浜嬮」</th>
+                            <th>鎻愪氦鏃堕棿</th>
+                            <th>璇︽儏</th>
+                            <th>缂栬緫</th>
+                            <th>宸插鐞?/th>
+                            <th>宸插畬鎴?/th>
+                            <th>寰呭弽棣?/th>
+                            <th>鎵撳嵃</th>
+                            <th>瀵煎嚭Word</th>
+                            <th>鏂规纭鎶ュ憡</th>
+                            <th>瀹屾垚纭鎶ュ憡</th>
+                            <th>鍒犻櫎</th>
                         </tr>
                         </thead>
                         <tbody>
                         <tr th:each="item : ${tickets}"
-                            th:classappend="${item.isTargetDueToday()} ? 'row-target-today' : (${item.status != '已完成' and item.expectedCompleteDate != null and item.expectedCompleteDate.isBefore(T(java.time.LocalDate).now())} ? 'row-warning' : '')">
+                            th:classappend="${item.isTargetDueToday()} ? 'row-target-today' : (${item.status != '宸插畬鎴? and item.expectedCompleteDate != null and item.expectedCompleteDate.isBefore(T(java.time.LocalDate).now())} ? 'row-warning' : '')">
                             <td>
                                 <a th:href="@{/tickets/{id}(id=${item.id})}" class="link-tech fw-semibold"
-                                   th:text="${item.archive.projectName}">项目</a>
+                                   th:text="${item.delivery.deliveryName}">椤圭洰</a>
                             </td>
-                            <td th:text="${item.orderType}">类型</td>
+                            <td th:text="${item.orderType}">绫诲瀷</td>
                             <td>
-                                <span class="tag tag-default" th:if="${item.status == '已提交'}" th:text="${item.status}">状态</span>
-                                <span class="tag tag-info" th:if="${item.status == '沟通中'}" th:text="${item.status}">状态</span>
-                                <span class="tag tag-warning" th:if="${item.status == '处理中'}" th:text="${item.status}">状态</span>
-                                <span class="tag tag-primary" th:if="${item.status == '已处理'}" th:text="${item.status}">状态</span>
-                                <span class="tag tag-warning" th:if="${item.status == '待反馈调整'}" th:text="${item.status}">状态</span>
-                                <span class="tag tag-danger" th:if="${item.status == '待升级'}" th:text="${item.status}">状态</span>
-                                <span class="tag tag-success" th:if="${item.status == '已完成'}" th:text="${item.status}">状态</span>
+                                <span class="tag tag-default" th:if="${item.status == '宸叉彁浜?}" th:text="${item.status}">鐘舵€?/span>
+                                <span class="tag tag-info" th:if="${item.status == '娌熼€氫腑'}" th:text="${item.status}">鐘舵€?/span>
+                                <span class="tag tag-warning" th:if="${item.status == '澶勭悊涓?}" th:text="${item.status}">鐘舵€?/span>
+                                <span class="tag tag-primary" th:if="${item.status == '宸插鐞?}" th:text="${item.status}">鐘舵€?/span>
+                                <span class="tag tag-warning" th:if="${item.status == '寰呭弽棣堣皟鏁?}" th:text="${item.status}">鐘舵€?/span>
+                                <span class="tag tag-danger" th:if="${item.status == '寰呭崌绾?}" th:text="${item.status}">鐘舵€?/span>
+                                <span class="tag tag-success" th:if="${item.status == '宸插畬鎴?}" th:text="${item.status}">鐘舵€?/span>
                             </td>
-                            <td class="cell-clamp" th:text="${item.content ?: '—'}">—</td>
-                            <td th:text="${item.handler ?: '—'}">—</td>
-                            <td th:text="${item.submitter ?: '—'}">—</td>
+                            <td class="cell-clamp" th:text="${item.content ?: '鈥?}">鈥?/td>
+                            <td th:text="${item.handler ?: '鈥?}">鈥?/td>
+                            <td th:text="${item.submitter ?: '鈥?}">鈥?/td>
                             <td>
                                 <span th:if="${item.targetCompleteDate != null}"
                                       th:classappend="${item.isTargetDueToday()} ? 'text-danger fw-semibold' : ''"
-                                      th:text="${#temporals.format(item.targetCompleteDate, 'yyyy-MM-dd')}">—</span>
-                                <span th:if="${item.targetCompleteDate == null}">—</span>
+                                      th:text="${#temporals.format(item.targetCompleteDate, 'yyyy-MM-dd')}">鈥?/span>
+                                <span th:if="${item.targetCompleteDate == null}">鈥?/span>
                             </td>
-                            <td th:text="${item.expectedCompleteDate != null ? #temporals.format(item.expectedCompleteDate, 'yyyy-MM-dd') : '—'}">—</td>
-                            <td class="cell-clamp" th:text="${item.attentionNote ?: '—'}">—</td>
-                            <td th:text="${#temporals.format(item.createTime, 'yyyy-MM-dd HH:mm')}">—</td>
+                            <td th:text="${item.expectedCompleteDate != null ? #temporals.format(item.expectedCompleteDate, 'yyyy-MM-dd') : '鈥?}">鈥?/td>
+                            <td class="cell-clamp" th:text="${item.attentionNote ?: '鈥?}">鈥?/td>
+                            <td th:text="${#temporals.format(item.createTime, 'yyyy-MM-dd HH:mm')}">鈥?/td>
                             <td class="cell-op">
-                                <a th:href="@{/tickets/{id}(id=${item.id})}">详情</a>
+                                <a th:href="@{/tickets/{id}(id=${item.id})}">璇︽儏</a>
                             </td>
                             <td class="cell-op">
-                                <a th:href="@{/tickets/{id}/edit(id=${item.id})}">编辑</a>
+                                <a th:href="@{/tickets/{id}/edit(id=${item.id})}">缂栬緫</a>
                             </td>
                             <td class="cell-op">
                                 <button type="button" class="btn btn-link btn-sm p-0 border-0"
-                                        th:if="${item.status != '已完成' and item.status != '已处理'}"
-                                        th:attr="data-ticket-id=${item.id}, data-project=${item.archive.projectName}"
-                                        onclick="openHandledModal(this)">已处理</button>
-                                <span th:unless="${item.status != '已完成' and item.status != '已处理'}" class="text-muted">—</span>
+                                        th:if="${item.status != '宸插畬鎴? and item.status != '宸插鐞?}"
+                                        th:attr="data-ticket-id=${item.id}, data-project=${item.delivery.deliveryName}"
+                                        onclick="openHandledModal(this)">宸插鐞?/button>
+                                <span th:unless="${item.status != '宸插畬鎴? and item.status != '宸插鐞?}" class="text-muted">鈥?/span>
                             </td>
                             <td class="cell-op">
                                 <button type="button" class="btn btn-link btn-sm p-0 border-0 text-success"
-                                        th:if="${item.status == '已处理'}"
-                                        th:attr="data-ticket-id=${item.id}, data-project=${item.archive.projectName}"
-                                        onclick="openCompleteModal(this)">已完成</button>
-                                <span th:unless="${item.status == '已处理'}" class="text-muted">—</span>
+                                        th:if="${item.status == '宸插鐞?}"
+                                        th:attr="data-ticket-id=${item.id}, data-project=${item.delivery.deliveryName}"
+                                        onclick="openCompleteModal(this)">宸插畬鎴?/button>
+                                <span th:unless="${item.status == '宸插鐞?}" class="text-muted">鈥?/span>
                             </td>
                             <td class="cell-op">
                                 <button type="button" class="btn btn-link btn-sm p-0 border-0 text-warning"
-                                        th:if="${item.status == '已处理'}"
-                                        th:attr="data-ticket-id=${item.id}, data-project=${item.archive.projectName}"
-                                        onclick="openNeedFeedbackModal(this)">待反馈调整</button>
-                                <span th:unless="${item.status == '已处理'}" class="text-muted">—</span>
+                                        th:if="${item.status == '宸插鐞?}"
+                                        th:attr="data-ticket-id=${item.id}, data-project=${item.delivery.deliveryName}"
+                                        onclick="openNeedFeedbackModal(this)">寰呭弽棣堣皟鏁?/button>
+                                <span th:unless="${item.status == '宸插鐞?}" class="text-muted">鈥?/span>
                             </td>
                             <td class="cell-op">
-                                <a th:href="@{/tickets/{id}/confirmation-print(id=${item.id})}" target="_blank" rel="noopener">打印</a>
+                                <a th:href="@{/tickets/{id}/confirmation-print(id=${item.id})}" target="_blank" rel="noopener">鎵撳嵃</a>
                             </td>
                             <td class="cell-op">
-                                <a th:href="@{/tickets/{id}/confirmation-export(id=${item.id})}">导出Word</a>
+                                <a th:href="@{/tickets/{id}/confirmation-export(id=${item.id})}">瀵煎嚭Word</a>
                             </td>
                             <td class="cell-op">
                                 <button type="button" class="btn btn-link btn-sm p-0 border-0"
-                                        th:attr="data-ticket-id=${item.id}, data-project=${item.archive.projectName}"
-                                        onclick="openPlanConfirmUpload(this)">上传</button>
+                                        th:attr="data-ticket-id=${item.id}, data-project=${item.delivery.deliveryName}"
+                                        onclick="openPlanConfirmUpload(this)">涓婁紶</button>
                                 <button type="button" class="btn btn-link btn-sm p-0 border-0 ms-1"
-                                        th:attr="data-ticket-id=${item.id}, data-project=${item.archive.projectName}"
-                                        onclick="openReportListModal(this, 'plan')">列表</button>
+                                        th:attr="data-ticket-id=${item.id}, data-project=${item.delivery.deliveryName}"
+                                        onclick="openReportListModal(this, 'plan')">鍒楄〃</button>
                                 <button type="button" class="tag tag-info ms-1 border-0"
                                         th:if="${planConfirmTicketIds != null and planConfirmTicketIds.contains(item.id)
                                       and (lockedPlanConfirmTicketIds == null or !lockedPlanConfirmTicketIds.contains(item.id))}"
-                                        th:attr="data-ticket-id=${item.id}, data-project=${item.archive.projectName}"
+                                        th:attr="data-ticket-id=${item.id}, data-project=${item.delivery.deliveryName}"
                                         onclick="openReportListModal(this, 'plan')"
-                                        title="查看已上传的方案确认报告">已上传</button>
+                                        title="鏌ョ湅宸蹭笂浼犵殑鏂规纭鎶ュ憡">宸蹭笂浼?/button>
                                 <button type="button" class="tag tag-primary ms-1 border-0"
                                         th:if="${lockedPlanConfirmTicketIds != null and lockedPlanConfirmTicketIds.contains(item.id)}"
-                                        th:attr="data-ticket-id=${item.id}, data-project=${item.archive.projectName}"
+                                        th:attr="data-ticket-id=${item.id}, data-project=${item.delivery.deliveryName}"
                                         onclick="openReportListModal(this, 'plan')"
-                                        title="方案确认报告已确认存档">已存档</button>
+                                        title="鏂规纭鎶ュ憡宸茬‘璁ゅ瓨妗?>宸插瓨妗?/button>
                             </td>
                             <td class="cell-op">
                                 <button type="button" class="btn btn-link btn-sm p-0 border-0"
-                                        th:attr="data-ticket-id=${item.id}, data-project=${item.archive.projectName}"
-                                        onclick="openConfirmUpload(this)">上传</button>
+                                        th:attr="data-ticket-id=${item.id}, data-project=${item.delivery.deliveryName}"
+                                        onclick="openConfirmUpload(this)">涓婁紶</button>
                                 <button type="button" class="btn btn-link btn-sm p-0 border-0 ms-1"
-                                        th:attr="data-ticket-id=${item.id}, data-project=${item.archive.projectName}"
-                                        onclick="openReportListModal(this, 'confirm')">列表</button>
+                                        th:attr="data-ticket-id=${item.id}, data-project=${item.delivery.deliveryName}"
+                                        onclick="openReportListModal(this, 'confirm')">鍒楄〃</button>
                                 <button type="button" class="tag tag-warning ms-1 border-0"
                                         th:if="${confirmTicketIds != null and confirmTicketIds.contains(item.id)
                                       and (lockedConfirmTicketIds == null or !lockedConfirmTicketIds.contains(item.id))}"
-                                        th:attr="data-ticket-id=${item.id}, data-project=${item.archive.projectName}"
+                                        th:attr="data-ticket-id=${item.id}, data-project=${item.delivery.deliveryName}"
                                         onclick="openReportListModal(this, 'confirm')"
-                                        title="查看已上传的完成确认报告">已上传</button>
+                                        title="鏌ョ湅宸蹭笂浼犵殑瀹屾垚纭鎶ュ憡">宸蹭笂浼?/button>
                                 <button type="button" class="tag tag-success ms-1 border-0"
                                         th:if="${lockedConfirmTicketIds != null and lockedConfirmTicketIds.contains(item.id)}"
-                                        th:attr="data-ticket-id=${item.id}, data-project=${item.archive.projectName}"
+                                        th:attr="data-ticket-id=${item.id}, data-project=${item.delivery.deliveryName}"
                                         onclick="openReportListModal(this, 'confirm')"
-                                        title="完成确认报告已确认存档">已存档</button>
+                                        title="瀹屾垚纭鎶ュ憡宸茬‘璁ゅ瓨妗?>宸插瓨妗?/button>
                             </td>
                             <td class="cell-op">
                                 <form th:if="${deletableTicketIds != null and deletableTicketIds.contains(item.id)}"
                                       th:action="@{/tickets/{id}/delete(id=${item.id})}" method="post" class="d-inline"
-                                      onsubmit="return confirm('确定删除该工单？')">
-                                    <button type="submit" class="btn btn-link btn-sm text-danger p-0 border-0">删除</button>
+                                      onsubmit="return confirm('纭畾鍒犻櫎璇ュ伐鍗曪紵')">
+                                    <button type="submit" class="btn btn-link btn-sm text-danger p-0 border-0">鍒犻櫎</button>
                                 </form>
                                 <span th:if="${deletableTicketIds == null or !deletableTicketIds.contains(item.id)}"
-                                      class="text-muted small" title="该工单含处理记录或确认资料，暂不支持删除">—</span>
+                                      class="text-muted small" title="璇ュ伐鍗曞惈澶勭悊璁板綍鎴栫‘璁よ祫鏂欙紝鏆備笉鏀寔鍒犻櫎">鈥?/span>
                             </td>
                         </tr>
                         </tbody>
@@ -248,143 +248,143 @@
     </main>
 </div>
 <script src="/js/bootstrap.bundle.min.js"></script>
-<!-- 已处理 -->
+<!-- 宸插鐞?-->
 <div class="modal fade" id="handledModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <form class="modal-content" id="handledForm" method="post">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
             <div class="modal-header py-2">
-                <h5 class="modal-title fs-6">记录已处理</h5>
+                <h5 class="modal-title fs-6">璁板綍宸插鐞?/h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p class="small text-muted mb-2" id="handledProject">—</p>
+                <p class="small text-muted mb-2" id="handledProject">鈥?/p>
                 <input type="hidden" name="returnTo" value="list">
                 <div class="mb-2">
-                    <label class="form-label small mb-1">处理方式</label>
+                    <label class="form-label small mb-1">澶勭悊鏂瑰紡</label>
                     <select name="handleMethod" class="form-select form-select-sm" required>
-                        <option value="">请选择</option>
-                        <option value="代码修复">代码修复</option>
-                        <option value="配置调整">配置调整</option>
-                        <option value="数据修正">数据修正</option>
-                        <option value="说明答复">说明答复</option>
-                        <option value="其他">其他</option>
+                        <option value="">璇烽€夋嫨</option>
+                        <option value="浠ｇ爜淇">浠ｇ爜淇</option>
+                        <option value="閰嶇疆璋冩暣">閰嶇疆璋冩暣</option>
+                        <option value="鏁版嵁淇">鏁版嵁淇</option>
+                        <option value="璇存槑绛斿">璇存槑绛斿</option>
+                        <option value="鍏朵粬">鍏朵粬</option>
                     </select>
                 </div>
                 <div>
-                    <label class="form-label small mb-1">处理说明</label>
+                    <label class="form-label small mb-1">澶勭悊璇存槑</label>
                     <textarea name="content" class="form-control form-control-sm" rows="4"
-                              placeholder="说明改了什么、验证方式、影响范围等" required></textarea>
+                              placeholder="璇存槑鏀逛簡浠€涔堛€侀獙璇佹柟寮忋€佸奖鍝嶈寖鍥寸瓑" required></textarea>
                 </div>
             </div>
             <div class="modal-footer py-2">
-                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">取消</button>
-                <button type="submit" class="btn btn-primary btn-sm">提交并标记已处理</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">鍙栨秷</button>
+                <button type="submit" class="btn btn-primary btn-sm">鎻愪氦骞舵爣璁板凡澶勭悊</button>
             </div>
         </form>
     </div>
 </div>
-<!-- 待反馈调整 -->
+<!-- 寰呭弽棣堣皟鏁?-->
 <div class="modal fade" id="needFeedbackModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <form class="modal-content" id="needFeedbackForm" method="post">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
             <div class="modal-header py-2">
-                <h5 class="modal-title fs-6">待反馈调整</h5>
+                <h5 class="modal-title fs-6">寰呭弽棣堣皟鏁?/h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p class="small text-muted mb-2" id="needFeedbackProject">—</p>
-                <p class="small mb-2">现场核对后与预期尚有偏差，请说明需调整点，便于开发继续处理（温和协作，非否定工作）。</p>
+                <p class="small text-muted mb-2" id="needFeedbackProject">鈥?/p>
+                <p class="small mb-2">鐜板満鏍稿鍚庝笌棰勬湡灏氭湁鍋忓樊锛岃璇存槑闇€璋冩暣鐐癸紝渚夸簬寮€鍙戠户缁鐞嗭紙娓╁拰鍗忎綔锛岄潪鍚﹀畾宸ヤ綔锛夈€?/p>
                 <input type="hidden" name="returnTo" value="list">
                 <textarea name="content" class="form-control form-control-sm" rows="4"
-                          placeholder="例如：列表已好，导出仍显示英文；希望与页面一致" required></textarea>
+                          placeholder="渚嬪锛氬垪琛ㄥ凡濂斤紝瀵煎嚭浠嶆樉绀鸿嫳鏂囷紱甯屾湜涓庨〉闈竴鑷? required></textarea>
             </div>
             <div class="modal-footer py-2">
-                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">取消</button>
-                <button type="submit" class="btn btn-warning btn-sm">提交反馈</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">鍙栨秷</button>
+                <button type="submit" class="btn btn-warning btn-sm">鎻愪氦鍙嶉</button>
             </div>
         </form>
     </div>
 </div>
-<!-- 已完成（可填核对说明） -->
+<!-- 宸插畬鎴愶紙鍙～鏍稿璇存槑锛?-->
 <div class="modal fade" id="completeModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <form class="modal-content" id="completeForm" method="post">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
             <div class="modal-header py-2">
-                <h5 class="modal-title fs-6">确认已完成</h5>
+                <h5 class="modal-title fs-6">纭宸插畬鎴?/h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p class="small text-muted mb-2" id="completeProject">—</p>
+                <p class="small text-muted mb-2" id="completeProject">鈥?/p>
                 <input type="hidden" name="returnTo" value="list">
                 <textarea name="content" class="form-control form-control-sm" rows="3"
-                          placeholder="可选：核对通过说明"></textarea>
+                          placeholder="鍙€夛細鏍稿閫氳繃璇存槑"></textarea>
             </div>
             <div class="modal-footer py-2">
-                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">取消</button>
-                <button type="submit" class="btn btn-success btn-sm">确认完成</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">鍙栨秷</button>
+                <button type="submit" class="btn btn-success btn-sm">纭瀹屾垚</button>
             </div>
         </form>
     </div>
 </div>
-<!-- 上传方案确认报告（事前） -->
+<!-- 涓婁紶鏂规纭鎶ュ憡锛堜簨鍓嶏級 -->
 <dialog class="ticket-dialog" id="planConfirmUploadDialog">
     <form class="ticket-dialog-panel" id="planConfirmUploadForm" method="post" enctype="multipart/form-data">
         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
         <div class="ticket-dialog-header">
-            <h5 class="ticket-dialog-title">上传方案确认报告</h5>
+            <h5 class="ticket-dialog-title">涓婁紶鏂规纭鎶ュ憡</h5>
             <button type="button" class="btn-close" data-close-dialog aria-label="Close"></button>
         </div>
         <div class="ticket-dialog-body">
-            <p class="small text-muted mb-2" id="planConfirmUploadProject">—</p>
-            <p class="small mb-3">请上传双方确认后的方案文件（PDF / 图片），便于留存与后续查阅。</p>
+            <p class="small text-muted mb-2" id="planConfirmUploadProject">鈥?/p>
+            <p class="small mb-3">璇蜂笂浼犲弻鏂圭‘璁ゅ悗鐨勬柟妗堟枃浠讹紙PDF / 鍥剧墖锛夛紝渚夸簬鐣欏瓨涓庡悗缁煡闃呫€?/p>
             <input type="hidden" name="returnTo" value="list">
             <input type="file" name="file" class="form-control form-control-sm" accept=".pdf,image/*" required>
         </div>
         <div class="ticket-dialog-footer">
-            <button type="button" class="btn btn-outline-secondary btn-sm" data-close-dialog>取消</button>
-            <button type="submit" class="btn btn-primary btn-sm">上传</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-close-dialog>鍙栨秷</button>
+            <button type="submit" class="btn btn-primary btn-sm">涓婁紶</button>
         </div>
     </form>
 </dialog>
-<!-- 上传完成确认报告 -->
+<!-- 涓婁紶瀹屾垚纭鎶ュ憡 -->
 <dialog class="ticket-dialog" id="confirmUploadDialog">
     <form class="ticket-dialog-panel" id="confirmUploadForm" method="post" enctype="multipart/form-data">
         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
         <div class="ticket-dialog-header">
-            <h5 class="ticket-dialog-title">上传完成确认报告</h5>
+            <h5 class="ticket-dialog-title">涓婁紶瀹屾垚纭鎶ュ憡</h5>
             <button type="button" class="btn-close" data-close-dialog aria-label="Close"></button>
         </div>
         <div class="ticket-dialog-body">
-            <p class="small text-muted mb-2" id="confirmUploadProject">—</p>
-            <p class="small mb-3">请上传完成后的确认文件（PDF / 图片），便于留存与后续查阅。</p>
+            <p class="small text-muted mb-2" id="confirmUploadProject">鈥?/p>
+            <p class="small mb-3">璇蜂笂浼犲畬鎴愬悗鐨勭‘璁ゆ枃浠讹紙PDF / 鍥剧墖锛夛紝渚夸簬鐣欏瓨涓庡悗缁煡闃呫€?/p>
             <input type="hidden" name="returnTo" value="list">
             <input type="file" name="file" class="form-control form-control-sm" accept=".pdf,image/*" required>
         </div>
         <div class="ticket-dialog-footer">
-            <button type="button" class="btn btn-outline-secondary btn-sm" data-close-dialog>取消</button>
-            <button type="submit" class="btn btn-primary btn-sm">上传</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-close-dialog>鍙栨秷</button>
+            <button type="submit" class="btn btn-primary btn-sm">涓婁紶</button>
         </div>
     </form>
 </dialog>
-<!-- 方案/完成确认报告列表 -->
+<!-- 鏂规/瀹屾垚纭鎶ュ憡鍒楄〃 -->
 <dialog class="ticket-dialog ticket-dialog-lg" id="reportListDialog">
     <div class="ticket-dialog-panel">
         <div class="ticket-dialog-header">
-            <h5 class="ticket-dialog-title" id="reportListModalTitle">报告列表</h5>
+            <h5 class="ticket-dialog-title" id="reportListModalTitle">鎶ュ憡鍒楄〃</h5>
             <button type="button" class="btn-close" data-close-dialog aria-label="Close"></button>
         </div>
         <div class="ticket-dialog-body">
-            <p class="small text-muted mb-2" id="reportListProject">—</p>
-            <p class="small text-muted mb-3" id="reportListHint">—</p>
-            <div id="reportListLoading" class="text-muted small d-none">加载中...</div>
-            <div id="reportListEmpty" class="text-muted small d-none">暂无报告</div>
+            <p class="small text-muted mb-2" id="reportListProject">鈥?/p>
+            <p class="small text-muted mb-3" id="reportListHint">鈥?/p>
+            <div id="reportListLoading" class="text-muted small d-none">鍔犺浇涓?..</div>
+            <div id="reportListEmpty" class="text-muted small d-none">鏆傛棤鎶ュ憡</div>
             <ul id="reportListItems" class="attachment-file-list mb-0 d-none"></ul>
         </div>
         <div class="ticket-dialog-footer">
-            <button type="button" class="btn btn-outline-secondary btn-sm" data-close-dialog>关闭</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-close-dialog>鍏抽棴</button>
         </div>
     </div>
 </dialog>
@@ -395,12 +395,12 @@ function openTicketActionModal(btn, formId, projectLabelId, actionSuffix, modalI
     const project = btn.getAttribute('data-project') || '';
     const form = document.getElementById(formId);
     if (!form) {
-        alert('表单未找到，请强制刷新页面后重试');
+        alert('琛ㄥ崟鏈壘鍒帮紝璇峰己鍒跺埛鏂伴〉闈㈠悗閲嶈瘯');
         return;
     }
     form.action = appendCsrfToAction(form, '/tickets/' + ticketId + '/' + actionSuffix);
     const label = document.getElementById(projectLabelId);
-    if (label) label.textContent = '项目：' + project;
+    if (label) label.textContent = '椤圭洰锛? + project;
     showBsModal(modalId);
 }
 function openHandledModal(btn) {
@@ -446,7 +446,7 @@ function openCompleteModal(btn) {
 
     const statusLabel = document.getElementById('statusFilterLabel');
     const statusHidden = document.getElementById('statusHiddenInputs');
-    const archiveLabel = document.getElementById('archiveFilterLabel');
+    const archiveLabel = document.getElementById('deliveryFilterLabel');
     const archiveHidden = document.getElementById('archiveHiddenInputs');
     const systemLabel = document.getElementById('systemFilterLabel');
     const systemHidden = document.getElementById('systemHiddenInputs');
@@ -455,10 +455,10 @@ function openCompleteModal(btn) {
     const menuMenu = document.getElementById('menuFilterMenu');
 
     function syncAll() {
-        syncMultiFilter('.status-option', statusLabel, statusHidden, '全部状态', true, '状态', 'status');
-        syncMultiFilter('.archive-option', archiveLabel, archiveHidden, '全部项目', true, '项目', 'archiveId');
-        syncMultiFilter('.system-option', systemLabel, systemHidden, '全部系统', true, '系统', 'systemId');
-        syncMultiFilter('.menu-option', menuLabel, menuHidden, '全部功能菜单', true, '菜单', 'menu');
+        syncMultiFilter('.status-option', statusLabel, statusHidden, '鍏ㄩ儴鐘舵€?, true, '鐘舵€?, 'status');
+        syncMultiFilter('.delivery-option', archiveLabel, archiveHidden, '鍏ㄩ儴椤圭洰', true, '椤圭洰', 'deliveryId');
+        syncMultiFilter('.system-option', systemLabel, systemHidden, '鍏ㄩ儴绯荤粺', true, '绯荤粺', 'systemId');
+        syncMultiFilter('.menu-option', menuLabel, menuHidden, '鍏ㄩ儴鍔熻兘鑿滃崟', true, '鑿滃崟', 'menu');
     }
 
     function renderMenus(titles, keepSelected) {
@@ -468,9 +468,9 @@ function openCompleteModal(btn) {
             const empty = document.createElement('div');
             empty.id = 'menuFilterEmpty';
             empty.className = 'px-2 py-1 text-muted small';
-            empty.textContent = '请先选择系统';
+            empty.textContent = '璇峰厛閫夋嫨绯荤粺';
             menuMenu.appendChild(empty);
-            syncMultiFilter('.menu-option', menuLabel, menuHidden, '全部功能菜单', true, '菜单', 'menu');
+            syncMultiFilter('.menu-option', menuLabel, menuHidden, '鍏ㄩ儴鍔熻兘鑿滃崟', true, '鑿滃崟', 'menu');
             return;
         }
         titles.forEach((title) => {
@@ -515,7 +515,7 @@ function openCompleteModal(btn) {
         }
     }
 
-    form.querySelectorAll('.status-option, .archive-option, .menu-option').forEach((el) => {
+    form.querySelectorAll('.status-option, .delivery-option, .menu-option').forEach((el) => {
         el.addEventListener('change', syncAll);
     });
     form.querySelectorAll('.system-option').forEach((el) => {
@@ -531,3 +531,4 @@ function openCompleteModal(btn) {
 <div th:replace="~{fragments/cell-clamp-tooltip :: cellClampTooltip}"></div>
 </body>
 </html>
+

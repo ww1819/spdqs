@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/app-head :: head('使用单位 - 档案工单系统')}"></head>
+<body class="app-page">
+<div class="app-shell">
+    <div th:replace="~{fragments/app-nav :: sidebar}"></div>
+    <main class="app-main">
+        <header class="app-header">
+            <h1>使用单位</h1>
+            <p class="header-desc">医院等主体主数据，产品交付挂在使用单位下</p>
+        </header>
+        <div class="app-content">
+            <div th:replace="~{fragments/page-header :: alerts}"></div>
+            <div class="panel">
+                <div class="toolbar">
+                    <form method="get" action="/customers" class="toolbar-filters m-0">
+                        <input type="text" name="keyword" class="form-control form-control-sm" style="width: 220px;"
+                               placeholder="搜索名称/编码/拼音/联系人" th:value="${keyword}">
+                        <button type="submit" class="btn btn-outline-secondary btn-sm">筛选</button>
+                        <a href="/customers" class="btn btn-link btn-sm">重置</a>
+                    </form>
+                    <a href="/customers/new" class="btn btn-primary btn-sm">+ 新建使用单位</a>
+                </div>
+                <div class="panel-body">
+                    <div th:if="${#lists.isEmpty(customers)}" class="table-empty">
+                        <p class="mb-2">暂无使用单位</p>
+                        <a href="/customers/new" class="btn btn-outline-primary btn-sm">创建第一条</a>
+                    </div>
+                    <table class="data-table" th:unless="${#lists.isEmpty(customers)}">
+                        <thead>
+                        <tr>
+                            <th>名称</th>
+                            <th>编码</th>
+                            <th>拼音简码</th>
+                            <th>类型</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="c : ${customers}">
+                            <td>
+                                <a th:href="@{/customers/{id}/edit(id=${c.id})}" class="link-tech fw-semibold"
+                                   th:text="${c.name}">名称</a>
+                            </td>
+                            <td th:text="${c.code ?: '—'}">—</td>
+                            <td th:text="${c.namePy ?: '—'}">—</td>
+                            <td th:text="${c.orgType ?: '—'}">—</td>
+                            <td th:text="${c.status ?: '—'}">—</td>
+                            <td class="cell-actions">
+                                <a th:href="@{/customers/{id}/edit(id=${c.id})}">编辑</a>
+                                <a th:href="@{/archives(keyword=${c.name})}">查看交付</a>
+                                <form th:action="@{/customers/{id}/delete(id=${c.id})}" method="post" class="d-inline"
+                                      onsubmit="return confirm('确定删除该使用单位？')">
+                                    <button type="submit" class="btn btn-link btn-sm text-danger p-0 border-0">删除</button>
+                                </form>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+<script src="/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

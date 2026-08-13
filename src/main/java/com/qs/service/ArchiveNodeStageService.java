@@ -2,9 +2,9 @@ package com.qs.service;
 
 import com.qs.dto.ArchiveNodeStageDto;
 import com.qs.dto.ArchiveNodeStageRequest;
-import com.qs.entity.ArchiveNode;
+import com.qs.entity.DeliveryNode;
 import com.qs.entity.ArchiveNodeStageDef;
-import com.qs.repository.ArchiveNodeRepository;
+import com.qs.repository.DeliveryNodeRepository;
 import com.qs.repository.ArchiveNodeStageDefRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,12 +24,12 @@ public class ArchiveNodeStageService {
     };
 
     private final ArchiveNodeStageDefRepository stageRepository;
-    private final ArchiveNodeRepository archiveNodeRepository;
+    private final DeliveryNodeRepository DeliveryNodeRepository;
 
     public ArchiveNodeStageService(ArchiveNodeStageDefRepository stageRepository,
-                                   ArchiveNodeRepository archiveNodeRepository) {
+                                   DeliveryNodeRepository DeliveryNodeRepository) {
         this.stageRepository = stageRepository;
-        this.archiveNodeRepository = archiveNodeRepository;
+        this.DeliveryNodeRepository = DeliveryNodeRepository;
     }
 
     public List<ArchiveNodeStageDto> listActive() {
@@ -67,13 +67,13 @@ public class ArchiveNodeStageService {
                     throw new IllegalArgumentException("阶段名称已存在：" + newName);
                 }
             });
-            List<ArchiveNode> nodes = archiveNodeRepository.findByStage(oldName);
-            for (ArchiveNode node : nodes) {
+            List<DeliveryNode> nodes = DeliveryNodeRepository.findByStage(oldName);
+            for (DeliveryNode node : nodes) {
                 node.setStage(newName);
                 if (oldName.equals(node.getTitle())) {
                     node.setTitle(newName);
                 }
-                archiveNodeRepository.save(node);
+                DeliveryNodeRepository.save(node);
             }
             stage.setName(newName);
         }
@@ -90,7 +90,7 @@ public class ArchiveNodeStageService {
     @Transactional
     public List<ArchiveNodeStageDto> delete(String id) {
         ArchiveNodeStageDef stage = requireActive(id);
-        long used = archiveNodeRepository.countByStage(stage.getName());
+        long used = DeliveryNodeRepository.countByStage(stage.getName());
         if (used > 0) {
             throw new IllegalArgumentException("该阶段已被 " + used + " 个节点使用，请先修改相关节点后再删除");
         }

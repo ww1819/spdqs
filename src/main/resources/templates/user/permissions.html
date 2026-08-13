@@ -31,19 +31,19 @@
                     </div>
 
                     <div class="mb-4">
-                        <h2 class="h6 mb-3">授权医院 / 项目档案</h2>
+                        <h2 class="h6 mb-3">授权产品交付</h2>
                         <p class="text-secondary small mb-3">
-                            控制该账号在档案、工单、工作台中能看到哪些医院项目。
-                            拥有「账号管理」菜单的用户默认可看全部医院。
+                            控制该账号在交付、工单、工作台中能看到哪些医院×产品×模块。
+                            拥有「账号管理」菜单的用户默认可看全部交付。
                         </p>
-                        <div th:if="${#lists.isEmpty(archives)}" class="text-secondary small">暂无项目档案，请先创建档案。</div>
-                        <div class="row g-2" th:unless="${#lists.isEmpty(archives)}">
-                            <div class="col-md-6" th:each="a : ${archives}">
+                        <div th:if="${#lists.isEmpty(deliveries)}" class="text-secondary small">暂无产品交付，请先创建。</div>
+                        <div class="row g-2" th:unless="${#lists.isEmpty(deliveries)}">
+                            <div class="col-md-6" th:each="a : ${deliveries}">
                                 <div class="form-check border rounded px-3 py-2">
-                                    <input class="form-check-input" type="checkbox" name="archives"
-                                           th:id="'archive_' + ${a.id}" th:value="${a.id}"
-                                           th:checked="${selectedArchives.contains(a.id)}">
-                                    <label class="form-check-label" th:for="'archive_' + ${a.id}" th:text="${a.projectName}">医院</label>
+                                    <input class="form-check-input" type="checkbox" name="deliveries"
+                                           th:id="'delivery_' + ${a.id}" th:value="${a.id}"
+                                           th:checked="${selectedDeliveries.contains(a.id)}">
+                                    <label class="form-check-label" th:for="'delivery_' + ${a.id}" th:text="${a.displayName}">交付</label>
                                 </div>
                             </div>
                         </div>

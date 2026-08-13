@@ -1,11 +1,14 @@
 package com.qs.service;
 
+import com.qs.entity.Delivery;
+import com.qs.entity.PartnerDeliveryPerm;
 import com.qs.entity.User;
-import com.qs.entity.UserArchivePerm;
+import com.qs.entity.UserDeliveryPerm;
 import com.qs.entity.UserMenuPerm;
 import com.qs.enums.MenuCode;
-import com.qs.repository.ArchiveRepository;
-import com.qs.repository.UserArchivePermRepository;
+import com.qs.repository.DeliveryRepository;
+import com.qs.repository.PartnerDeliveryPermRepository;
+import com.qs.repository.UserDeliveryPermRepository;
 import com.qs.repository.UserMenuPermRepository;
 import com.qs.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -20,18 +23,21 @@ import java.util.stream.Collectors;
 public class PermissionService {
 
     private final UserMenuPermRepository menuPermRepository;
-    private final UserArchivePermRepository archivePermRepository;
+    private final UserDeliveryPermRepository deliveryPermRepository;
+    private final PartnerDeliveryPermRepository partnerDeliveryPermRepository;
     private final UserRepository userRepository;
-    private final ArchiveRepository archiveRepository;
+    private final DeliveryRepository deliveryRepository;
 
     public PermissionService(UserMenuPermRepository menuPermRepository,
-                             UserArchivePermRepository archivePermRepository,
+                             UserDeliveryPermRepository deliveryPermRepository,
+                             PartnerDeliveryPermRepository partnerDeliveryPermRepository,
                              UserRepository userRepository,
-                             ArchiveRepository archiveRepository) {
+                             DeliveryRepository deliveryRepository) {
         this.menuPermRepository = menuPermRepository;
-        this.archivePermRepository = archivePermRepository;
+        this.deliveryPermRepository = deliveryPermRepository;
+        this.partnerDeliveryPermRepository = partnerDeliveryPermRepository;
         this.userRepository = userRepository;
-        this.archiveRepository = archiveRepository;
+        this.deliveryRepository = deliveryRepository;
     }
 
     public Set<String> getMenuCodes(String userId) {
@@ -61,38 +67,44 @@ public class PermissionService {
                 && menuPermRepository.existsByUserIdAndMenuCode(userId, menu.getCode());
     }
 
-    /** 授权的医院/项目档案 ID；账号管理权限用户视为全部档案 */
-    public Set<String> getAllowedArchiveIds(String username) {
+    /** 授权的产品交付 ID；账号管理权限用户视为全部交付；服务商账号叠加服务商授权 */
+    public Set<String> getAllowedDeliveryIds(String username) {
         User user = userRepository.findByUsername(username).orElse(null);
         if (user == null) {
             return Set.of();
         }
         if (menuPermRepository.existsByUserIdAndMenuCode(user.getId(), MenuCode.USERS.getCode())) {
-            return archiveRepository.findAll().stream()
-                    .map(a -> a.getId())
+            return deliveryRepository.findAll().stream()
+                    .map(Delivery::getId)
                     .collect(Collectors.toCollection(HashSet::new));
         }
-        return archivePermRepository.findByUserId(user.getId()).stream()
-                .map(UserArchivePerm::getArchiveId)
+        Set<String> ids = deliveryPermRepository.findByUserId(user.getId()).stream()
+                .map(UserDeliveryPerm::getDeliveryId)
                 .collect(Collectors.toCollection(HashSet::new));
+        if (user.getPartnerId() != null && !user.getPartnerId().isBlank()) {
+            partnerDeliveryPermRepository.findByPartnerId(user.getPartnerId()).stream()
+                    .map(PartnerDeliveryPerm::getDeliveryId)
+                    .forEach(ids::add);
+        }
+        return ids;
     }
 
-    public Set<String> getAssignedArchiveIds(String userId) {
-        return archivePermRepository.findByUserId(userId).stream()
-                .map(UserArchivePerm::getArchiveId)
+    public Set<String> getAssignedDeliveryIds(String userId) {
+        return deliveryPermRepository.findByUserId(userId).stream()
+                .map(UserDeliveryPerm::getDeliveryId)
                 .collect(Collectors.toCollection(HashSet::new));
     }
 
     @Transactional
-    public void grantArchiveToUser(String userId, String archiveId) {
-        grantArchiveIfAbsent(userId, archiveId);
+    public void grantDeliveryToUser(String userId, String deliveryId) {
+        grantDeliveryIfAbsent(userId, deliveryId);
     }
 
-    public boolean canAccessArchive(String username, String archiveId) {
-        if (archiveId == null || archiveId.isBlank()) {
+    public boolean canAccessDelivery(String username, String deliveryId) {
+        if (deliveryId == null || deliveryId.isBlank()) {
             return false;
         }
-        return getAllowedArchiveIds(username).contains(archiveId);
+        return getAllowedDeliveryIds(username).contains(deliveryId);
     }
 
     @Transactional
@@ -110,17 +122,17 @@ public class PermissionService {
     }
 
     @Transactional
-    public void grantAllArchives(String userId) {
-        archiveRepository.findAll().forEach(archive -> grantArchiveIfAbsent(userId, archive.getId()));
+    public void grantAllDeliveries(String userId) {
+        deliveryRepository.findAll().forEach(d -> grantDeliveryIfAbsent(userId, d.getId()));
     }
 
     @Transactional
-    public void savePermissions(String userId, List<String> menuCodes, List<String> archiveIds) {
+    public void savePermissions(String userId, List<String> menuCodes, List<String> deliveryIds) {
         userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("账号不存在"));
 
         menuPermRepository.deleteByUserId(userId);
-        archivePermRepository.deleteByUserId(userId);
+        deliveryPermRepository.deleteByUserId(userId);
 
         Set<String> menus = menuCodes == null ? Set.of() : new HashSet<>(menuCodes);
         for (String code : menus) {
@@ -132,14 +144,14 @@ public class PermissionService {
             }
         }
 
-        Set<String> archives = archiveIds == null ? Set.of() : new HashSet<>(archiveIds);
-        for (String archiveId : archives) {
-            if (archiveId != null && !archiveId.isBlank()
-                    && archiveRepository.existsById(archiveId)) {
-                UserArchivePerm perm = new UserArchivePerm();
+        Set<String> deliveries = deliveryIds == null ? Set.of() : new HashSet<>(deliveryIds);
+        for (String deliveryId : deliveries) {
+            if (deliveryId != null && !deliveryId.isBlank()
+                    && deliveryRepository.existsById(deliveryId)) {
+                UserDeliveryPerm perm = new UserDeliveryPerm();
                 perm.setUserId(userId);
-                perm.setArchiveId(archiveId);
-                archivePermRepository.save(perm);
+                perm.setDeliveryId(deliveryId);
+                deliveryPermRepository.save(perm);
             }
         }
     }
@@ -151,9 +163,18 @@ public class PermissionService {
             if (menuPermRepository.countByUserId(user.getId()) == 0) {
                 if ("王威".equals(user.getUsername())) {
                     grantAllMenus(user.getId());
-                    grantAllArchives(user.getId());
+                    grantAllDeliveries(user.getId());
                 } else {
                     grantDefaultMenus(user.getId());
+                }
+            } else {
+                // 存量账号：有档案权限则补使用单位；有账号管理则补服务商
+                if (menuPermRepository.existsByUserIdAndMenuCode(user.getId(), MenuCode.ARCHIVES.getCode())) {
+                    grantMenuIfAbsent(user.getId(), MenuCode.CUSTOMERS);
+                }
+                if (menuPermRepository.existsByUserIdAndMenuCode(user.getId(), MenuCode.USERS.getCode())) {
+                    grantMenuIfAbsent(user.getId(), MenuCode.CUSTOMERS);
+                    grantMenuIfAbsent(user.getId(), MenuCode.PARTNERS);
                 }
             }
         }
@@ -168,12 +189,12 @@ public class PermissionService {
         }
     }
 
-    private void grantArchiveIfAbsent(String userId, String archiveId) {
-        if (!archivePermRepository.existsByUserIdAndArchiveId(userId, archiveId)) {
-            UserArchivePerm perm = new UserArchivePerm();
+    private void grantDeliveryIfAbsent(String userId, String deliveryId) {
+        if (!deliveryPermRepository.existsByUserIdAndDeliveryId(userId, deliveryId)) {
+            UserDeliveryPerm perm = new UserDeliveryPerm();
             perm.setUserId(userId);
-            perm.setArchiveId(archiveId);
-            archivePermRepository.save(perm);
+            perm.setDeliveryId(deliveryId);
+            deliveryPermRepository.save(perm);
         }
     }
 }

@@ -1,8 +1,8 @@
 package com.qs.controller;
 
-import com.qs.dto.ArchiveBriefDto;
-import com.qs.dto.ArchiveOptionDto;
-import com.qs.service.ArchiveService;
+import com.qs.dto.DeliveryBriefDto;
+import com.qs.dto.DeliveryOptionDto;
+import com.qs.service.DeliveryService;
 import com.qs.service.PermissionService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,30 +16,30 @@ import java.util.Set;
 
 @RestController
 @RequestMapping("/api/archives")
-public class ArchiveApiController {
+public class DeliveryApiController {
 
-    private final ArchiveService archiveService;
+    private final DeliveryService deliveryService;
     private final PermissionService permissionService;
 
-    public ArchiveApiController(ArchiveService archiveService, PermissionService permissionService) {
-        this.archiveService = archiveService;
+    public DeliveryApiController(DeliveryService deliveryService, PermissionService permissionService) {
+        this.deliveryService = deliveryService;
         this.permissionService = permissionService;
     }
 
     @GetMapping("/options")
-    public List<ArchiveOptionDto> options(@AuthenticationPrincipal UserDetails userDetails) {
+    public List<DeliveryOptionDto> options(@AuthenticationPrincipal UserDetails userDetails) {
         Set<String> allowed = userDetails == null
                 ? Set.of()
-                : permissionService.getAllowedArchiveIds(userDetails.getUsername());
-        return archiveService.listOptions(allowed);
+                : permissionService.getAllowedDeliveryIds(userDetails.getUsername());
+        return deliveryService.listOptions(allowed);
     }
 
     @GetMapping("/{id}/brief")
-    public ArchiveBriefDto brief(@PathVariable String id,
+    public DeliveryBriefDto brief(@PathVariable String id,
                                  @AuthenticationPrincipal UserDetails userDetails) {
-        if (userDetails == null || !permissionService.canAccessArchive(userDetails.getUsername(), id)) {
+        if (userDetails == null || !permissionService.canAccessDelivery(userDetails.getUsername(), id)) {
             throw new IllegalArgumentException("无权访问该医院/项目档案");
         }
-        return archiveService.getBrief(id);
+        return deliveryService.getBrief(id);
     }
 }
