@@ -6,6 +6,9 @@
     const tableBody = document.getElementById('nodeTableBody');
     const tableEmpty = document.getElementById('nodeTableEmpty');
     const timelineEmpty = document.getElementById('nodeTimelineEmpty');
+    const timelineWrap = document.getElementById('projectTimelineWrap');
+    const timelineCanvas = document.getElementById('projectTimelineCanvas');
+    const timelineHead = document.getElementById('projectTimelineHead');
     const timelineAxis = document.getElementById('projectTimelineAxis');
     const timelineTrack = document.getElementById('projectTimelineTrack');
     const countLabel = document.getElementById('nodeCountLabel');
@@ -25,6 +28,9 @@
     let editingId = null;
     let filesNodeId = null;
     let memosNodeId = null;
+    let selectedNodeId = null;
+    const AXIS_W = 84;
+    const COL_W = 92;
 
     function csrfHeaders() {
         const token = document.querySelector('meta[name="_csrf"]')?.content;
@@ -300,9 +306,23 @@
         nodeModal.show();
     }
 
+    function nodeStartKey(n) {
+        return n.startDate || '';
+    }
+
+    function sortedNodes() {
+        return nodes.slice().sort((a, b) => {
+            const da = nodeStartKey(a);
+            const db = nodeStartKey(b);
+            if (da !== db) return da < db ? -1 : 1;
+            return (a.sortOrder || 0) - (b.sortOrder || 0);
+        });
+    }
+
     function renderTable() {
         if (!tableBody) return;
-        if (!nodes.length) {
+        const list = sortedNodes();
+        if (!list.length) {
             tableBody.innerHTML = '';
             tableEmpty?.classList.remove('d-none');
             document.getElementById('nodeTable')?.classList.add('d-none');
@@ -310,7 +330,7 @@
         }
         tableEmpty?.classList.add('d-none');
         document.getElementById('nodeTable')?.classList.remove('d-none');
-        tableBody.innerHTML = nodes.map((n) => {
+        tableBody.innerHTML = list.map((n) => {
             const confirmTag = n.confirmed
                 ? '<span class="tag tag-success">已确认</span>'
                 : '<span class="tag tag-default">未确认</span>';
@@ -326,8 +346,9 @@
             } else {
                 actions.push('<span class="text-muted small">不可删</span>');
             }
+            const selected = n.id === selectedNodeId ? ' is-selected' : '';
             return `
-            <tr>
+            <tr data-node-id="${n.id}" class="${selected.trim()}">
                 <td><span class="tag ${stageClass(n.stage)}">${escapeHtml(n.stage)}</span></td>
                 <td>${escapeHtml(n.title)}</td>
                 <td>${escapeHtml(n.nodeType)}</td>
@@ -342,22 +363,42 @@
         }).join('');
     }
 
+    function pad2(n) {
+        return String(n).padStart(2, '0');
+    }
+
+    function formatTickDate(d) {
+        return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+    }
+
+    function toLocalDate(value) {
+        if (!value) return null;
+        const d = new Date(value);
+        d.setHours(0, 0, 0, 0);
+        return d;
+    }
+
     function renderTimeline() {
-        if (!timelineAxis || !timelineTrack) return;
-        if (!nodes.length) {
+        if (!timelineAxis || !timelineTrack || !timelineHead) return;
+        const list = sortedNodes();
+        if (!list.length) {
             timelineEmpty?.classList.remove('d-none');
+            if (timelineWrap) timelineWrap.classList.add('d-none');
+            timelineHead.innerHTML = '';
             timelineAxis.innerHTML = '';
             timelineTrack.innerHTML = '';
             return;
         }
         timelineEmpty?.classList.add('d-none');
+        timelineWrap?.classList.remove('d-none');
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const dates = [];
-        nodes.forEach((n) => {
-            if (n.startDate) dates.push(new Date(n.startDate));
-            if (n.endDate) dates.push(new Date(n.endDate));
+        list.forEach((n) => {
+            const start = toLocalDate(n.startDate);
+            if (start) dates.push(start);
+            if (n.endDate) dates.push(toLocalDate(n.endDate));
             else if (n.range) dates.push(today);
         });
         dates.push(today);
@@ -367,58 +408,92 @@
             min = new Date(min.getTime() - 7 * 86400000);
             max = new Date(max.getTime() + 7 * 86400000);
         } else {
-            const pad = Math.max(3, Math.round((max - min) / 86400000 * 0.08));
+            const pad = Math.max(3, Math.round((max - min) / 86400000 * 0.06));
             min = new Date(min.getTime() - pad * 86400000);
             max = new Date(max.getTime() + pad * 86400000);
         }
-        const span = max.getTime() - min.getTime();
+        const daySpan = Math.max(1, Math.round((max.getTime() - min.getTime()) / 86400000));
+        const pxPerDay = daySpan < 45 ? 10 : daySpan < 120 ? 5 : daySpan < 400 ? 3 : 2;
+        const trackH = Math.max(360, daySpan * pxPerDay);
 
-        function pct(dateStr) {
-            const d = new Date(dateStr);
-            return ((d.getTime() - min.getTime()) / span) * 100;
+        function yOf(dateVal) {
+            const d = toLocalDate(dateVal) || today;
+            return ((d.getTime() - min.getTime()) / 86400000) * pxPerDay;
         }
 
+        const tickStep = daySpan > 540 ? 60 : daySpan > 180 ? 30 : daySpan > 60 ? 14 : 7;
         const ticks = [];
-        const tickCount = 6;
-        for (let i = 0; i <= tickCount; i++) {
-            ticks.push(new Date(min.getTime() + (span * i) / tickCount));
+        for (let t = min.getTime(); t <= max.getTime(); t += tickStep * 86400000) {
+            ticks.push(new Date(t));
         }
+        if (ticks.length === 0 || ticks[ticks.length - 1].getTime() < max.getTime() - 2 * 86400000) {
+            ticks.push(max);
+        }
+
+        timelineHead.innerHTML = '<div class="v-timeline-corner">日期</div><div class="v-timeline-cols">'
+            + list.map((n) => {
+                const selected = n.id === selectedNodeId ? ' is-selected' : '';
+                return `<div class="v-timeline-col-head${selected}" data-node-id="${n.id}" title="${escapeHtml(n.title)}">${escapeHtml(n.title)}</div>`;
+            }).join('')
+            + '</div>';
+
+        timelineAxis.style.height = trackH + 'px';
         timelineAxis.innerHTML = ticks.map((t) => {
-            const left = ((t.getTime() - min.getTime()) / span) * 100;
-            const label = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
-            return `<div class="timeline-tick" style="left:${left}%"><span>${label}</span></div>`;
+            return `<div class="v-timeline-tick" style="top:${yOf(t)}px">${formatTickDate(t)}</div>`;
         }).join('');
 
-        const todayPct = ((today.getTime() - min.getTime()) / span) * 100;
-        let html = `<div class="timeline-today" style="left:${todayPct}%" title="今天"></div>`;
-
-        nodes.forEach((n, idx) => {
-            const lane = idx % 3;
+        const todayY = yOf(today);
+        let html = `<div class="v-timeline-today" style="top:${todayY}px" title="今天"></div>`;
+        list.forEach((n, idx) => {
+            const left = idx * COL_W;
+            const selected = n.id === selectedNodeId ? ' is-selected' : '';
+            html += `<div class="v-timeline-col${selected}" data-node-id="${n.id}" style="left:${left}px" title="${escapeHtml(n.title)} (${escapeHtml(n.dateLabel)})"></div>`;
+            const cls = stageClass(n.stage);
             if (n.range) {
-                const left = pct(n.startDate);
-                const endStr = n.endDate || today.toISOString().slice(0, 10);
-                const right = pct(endStr);
-                const width = Math.max(1.2, right - left);
-                html += `<div class="timeline-range ${stageClass(n.stage)}" style="left:${left}%;width:${width}%;top:${28 + lane * 34}px"
-                    title="${escapeHtml(n.title)} (${escapeHtml(n.dateLabel)})">
-                    <span>${escapeHtml(n.title)}</span>
-                </div>`;
+                const top = yOf(n.startDate);
+                const endStr = n.endDate || formatTickDate(today);
+                const height = Math.max(16, yOf(endStr) - top);
+                html += `<div class="v-timeline-range ${cls}" data-node-id="${n.id}" style="left:${left + 35}px;top:${top}px;height:${height}px" title="${escapeHtml(n.title)} (${escapeHtml(n.dateLabel)})"></div>`;
             } else {
-                const left = pct(n.startDate);
-                html += `<div class="timeline-point ${stageClass(n.stage)}" style="left:${left}%;top:${28 + lane * 34}px"
-                    title="${escapeHtml(n.title)} (${escapeHtml(n.dateLabel)})">
-                    <i></i><span>${escapeHtml(n.title)}</span>
-                </div>`;
+                html += `<div class="v-timeline-point ${cls}" data-node-id="${n.id}" style="left:${left + COL_W / 2}px;top:${yOf(n.startDate)}px" title="${escapeHtml(n.title)} (${escapeHtml(n.dateLabel)})"><i></i></div>`;
             }
         });
+        timelineTrack.style.height = trackH + 'px';
+        timelineTrack.style.width = (list.length * COL_W) + 'px';
         timelineTrack.innerHTML = html;
-        timelineTrack.style.minHeight = (28 + Math.min(nodes.length, 3) * 34 + 24) + 'px';
+        if (timelineCanvas) {
+            timelineCanvas.style.width = (AXIS_W + list.length * COL_W) + 'px';
+        }
+    }
+
+    function applySelection() {
+        document.querySelectorAll('.v-timeline-col-head, .v-timeline-col').forEach((el) => {
+            el.classList.toggle('is-selected', el.getAttribute('data-node-id') === selectedNodeId);
+        });
+        document.querySelectorAll('#nodeTableBody tr').forEach((tr) => {
+            tr.classList.toggle('is-selected', tr.getAttribute('data-node-id') === selectedNodeId);
+        });
+    }
+
+    function selectNode(id, source) {
+        if (!id) return;
+        selectedNodeId = id;
+        applySelection();
+        if (source === 'timeline') {
+            const row = document.querySelector('#nodeTableBody tr[data-node-id="' + id + '"]');
+            row?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        } else if (source === 'table') {
+            const col = document.querySelector('.v-timeline-col[data-node-id="' + id + '"]')
+                || document.querySelector('.v-timeline-col-head[data-node-id="' + id + '"]');
+            col?.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' });
+        }
     }
 
     function renderAll() {
         if (countLabel) countLabel.textContent = '共 ' + nodes.length + ' 个节点';
         renderTable();
         renderTimeline();
+        applySelection();
     }
 
     async function loadNodes() {
@@ -943,6 +1018,8 @@
     }
 
     tableBody?.addEventListener('click', (e) => {
+        const row = e.target.closest('tr[data-node-id]');
+        if (row) selectNode(row.getAttribute('data-node-id'), 'table');
         const editId = e.target.getAttribute('data-edit');
         const delId = e.target.getAttribute('data-del');
         const confirmId = e.target.getAttribute('data-confirm');
@@ -963,6 +1040,11 @@
         } else if (memosId) {
             openMemos(memosId);
         }
+    });
+
+    timelineWrap?.addEventListener('click', (e) => {
+        const id = e.target.closest('[data-node-id]')?.getAttribute('data-node-id');
+        if (id) selectNode(id, 'timeline');
     });
 
     document.getElementById('btnUploadNodeFiles')?.addEventListener('click', uploadNodeFiles);

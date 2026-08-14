@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/app-head :: head(${view.displayName + ' - 项目节点'})}"></head>
-<body class="app-page">
+<body class="app-page nodes-page">
 <div class="app-shell">
     <div th:replace="~{fragments/app-nav :: sidebar}"></div>
     <main class="app-main">
@@ -22,11 +22,11 @@
                 </div>
             </div>
         </header>
-        <div class="app-content">
+        <div class="app-content nodes-page-content">
             <div th:replace="~{fragments/page-header :: alerts}"></div>
             <div id="nodeToast" class="flow-toast" role="status"></div>
 
-            <div class="panel mb-3">
+            <div class="panel mb-3 nodes-quick-panel">
                 <div class="panel-body">
                     <div class="node-stage-quick" id="nodeStageQuick">
                         <span class="text-muted small me-2">快捷添加：</span>
@@ -35,52 +35,59 @@
                 </div>
             </div>
 
-            <div class="panel mb-3">
-                <div class="panel-header d-flex justify-content-between align-items-center">
-                    <h2 class="mb-0">项目时间轴</h2>
-                    <span class="text-muted small" id="nodeCountLabel">加载中…</span>
+            <div class="nodes-workspace">
+                <div class="panel nodes-pane nodes-pane-timeline mb-0">
+                    <div class="panel-header d-flex justify-content-between align-items-center">
+                        <h2 class="mb-0">项目时间轴</h2>
+                        <span class="text-muted small" id="nodeCountLabel">加载中…</span>
+                    </div>
+                    <div class="panel-body nodes-pane-body">
+                        <div id="nodeTimelineEmpty" class="table-empty d-none">
+                            <p class="mb-2">暂无项目节点</p>
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="btnAddNodeEmpty">创建第一个节点</button>
+                        </div>
+                        <div class="v-timeline-scroll" id="projectTimelineWrap">
+                            <div class="v-timeline-canvas" id="projectTimelineCanvas">
+                                <div class="v-timeline-head" id="projectTimelineHead"></div>
+                                <div class="v-timeline-main">
+                                    <div class="v-timeline-axis" id="projectTimelineAxis"></div>
+                                    <div class="v-timeline-track" id="projectTimelineTrack"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="project-timeline-legend mt-2">
+                            <span class="legend-item"><i class="legend-dot legend-point"></i>时间点</span>
+                            <span class="legend-item"><i class="legend-bar legend-range"></i>时间段</span>
+                            <span class="legend-item"><i class="legend-dot legend-today"></i>今天</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="panel-body">
-                    <div id="nodeTimelineEmpty" class="table-empty d-none">
-                        <p class="mb-2">暂无项目节点</p>
-                        <button type="button" class="btn btn-outline-primary btn-sm" id="btnAddNodeEmpty">创建第一个节点</button>
-                    </div>
-                    <div class="project-timeline-wrap" id="projectTimelineWrap">
-                        <div class="project-timeline-axis" id="projectTimelineAxis"></div>
-                        <div class="project-timeline-track" id="projectTimelineTrack"></div>
-                    </div>
-                    <div class="project-timeline-legend mt-3">
-                        <span class="legend-item"><i class="legend-dot legend-point"></i>时间点</span>
-                        <span class="legend-item"><i class="legend-bar legend-range"></i>时间段</span>
-                        <span class="legend-item"><i class="legend-dot legend-today"></i>今天</span>
-                    </div>
-                </div>
-            </div>
 
-            <div class="panel">
-                <div class="panel-header">
-                    <h2 class="mb-0">节点列表</h2>
-                </div>
-                <div class="panel-body">
-                    <div id="nodeTableEmpty" class="text-muted d-none">暂无节点数据</div>
-                    <div class="table-responsive">
-                        <table class="data-table" id="nodeTable">
-                            <thead>
-                            <tr>
-                                <th>阶段</th>
-                                <th>标题</th>
-                                <th>类型</th>
-                                <th>时间</th>
-                                <th>状态</th>
-                                <th>确认</th>
-                                <th>附件</th>
-                                <th>备忘</th>
-                                <th>备注</th>
-                                <th>操作</th>
-                            </tr>
-                            </thead>
-                            <tbody id="nodeTableBody"></tbody>
-                        </table>
+                <div class="panel nodes-pane nodes-pane-list mb-0">
+                    <div class="panel-header">
+                        <h2 class="mb-0">节点列表</h2>
+                    </div>
+                    <div class="panel-body nodes-pane-body">
+                        <div id="nodeTableEmpty" class="text-muted d-none">暂无节点数据</div>
+                        <div class="nodes-list-scroll" id="nodeListScroll">
+                            <table class="data-table" id="nodeTable">
+                                <thead>
+                                <tr>
+                                    <th>阶段</th>
+                                    <th>标题</th>
+                                    <th>类型</th>
+                                    <th>时间</th>
+                                    <th>状态</th>
+                                    <th>确认</th>
+                                    <th>附件</th>
+                                    <th>备忘</th>
+                                    <th>备注</th>
+                                    <th>操作</th>
+                                </tr>
+                                </thead>
+                                <tbody id="nodeTableBody"></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
