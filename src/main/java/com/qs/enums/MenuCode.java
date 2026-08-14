@@ -7,6 +7,7 @@ public enum MenuCode {
     DASHBOARD("dashboard", "工作台", "/dashboard"),
     ARCHIVES("archives", "产品交付", "/archives"),
     CUSTOMERS("customers", "使用单位", "/customers"),
+    PRODUCTS("products", "产品", "/products"),
     PARTNERS("partners", "服务商", "/partners"),
     TICKETS("tickets", "工单列表", "/tickets"),
     ANALYSIS("analysis", "项目分析", "/analysis"),
@@ -46,9 +47,9 @@ public enum MenuCode {
         return null;
     }
 
-    /** 新注册用户默认菜单（不含账号管理、项目分析） */
+    /** 新注册用户默认菜单（不含账号管理） */
     public static List<MenuCode> defaultMenusForNewUser() {
-        return List.of(DASHBOARD, ARCHIVES, CUSTOMERS, PARTNERS, TICKETS);
+        return List.of(DASHBOARD, ARCHIVES, CUSTOMERS, PRODUCTS, PARTNERS, TICKETS, ANALYSIS);
     }
 
     public static List<MenuCode> allMenus() {

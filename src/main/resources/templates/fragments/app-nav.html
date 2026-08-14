@@ -15,6 +15,10 @@
            th:classappend="${activeTab == 'customers'} ? 'active'" href="/customers">
             <span class="sidebar-icon">⌂</span> 使用单位
         </a>
+        <a class="sidebar-link" th:if="${allowedMenus != null and allowedMenus.contains('products')}"
+           th:classappend="${activeTab == 'products'} ? 'active'" href="/products">
+            <span class="sidebar-icon">▤</span> 产品
+        </a>
         <a class="sidebar-link" th:if="${allowedMenus != null and allowedMenus.contains('archives')}"
            th:classappend="${activeTab == 'archives'} ? 'active'" href="/archives">
             <span class="sidebar-icon">☰</span> 产品交付
@@ -36,10 +40,14 @@
             <span class="sidebar-icon">👤</span> 账号管理
         </a>
         <div class="sidebar-divider"
-             th:if="${allowedMenus != null and (allowedMenus.contains('archives') or allowedMenus.contains('tickets') or allowedMenus.contains('customers') or allowedMenus.contains('partners'))}"></div>
+             th:if="${allowedMenus != null and (allowedMenus.contains('archives') or allowedMenus.contains('tickets') or allowedMenus.contains('customers') or allowedMenus.contains('products') or allowedMenus.contains('partners'))}"></div>
         <a class="sidebar-link sidebar-link-sub" th:if="${allowedMenus != null and allowedMenus.contains('customers')}"
            href="/customers/new">
             <span class="sidebar-icon">+</span> 新建使用单位
+        </a>
+        <a class="sidebar-link sidebar-link-sub" th:if="${allowedMenus != null and allowedMenus.contains('products')}"
+           href="/products/new">
+            <span class="sidebar-icon">+</span> 新建产品
         </a>
         <a class="sidebar-link sidebar-link-sub" th:if="${allowedMenus != null and allowedMenus.contains('archives')}"
            href="/archives/new">
