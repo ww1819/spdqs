@@ -15,6 +15,8 @@
                     </p>
                 </div>
                 <div class="d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="btnToggleAxis"
+                            title="切换时间轴方向">横纵转换</button>
                     <button type="button" class="btn btn-outline-primary btn-sm" id="btnManageStages">维护阶段</button>
                     <button type="button" class="btn btn-primary btn-sm" id="btnAddNode">+ 新增节点</button>
                     <a th:href="@{/archives/{id}(id=${view.id})}" class="btn btn-outline-secondary btn-sm">返回详情</a>
@@ -35,11 +37,14 @@
                 </div>
             </div>
 
-            <div class="nodes-workspace">
+            <div class="nodes-workspace is-time-y">
                 <div class="panel nodes-pane nodes-pane-timeline mb-0">
                     <div class="panel-header d-flex justify-content-between align-items-center">
                         <h2 class="mb-0">项目时间轴</h2>
-                        <span class="text-muted small" id="nodeCountLabel">加载中…</span>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="text-muted small" id="axisModeHint">时间为纵轴</span>
+                            <span class="text-muted small" id="nodeCountLabel">加载中…</span>
+                        </div>
                     </div>
                     <div class="panel-body nodes-pane-body">
                         <div id="nodeTimelineEmpty" class="table-empty d-none">

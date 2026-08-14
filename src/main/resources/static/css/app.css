@@ -1865,12 +1865,115 @@ body.auth-page {
 .v-timeline-range.stage-other,
 .v-timeline-point.stage-other i { background: #64748b; }
 
+.nodes-workspace.is-time-x {
+    flex-direction: column;
+}
+
+.nodes-workspace.is-time-x .nodes-pane-timeline {
+    flex: 0 0 42%;
+    max-width: none;
+    min-height: 220px;
+}
+
+.nodes-workspace.is-time-x .nodes-pane-list {
+    flex: 1 1 58%;
+}
+
+.v-timeline-canvas.is-time-x .v-timeline-corner,
+.v-timeline-canvas.is-time-x .v-timeline-axis {
+    flex: 0 0 120px;
+    width: 120px;
+}
+
+.v-timeline-canvas.is-time-x .v-timeline-track {
+    background-image: linear-gradient(to bottom, #e2e8f0 1px, transparent 1px);
+    background-size: 100% 44px;
+}
+
+.v-timeline-canvas.is-time-x .v-timeline-tick {
+    top: auto;
+    bottom: 6px;
+    left: 0;
+    right: auto;
+    transform: translateX(-50%);
+    padding: 0;
+}
+
+.v-timeline-canvas.is-time-x .v-timeline-tick::after {
+    left: 50%;
+    right: auto;
+    top: auto;
+    bottom: -6px;
+    width: 1px;
+    height: 8px;
+}
+
+.v-timeline-row-head {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 1px solid #e2e8f0;
+    overflow: hidden;
+    color: var(--text);
+}
+
+.v-timeline-row-head.is-selected,
+.v-timeline-row.is-selected {
+    background: #dbeafe;
+}
+
+.v-timeline-row {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 44px;
+    cursor: pointer;
+}
+
+.v-timeline-row:hover {
+    background: rgba(37, 99, 235, 0.06);
+}
+
+.v-timeline-canvas.is-time-x .v-timeline-today {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: auto;
+    width: 2px;
+    height: auto;
+}
+
+.v-timeline-canvas.is-time-x .v-timeline-today::after {
+    top: 4px;
+    left: 6px;
+}
+
+.v-timeline-range.is-x {
+    height: 22px;
+    min-height: 0;
+    min-width: 16px;
+    width: auto;
+}
+
+.v-timeline-cols.is-x {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+}
+
 @media (max-width: 1200px) {
-    .nodes-workspace {
+    .nodes-workspace.is-time-y {
         flex-direction: column;
     }
-    .nodes-pane-timeline,
-    .nodes-pane-list {
+    .nodes-workspace.is-time-y .nodes-pane-timeline,
+    .nodes-workspace.is-time-y .nodes-pane-list {
         flex: 1 1 auto;
         max-width: none;
         min-height: 280px;

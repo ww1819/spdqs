@@ -29,8 +29,14 @@
     let filesNodeId = null;
     let memosNodeId = null;
     let selectedNodeId = null;
+    const AXIS_MODE_KEY = 'qs-nodes-axis-mode';
+    let axisMode = localStorage.getItem(AXIS_MODE_KEY) === 'x' ? 'x' : 'y';
     const AXIS_W = 84;
     const COL_W = 92;
+    const AXIS_W_X = 120;
+    const ROW_H = 44;
+    const workspaceEl = document.querySelector('.nodes-workspace');
+    const axisModeHint = document.getElementById('axisModeHint');
 
     function csrfHeaders() {
         const token = document.querySelector('meta[name="_csrf"]')?.content;
@@ -378,20 +384,7 @@
         return d;
     }
 
-    function renderTimeline() {
-        if (!timelineAxis || !timelineTrack || !timelineHead) return;
-        const list = sortedNodes();
-        if (!list.length) {
-            timelineEmpty?.classList.remove('d-none');
-            if (timelineWrap) timelineWrap.classList.add('d-none');
-            timelineHead.innerHTML = '';
-            timelineAxis.innerHTML = '';
-            timelineTrack.innerHTML = '';
-            return;
-        }
-        timelineEmpty?.classList.add('d-none');
-        timelineWrap?.classList.remove('d-none');
-
+    function buildTimeScale(list) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const dates = [];
@@ -414,13 +407,6 @@
         }
         const daySpan = Math.max(1, Math.round((max.getTime() - min.getTime()) / 86400000));
         const pxPerDay = daySpan < 45 ? 10 : daySpan < 120 ? 5 : daySpan < 400 ? 3 : 2;
-        const trackH = Math.max(360, daySpan * pxPerDay);
-
-        function yOf(dateVal) {
-            const d = toLocalDate(dateVal) || today;
-            return ((d.getTime() - min.getTime()) / 86400000) * pxPerDay;
-        }
-
         const tickStep = daySpan > 540 ? 60 : daySpan > 180 ? 30 : daySpan > 60 ? 14 : 7;
         const ticks = [];
         for (let t = min.getTime(); t <= max.getTime(); t += tickStep * 86400000) {
@@ -429,6 +415,60 @@
         if (ticks.length === 0 || ticks[ticks.length - 1].getTime() < max.getTime() - 2 * 86400000) {
             ticks.push(max);
         }
+        function pos(dateVal) {
+            const d = toLocalDate(dateVal) || today;
+            return ((d.getTime() - min.getTime()) / 86400000) * pxPerDay;
+        }
+        return { today, daySpan, pxPerDay, ticks, pos };
+    }
+
+    function applyAxisMode() {
+        workspaceEl?.classList.toggle('is-time-x', axisMode === 'x');
+        workspaceEl?.classList.toggle('is-time-y', axisMode === 'y');
+        timelineCanvas?.classList.toggle('is-time-x', axisMode === 'x');
+        timelineCanvas?.classList.toggle('is-time-y', axisMode === 'y');
+        if (axisModeHint) {
+            axisModeHint.textContent = axisMode === 'x' ? '时间为横轴' : '时间为纵轴';
+        }
+        const btn = document.getElementById('btnToggleAxis');
+        if (btn) {
+            btn.title = axisMode === 'y'
+                ? '当前时间为纵轴。点击改为时间横轴、节点纵轴（上轴下列表）'
+                : '当前时间为横轴。点击改回时间纵轴、节点横轴（左轴右列表）';
+        }
+    }
+
+    function toggleAxisMode() {
+        axisMode = axisMode === 'y' ? 'x' : 'y';
+        localStorage.setItem(AXIS_MODE_KEY, axisMode);
+        applyAxisMode();
+        renderTimeline();
+        applySelection();
+    }
+
+    function renderTimeline() {
+        if (!timelineAxis || !timelineTrack || !timelineHead) return;
+        const list = sortedNodes();
+        if (!list.length) {
+            timelineEmpty?.classList.remove('d-none');
+            if (timelineWrap) timelineWrap.classList.add('d-none');
+            timelineHead.innerHTML = '';
+            timelineAxis.innerHTML = '';
+            timelineTrack.innerHTML = '';
+            return;
+        }
+        timelineEmpty?.classList.add('d-none');
+        timelineWrap?.classList.remove('d-none');
+        if (axisMode === 'x') {
+            renderTimelineTimeX(list);
+        } else {
+            renderTimelineTimeY(list);
+        }
+    }
+
+    function renderTimelineTimeY(list) {
+        const scale = buildTimeScale(list);
+        const trackH = Math.max(360, scale.daySpan * scale.pxPerDay);
 
         timelineHead.innerHTML = '<div class="v-timeline-corner">日期</div><div class="v-timeline-cols">'
             + list.map((n) => {
@@ -438,24 +478,24 @@
             + '</div>';
 
         timelineAxis.style.height = trackH + 'px';
-        timelineAxis.innerHTML = ticks.map((t) => {
-            return `<div class="v-timeline-tick" style="top:${yOf(t)}px">${formatTickDate(t)}</div>`;
+        timelineAxis.style.width = '';
+        timelineAxis.innerHTML = scale.ticks.map((t) => {
+            return `<div class="v-timeline-tick" style="top:${scale.pos(t)}px">${formatTickDate(t)}</div>`;
         }).join('');
 
-        const todayY = yOf(today);
-        let html = `<div class="v-timeline-today" style="top:${todayY}px" title="今天"></div>`;
+        let html = `<div class="v-timeline-today" style="top:${scale.pos(scale.today)}px" title="今天"></div>`;
         list.forEach((n, idx) => {
             const left = idx * COL_W;
             const selected = n.id === selectedNodeId ? ' is-selected' : '';
             html += `<div class="v-timeline-col${selected}" data-node-id="${n.id}" style="left:${left}px" title="${escapeHtml(n.title)} (${escapeHtml(n.dateLabel)})"></div>`;
             const cls = stageClass(n.stage);
             if (n.range) {
-                const top = yOf(n.startDate);
-                const endStr = n.endDate || formatTickDate(today);
-                const height = Math.max(16, yOf(endStr) - top);
+                const top = scale.pos(n.startDate);
+                const endStr = n.endDate || formatTickDate(scale.today);
+                const height = Math.max(16, scale.pos(endStr) - top);
                 html += `<div class="v-timeline-range ${cls}" data-node-id="${n.id}" style="left:${left + 35}px;top:${top}px;height:${height}px" title="${escapeHtml(n.title)} (${escapeHtml(n.dateLabel)})"></div>`;
             } else {
-                html += `<div class="v-timeline-point ${cls}" data-node-id="${n.id}" style="left:${left + COL_W / 2}px;top:${yOf(n.startDate)}px" title="${escapeHtml(n.title)} (${escapeHtml(n.dateLabel)})"><i></i></div>`;
+                html += `<div class="v-timeline-point ${cls}" data-node-id="${n.id}" style="left:${left + COL_W / 2}px;top:${scale.pos(n.startDate)}px" title="${escapeHtml(n.title)} (${escapeHtml(n.dateLabel)})"><i></i></div>`;
             }
         });
         timelineTrack.style.height = trackH + 'px';
@@ -463,11 +503,55 @@
         timelineTrack.innerHTML = html;
         if (timelineCanvas) {
             timelineCanvas.style.width = (AXIS_W + list.length * COL_W) + 'px';
+            timelineCanvas.style.minHeight = '';
+        }
+    }
+
+    function renderTimelineTimeX(list) {
+        const scale = buildTimeScale(list);
+        const trackW = Math.max(720, scale.daySpan * scale.pxPerDay);
+        const trackH = Math.max(ROW_H, list.length * ROW_H);
+        const posX = (dateVal) => (scale.pos(dateVal) / (scale.daySpan * scale.pxPerDay)) * trackW;
+
+        timelineHead.innerHTML = '<div class="v-timeline-corner">节点</div>'
+            + '<div class="v-timeline-cols is-x" style="width:' + trackW + 'px">'
+            + scale.ticks.map((t) => {
+                return `<div class="v-timeline-tick" style="left:${posX(t)}px">${formatTickDate(t)}</div>`;
+            }).join('')
+            + '</div>';
+
+        timelineAxis.style.height = trackH + 'px';
+        timelineAxis.style.width = AXIS_W_X + 'px';
+        timelineAxis.innerHTML = list.map((n, idx) => {
+            const selected = n.id === selectedNodeId ? ' is-selected' : '';
+            return `<div class="v-timeline-row-head${selected}" data-node-id="${n.id}" style="top:${idx * ROW_H}px" title="${escapeHtml(n.title)}">${escapeHtml(n.title)}</div>`;
+        }).join('');
+
+        let html = `<div class="v-timeline-today" style="left:${posX(scale.today)}px" title="今天"></div>`;
+        list.forEach((n, idx) => {
+            const top = idx * ROW_H;
+            const selected = n.id === selectedNodeId ? ' is-selected' : '';
+            html += `<div class="v-timeline-row${selected}" data-node-id="${n.id}" style="top:${top}px" title="${escapeHtml(n.title)} (${escapeHtml(n.dateLabel)})"></div>`;
+            const cls = stageClass(n.stage);
+            if (n.range) {
+                const left = posX(n.startDate);
+                const endStr = n.endDate || formatTickDate(scale.today);
+                const width = Math.max(16, posX(endStr) - left);
+                html += `<div class="v-timeline-range is-x ${cls}" data-node-id="${n.id}" style="left:${left}px;top:${top + 11}px;width:${width}px" title="${escapeHtml(n.title)} (${escapeHtml(n.dateLabel)})"></div>`;
+            } else {
+                html += `<div class="v-timeline-point ${cls}" data-node-id="${n.id}" style="left:${posX(n.startDate)}px;top:${top + ROW_H / 2}px" title="${escapeHtml(n.title)} (${escapeHtml(n.dateLabel)})"><i></i></div>`;
+            }
+        });
+        timelineTrack.style.height = trackH + 'px';
+        timelineTrack.style.width = trackW + 'px';
+        timelineTrack.innerHTML = html;
+        if (timelineCanvas) {
+            timelineCanvas.style.width = (AXIS_W_X + trackW) + 'px';
         }
     }
 
     function applySelection() {
-        document.querySelectorAll('.v-timeline-col-head, .v-timeline-col').forEach((el) => {
+        document.querySelectorAll('.v-timeline-col-head, .v-timeline-col, .v-timeline-row-head, .v-timeline-row').forEach((el) => {
             el.classList.toggle('is-selected', el.getAttribute('data-node-id') === selectedNodeId);
         });
         document.querySelectorAll('#nodeTableBody tr').forEach((tr) => {
@@ -484,7 +568,9 @@
             row?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         } else if (source === 'table') {
             const col = document.querySelector('.v-timeline-col[data-node-id="' + id + '"]')
-                || document.querySelector('.v-timeline-col-head[data-node-id="' + id + '"]');
+                || document.querySelector('.v-timeline-row[data-node-id="' + id + '"]')
+                || document.querySelector('.v-timeline-col-head[data-node-id="' + id + '"]')
+                || document.querySelector('.v-timeline-row-head[data-node-id="' + id + '"]');
             col?.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' });
         }
     }
@@ -1042,6 +1128,8 @@
         }
     });
 
+    document.getElementById('btnToggleAxis')?.addEventListener('click', toggleAxisMode);
+
     timelineWrap?.addEventListener('click', (e) => {
         const id = e.target.closest('[data-node-id]')?.getAttribute('data-node-id');
         if (id) selectNode(id, 'timeline');
@@ -1062,6 +1150,7 @@
         else if (delId) deleteNodeMemo(delId);
     });
 
+    applyAxisMode();
     syncTypeUi();
     Promise.all([loadStages(), loadNodes()])
         .catch((e) => {
